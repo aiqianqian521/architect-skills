@@ -138,7 +138,7 @@ parent_step_id  = fan-out 子任务回收时的父步骤
 [ ] 热路径是否经过优化？ → 未优化: 用 cProfile 找到最热 3 条路径，逐一优化
 
 > **口径演进（2026-09-05 · TencentDB-Agent-Memory iter#3 实测真值校正）**：Backpressure 行由“待实现”校正为真实四件套实现模式；检查清单新增「分层降维/压缩归档」「worker-pool 并发上限+buffer+oversize」两项，均带可回溯 file:行段真值。校正记录见 architect-skills `output/loop-dev/2026-09-05/report.md`。
-``````
+```
 
 ## 常见问题修复指南
 

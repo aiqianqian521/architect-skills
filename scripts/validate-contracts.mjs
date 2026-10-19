@@ -16,7 +16,9 @@ const VALID_DIMENSIONS = new Set([
   "design", "review", "data", "test", "workflow",
   "agent", "git", "docs", "net", "security",
   "ops", "observability", "cost", "compliance", "frontend",
-  "plugin", "router"
+  "plugin", "router",
+  // --- cycle-6 repair: align with actual atom set (19 dims) ---
+  "context", "rag"
 ]);
 const REQUIRED_OUTPUT_SCHEMA_FIELDS = ["required"];
 const REQUIRED_CHECKLIST_ITEM_FIELDS = ["id", "rule"];

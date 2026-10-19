@@ -12,7 +12,9 @@ const REQUIRED_FINDING_FIELDS = ["id", "type", "evidence", "risk_level", "confid
 const VALID_DIMENSIONS = new Set([
   "design", "review", "data", "test", "workflow",
   "agent", "git", "docs", "net", "security",
-  "ops", "observability", "cost", "compliance", "frontend"
+  "ops", "observability", "cost", "compliance", "frontend",
+  // --- cycle-6 repair: align with actual atom set (19 dims) ---
+  "context", "rag", "plugin", "router"
 ]);
 const VALID_RISK_LEVELS = new Set(["critical", "high", "medium", "low"]);
 const VALID_CONFIDENCES = new Set(["high", "medium", "low", "unknown"]);

@@ -41,7 +41,7 @@
 
 > **口径演进（2026-09-05 · TencentDB-Agent-Memory iter#3 实测真值校正）**：检查清单新增「telemetry 后端可插拔 factory + noop 降级」一项，带可回溯 file:行段真值（factory 切配多后端 + NoopTraceBackend 不可用降级）。校正记录见 architect-skills `output/loop-dev/2026-09-05/report.md`。
 > **口径演进（2026-09-06 · B 阶段 round2 · adk+coze-loop+librechat ⑩ 三方实测真值校正）**：检查清单新增「OTel 标准语义约定」「trace exporter/路由多范式+多租户隔离」两项，带三源可回溯 file:行段真值（SDK 端 adk OTel+SQLite exporter / 平台端 coze-loop ClickHouse+OpenInference / 采集器端 librechat OTel collector routing 多租户扇出）。校正记录见 architect-skills `output/loop-dev/2026-09-06/report.md`。
-``````
+```
 
 ## 常见问题修复指南
 

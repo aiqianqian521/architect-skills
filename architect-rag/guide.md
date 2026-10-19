@@ -19,7 +19,7 @@ RAG系统的三个核心问题：
 
 ### 架构总览
 
-`
+```
                     query
                       │
         ┌─────────────┼─────────────┐
@@ -44,7 +44,7 @@ RAG系统的三个核心问题：
    │         MMR Diversity Filter                       │
    │   λ·relevance - (1-λ)·max_similarity_to_selected   │
    └────────────────────────────────────────────────────┘
-`
+```
 
 ### 4条检索路径详解
 
@@ -72,16 +72,16 @@ RAG系统的三个核心问题：
 
 ### RRF融合公式
 
-`
+```
 RRF_score(d) = Σ_{r in R} 1/(k + rank_r(d))
-`
+```
 
 - k=60（标准值），防止单路极低排名被过度惩罚
 - 优势：无需调参，各路评分尺度无关
 
 **实现范式（双路RRF）**：
 
-`python
+```python
 def rrf_fusion(arm_scores: list[list[tuple[str, float]]], k=60) -> list[tuple[str, float]]:
     """
     arm_scores: 每路检索的 [(doc_id, score), ...]，按分数降序排列
@@ -92,7 +92,7 @@ def rrf_fusion(arm_scores: list[list[tuple[str, float]]], k=60) -> list[tuple[st
         for rank, (doc_id, _) in enumerate(arm, start=1):
             rrf[doc_id] = rrf.get(doc_id, 0) + 1.0 / (k + rank)
     return sorted(rrf.items(), key=lambda x: -x[1])
-`
+```
 
 ### Cross-encoder Reranking
 
@@ -103,15 +103,15 @@ def rrf_fusion(arm_scores: list[list[tuple[str, float]]], k=60) -> list[tuple[st
 
 ### MMR 多样性过滤
 
-`
+```
 MMR = λ·relevance_score - (1-λ)·max_similarity(d, already_selected)
-`
+```
 
 - λ=0.7：偏向相关性
 - 防止返回高度重复的内容
 - 贪心算法实现，复杂度 O(n*k)
 
-`python
+```python
 def mmr_select(candidates, scores, top_k, lambda_param=0.7, sim_fn=None):
     """从候选集中选择 top_k 个多样性+相关性的文档"""
     if sim_fn is None:
@@ -126,17 +126,17 @@ def mmr_select(candidates, scores, top_k, lambda_param=0.7, sim_fn=None):
         best = max(range(len(candidates)), key=lambda i: mmr_scores[i])
         selected.append(candidates.pop(best))
     return selected
-`
+```
 
 ---
 
 ## 分层检索架构
 
-`
+```
 mental_models (最高优先级, 40% token预算)
   └── observations (中等优先级, 35% token预算)
       └── raw_facts (最低优先级, 25% token预算)
-`
+```
 
 **原则**：
 - **mental_models**：用户确认的持久化认知，不可被自动删除
@@ -198,7 +198,7 @@ ew_fact → derived_from [old_fact_ids]
 
 ## 检查清单
 
-`
+```
 [ ] RAG-01: 检索是否多路并行？（至少2路：语义+关键词）
     → 单路: 至少加BM25关键词检索作为第二路
 
@@ -222,7 +222,7 @@ ew_fact → derived_from [old_fact_ids]
 
 [ ] RAG-08: 是否有Graph检索？（激活扩散+时间图）
     → 无但场景需要: 加Entity Links + Spreading Activation
-`
+```
 
 ---
 
