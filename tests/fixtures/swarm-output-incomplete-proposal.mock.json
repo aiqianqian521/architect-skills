@@ -1,0 +1,15 @@
+{
+  "project": "loop-dev-incomplete",
+  "evaluatedAt": "2026-08-31T10:00:00Z",
+  "proposal": {
+    "id": "PROP-002",
+    "target": "优化性能",
+    "gap": "现状还行",
+    "migration": "改一下",
+    "compat": "应该没问题",
+    "owner": ""
+  },
+  "agents": [],
+  "archMap": [],
+  "narratives": {}
+}

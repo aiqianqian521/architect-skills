@@ -1,0 +1,189 @@
+﻿{
+    "dimension":  "agent",
+    "checklist":  [
+                      {
+                          "id":  "AGE-01",
+                          "rule":  "是否有明确的状态机定义（状态+转换+条件）？",
+                          "trigger":  "没有: 用 StateGraph 或枚举定义状态，画出转换图",
+                          "severity_if_fail":  "high",
+                          "guide_ref":  "核心原则·1"
+                      },
+                      {
+                          "id":  "AGE-02",
+                          "rule":  "阶段间状态是否可持久化（checkpoint-resume）？",
+                          "trigger":  "不可持久化: 每个 checkpoint 写 state.md 或 SQLite",
+                          "severity_if_fail":  "high",
+                          "guide_ref":  "核心原则·2"
+                      },
+                      {
+                          "id":  "AGE-03",
+                          "rule":  "错误处理是否分层（L1重试",
+                          "trigger":  "L2诊断→L3人工）？ → 未分层: 实现 standard→longer_timeout→graceful_skip 三级",
+                          "severity_if_fail":  "high",
+                          "guide_ref":  "核心原则·3"
+                      },
+                      {
+                          "id":  "AGE-04",
+                          "rule":  "是否有 circuit breaker（防止雪崩）？",
+                          "trigger":  "没有: 加连续错误计数器，超阈值时熔断 + 通知",
+                          "severity_if_fail":  "high",
+                          "guide_ref":  "核心原则·4"
+                      },
+                      {
+                          "id":  "AGE-05",
+                          "rule":  "长流程/记忆/日志是否有分层降维 + 压缩归档（L0 原始",
+                          "trigger":  "L1 抽取 → compact 压缩 → fast-path 快路径）？ → 未分层: 按 L0-recorder→L1-extractor→compressor→fast-path 四层降维，超阈值触发压缩归档（真值 TencentDB `l0-recorder.ts:28-34`/`l1-extractor.ts:64-72`/`compressor.ts:90-98`/`fast-path.ts:17-20`）",
+                          "severity_if_fail":  "medium",
+                          "guide_ref":  "核心原则·5"
+                      },
+                      {
+                          "id":  "AGE-06",
+                          "rule":  "并发抽取是否有 worker-pool 并发上限 + buffer + oversize + task-queue 背压四件套？",
+                          "trigger":  "缺件: 补 worker-pool(concurrency≥1) + buffer-storage + oversize-strategy + agent-task-queue，禁止无限 `gather()`（真值 TencentDB `worker-pool.ts:41-52` 等）",
+                          "severity_if_fail":  "high",
+                          "guide_ref":  "核心原则·6"
+                      },
+                      {
+                          "id":  "AGE-07",
+                          "rule":  "扩展点是否用事件/钩子而非硬编码？",
+                          "trigger":  "硬编码: 改为 waterfall hook 链或 EventEmitter 模式",
+                          "severity_if_fail":  "high",
+                          "guide_ref":  "核心原则·7"
+                      },
+                      {
+                          "id":  "AGE-08",
+                          "rule":  "热路径是否经过优化？",
+                          "trigger":  "未优化: 用 cProfile 找到最热 3 条路径，逐一优化",
+                          "severity_if_fail":  "high",
+                          "guide_ref":  "核心原则·8"
+                      },
+                      {
+                          "severity_if_fail":  "critical",
+                          "rule":  "是否所有执行路径走同一个入口函数？(单一路径原则)",
+                          "id":  "AGE-09",
+                          "guide_ref":  "Claude Code参考·单一路径原则",
+                          "trigger":  "存在多个入口/快捷方式绕过中间件：合并为单一query()函数"
+                      },
+                      {
+                          "severity_if_fail":  "high",
+                          "rule":  "编排框架是否使用Async Generator模式？(backpressure+TerminalReason+yield*)",
+                          "id":  "AGE-10",
+                          "guide_ref":  "Claude Code参考·Async Generator",
+                          "trigger":  "无generator/无背压机制：改造为async generator，枚举化终止原因"
+                      },
+                      {
+                          "severity_if_fail":  "high",
+                          "rule":  "状态是否三段式分离(Config不可变/State可变/Deps可注入≤4个)？",
+                          "id":  "AGE-11",
+                          "guide_ref":  "Claude Code参考·三段式状态",
+                          "trigger":  "所有内容塞进一个不可变快照：拆分为三段"
+                      },
+                      {
+                          "severity_if_fail":  "critical",
+                          "rule":  "上下文压缩是否有分层+熔断器？(collapse先于compact+连续失败3次熔断)",
+                          "id":  "AGE-12",
+                          "guide_ref":  "Claude Code参考·压缩+熔断器",
+                          "trigger":  "无分层压缩/无熔断：实现4层压缩+autoCompactFuse"
+                      },
+                      {
+                          "severity_if_fail":  "critical",
+                          "rule":  "是否有死亡螺旋5层防护？(reactiveCompact→snip→micro→collapse→fuse)",
+                          "id":  "AGE-13",
+                          "guide_ref":  "Claude Code参考·死亡螺旋",
+                          "trigger":  "少于3层：补全5层防护体系"
+                      },
+                      {
+                          "severity_if_fail":  "high",
+                          "rule":  "错误恢复是否是阶梯式逐级升级？(drain→compact→升级→多轮→暴露)",
+                          "id":  "AGE-14",
+                          "guide_ref":  "Claude Code参考·错误恢复阶梯",
+                          "trigger":  "单一重试策略：实现5级阶梯"
+                      },
+                      {
+                          "severity_if_fail":  "medium",
+                          "rule":  "多Agent编排是否支持Fan-out/Saga/Map-reduce模式？",
+                          "id":  "AGE-15",
+                          "guide_ref":  "多Agent编排模式",
+                          "trigger":  "只支持串行：实现并行编排模式+补偿机制"
+                      }
+                  ],
+    "output_schema":  {
+                          "required":  [
+                                           "id",
+                                           "type",
+                                           "evidence",
+                                           "risk_level",
+                                           "confidence",
+                                           "next_step"
+                                       ],
+                          "fields":  {
+                                         "id":  {
+                                                    "type":  "string",
+                                                    "pattern":  "^AGE-[0-9]{2}$",
+                                                    "description":  "必须引用 checklist 中的规则 ID"
+                                                },
+                                         "type":  {
+                                                      "type":  "string",
+                                                      "enum":  [
+                                                                   "pattern_violation",
+                                                                   "missing_mechanism",
+                                                                   "design_flaw",
+                                                                   "performance_issue",
+                                                                   "other",
+                                                                   "unknown"
+                                                               ],
+                                                      "description":  "发现类型"
+                                                  },
+                                         "evidence":  {
+                                                          "type":  "string",
+                                                          "min_length":  10,
+                                                          "description":  "行级证据：文件路径 + 行号 + 代码片段"
+                                                      },
+                                         "risk_level":  {
+                                                            "type":  "string",
+                                                            "enum":  [
+                                                                         "critical",
+                                                                         "high",
+                                                                         "medium",
+                                                                         "low",
+                                                                         "unknown"
+                                                                     ],
+                                                            "description":  "按 risk-grading-scheme.md 量化口径判定"
+                                                        },
+                                         "risk_scheme_ref":  {
+                                                                 "type":  "string",
+                                                                 "description":  "引用 risk-grading-scheme.md 触发条件编号"
+                                                             },
+                                         "confidence":  {
+                                                            "type":  "string",
+                                                            "enum":  [
+                                                                         "high",
+                                                                         "medium",
+                                                                         "low",
+                                                                         "unknown"
+                                                                     ],
+                                                            "description":  "对定级和证据的置信度"
+                                                        },
+                                         "next_step":  {
+                                                           "type":  "string",
+                                                           "min_length":  10,
+                                                           "description":  "具体可执行的下一步，含验证命令或人工复核说明"
+                                                       },
+                                         "verify_command":  {
+                                                                "type":  "string",
+                                                                "description":  "可运行的验证命令（GREEN-first）"
+                                                            },
+                                         "rollback":  {
+                                                          "type":  "string",
+                                                          "description":  "失败时的撤退路径"
+                                                      }
+                                     }
+                      },
+    "meta":  {
+                 "version":  "1.0",
+                 "updated_at":  "2026-10-09",
+                 "source_skill":  "architect-agent",
+                 "scene":  "B",
+                 "note":  "本契约仅用于蜂群模式（场景 B）的方案评审。"
+             }
+}

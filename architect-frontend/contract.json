@@ -1,0 +1,176 @@
+{
+  "dimension": "frontend",
+  "checklist": [
+    {
+      "id": "FRO-01",
+      "rule": "是否有关键用户旅程和所有加载/空/错误/权限状态？",
+      "trigger": "未通过时: 画关键用户旅程图并列出加载/空/错误/权限四态；缺态即补到设计稿与测试用例，旅程序列缺失标 medium。",
+      "severity_if_fail": "critical",
+      "guide_ref": "核心原则·1"
+    },
+    {
+      "id": "FRO-02",
+      "rule": "状态是否按服务器/URL/表单/UI 生命周期分层？",
+      "trigger": "未通过时: 按服务器(URL cache)/URL/表单/临时 UI/跨页客户端五类拆分全局 store；混存的改为按生命周期归属。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·2"
+    },
+    {
+      "id": "FRO-03",
+      "rule": "组件边界是否避免跨 feature 隐式依赖？",
+      "trigger": "未通过时: 用 props/events/协议显式声明边界；业务规则从纯展示组件剥离到可测试边界；隐式依赖标 high。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·3"
+    },
+    {
+      "id": "FRO-04",
+      "rule": "是否有键盘、焦点、语义 HTML、对比度和屏幕阅读器验证？",
+      "trigger": "未通过时: 接 a11y 自动化(axe-core)+键盘手动回归+对比度≥4.5:1；缺项补到验收门禁。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·4"
+    },
+    {
+      "id": "FRO-05",
+      "rule": "是否测量 LCP/INP/CLS、bundle size 和运行时错误？",
+      "trigger": "未通过时: 接 Web Vitals 上报+bundle 分析(size-limit)+前端错误监控(Sentry 类)；无基线即先打基线再设阈值。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·5"
+    },
+    {
+      "id": "FRO-06",
+      "rule": "是否有组件契约测试和关键旅程 E2E？",
+      "trigger": "未通过时: 为共享组件加契约测试(Storybook/props 断言)+关键旅程 E2E；纯手测改为自动化并入 CI。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·6"
+    },
+    {
+      "id": "FRO-07",
+      "rule": "设计 token、主题和版本是否有单一真相源？",
+      "trigger": "未通过时: 把 token 收口到单一变量文件(theme.tokens)+版本化；散落硬编码改为引用 token。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·7"
+    },
+    {
+      "id": "FRO-08",
+      "rule": "展示数据是否按六层分页（总览/币种/引擎/方案/回测/账户）？",
+      "trigger": "未通过时：一页塞全部=数据爆炸，改为分层嵌套路由。",
+      "severity_if_fail": "high",
+      "guide_ref": "展示系统架构·核验清单"
+    },
+    {
+      "id": "FRO-09",
+      "rule": "路由是否支持深链接直达（hash 路由）？",
+      "trigger": "未通过时：改用 hash 路由支持刷新/分享还原视图。",
+      "severity_if_fail": "high",
+      "guide_ref": "展示系统架构·核验清单"
+    },
+    {
+      "id": "FRO-0A",
+      "rule": "前端是否前后端分离只消费 REST + token 鉴权？",
+      "trigger": "未通过时：一律走后端接口避免逻辑二处维护。",
+      "severity_if_fail": "critical",
+      "guide_ref": "展示系统架构·核验清单"
+    },
+    {
+      "id": "FRO-0B",
+      "rule": "大表是否虚拟滚动、图表是否图表池懒实例化+节流刷新？",
+      "trigger": "未通过时：大表/全图表同时渲染=卡顿，改虚拟滚动+懒加载+30s刷新。",
+      "severity_if_fail": "high",
+      "guide_ref": "展示系统架构·核验清单"
+    },
+    {
+      "id": "FRO-0C",
+      "rule": "空/加载/错误三态是否齐全？",
+      "trigger": "未通过时：缺三态=接口抖动白屏/误导，补 skeleton/empty/error 兜底。",
+      "severity_if_fail": "high",
+      "guide_ref": "展示系统架构·核验清单"
+    },
+    {
+      "id": "FRO-0D",
+      "rule": "展示层是否引入未来数据逻辑？",
+      "trigger": "命中时：红线【禁止未来数据】，展示层只读已收盘 bar。",
+      "severity_if_fail": "critical",
+      "guide_ref": "展示系统架构·核验清单"
+    }
+  ],
+  "output_schema": {
+    "required": [
+      "id",
+      "type",
+      "evidence",
+      "risk_level",
+      "confidence",
+      "next_step"
+    ],
+    "fields": {
+      "id": {
+        "type": "string",
+        "pattern": "^FRO-[0-9]{2}$",
+        "description": "必须引用 checklist 中的规则 ID"
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "pattern_violation",
+          "missing_mechanism",
+          "design_flaw",
+          "performance_issue",
+          "other",
+          "unknown"
+        ],
+        "description": "发现类型"
+      },
+      "evidence": {
+        "type": "string",
+        "min_length": 10,
+        "description": "行级证据：文件路径 + 行号 + 代码片段"
+      },
+      "risk_level": {
+        "type": "string",
+        "enum": [
+          "critical",
+          "high",
+          "medium",
+          "low",
+          "unknown"
+        ],
+        "description": "按 risk-grading-scheme.md 量化口径判定"
+      },
+      "risk_scheme_ref": {
+        "type": "string",
+        "description": "引用 risk-grading-scheme.md 触发条件编号"
+      },
+      "confidence": {
+        "type": "string",
+        "enum": [
+          "high",
+          "medium",
+          "low",
+          "unknown"
+        ],
+        "description": "对定级和证据的置信度"
+      },
+      "next_step": {
+        "type": "string",
+        "min_length": 10,
+        "description": "具体可执行的下一步，含验证命令或人工复核说明"
+      },
+      "verify_command": {
+        "type": "string",
+        "description": "可运行的验证命令（GREEN-first）"
+      },
+      "rollback": {
+        "type": "string",
+        "description": "失败时的撤退路径"
+      }
+    }
+  },
+  "meta": {
+    "version": "1.0",
+    "updated_at": "2026-09-14",
+    "source_skill": "architect-frontend",
+    "scene": "B",
+    "note": "本契约仅用于蜂群模式（场景 B）的方案评审。"
+  },
+  "display_system": true
+}

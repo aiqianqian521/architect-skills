@@ -1,0 +1,422 @@
+{
+  "_meta": {
+    "kind": "swarm-eval-baseline",
+    "created": "2026-08-31",
+    "note": "锚定三项目(2026-08-31)实测发现作为回归基线。来源 tests/fixtures/eval-*.json。"
+  },
+  "agents": [
+    {
+      "agent": "Bacon",
+      "dimension": "test",
+      "evaluatedAt": "2026-08-31T14:05:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "T1",
+          "type": "missing_test",
+          "evidence": "test/ directory only has 12 test files while src/ has 190 files; no coverage config found",
+          "file_line": "test/",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§1②",
+          "confidence": "high",
+          "next_step": "Add pytest + coverage config, target core module coverage >=70%",
+          "verify_command": "pytest --cov=src --cov-report=term-missing",
+          "rollback": "Remove pytest-cov config"
+        }
+      ],
+      "coverage": {
+        "status": "partial",
+        "covered_files": 12,
+        "total_files": 190
+      },
+      "meta": {
+        "intake_evidence_count": 8,
+        "files_read": [
+          "app.py",
+          "task_service.py",
+          "Dockerfile"
+        ],
+        "notes": ""
+      }
+    },
+    {
+      "agent": "Archimedes",
+      "dimension": "data",
+      "evaluatedAt": "2026-08-31T14:08:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "D1",
+          "type": "missing_validation",
+          "evidence": "config_env.py:198 int(val) without try/except; invalid value causes ValueError at startup",
+          "file_line": "config_env.py:198-201",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§1②",
+          "confidence": "high",
+          "next_step": "Wrap int() with try/except, return None on invalid value and log warning",
+          "verify_command": "pytest tests/test_config_env.py -k invalid_uid",
+          "rollback": "Restore direct int() conversion"
+        }
+      ],
+      "coverage": {
+        "status": "covered"
+      },
+      "meta": {
+        "intake_evidence_count": 5,
+        "files_read": [
+          "config_env.py"
+        ],
+        "notes": ""
+      }
+    },
+    {
+      "agent": "Halley",
+      "dimension": "design",
+      "evaluatedAt": "2026-08-31T14:10:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "DES1",
+          "type": "god_file",
+          "evidence": "app.py 602 lines: monkey patch, HTTP server, AgentRun server, tool loading, config printing; too many responsibilities",
+          "file_line": "app.py:1-602",
+          "risk_level": "high",
+          "risk_scheme_ref": "§1①",
+          "confidence": "high",
+          "next_step": "Split: app.py keeps entry only, monkey patch -> patches/, HTTP server -> server/, tool loading -> bootstrap/",
+          "verify_command": "python -m py_compile app.py && dir src/server src/patches src/bootstrap",
+          "rollback": "git revert split commit"
+        },
+        {
+          "id": "DES2",
+          "type": "design_flaw",
+          "evidence": "task_service.py:151-404 has 5 nearly identical _maybe_prefetch_* methods differing only in task_name/parsed type",
+          "file_line": "task_service.py:151-404",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§1②",
+          "confidence": "high",
+          "next_step": "Extract generic prefetch template method, each specific method only passes parser and task name",
+          "verify_command": "pytest tests/test_task_service.py -q",
+          "rollback": "Restore original 5 separate methods"
+        }
+      ],
+      "coverage": {
+        "status": "covered"
+      },
+      "meta": {
+        "intake_evidence_count": 10,
+        "files_read": [
+          "app.py",
+          "task_service.py"
+        ],
+        "notes": ""
+      }
+    },
+    {
+      "agent": "SecurityAgent",
+      "dimension": "security",
+      "evaluatedAt": "2026-08-31T14:12:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "SEC-04",
+          "type": "hardcoded_secret",
+          "evidence": "app.py:342 ali_uid=1960721413485912 hardcoded in source, not from env var",
+          "file_line": "app.py:342",
+          "risk_level": "critical",
+          "risk_scheme_ref": "§1①",
+          "confidence": "high",
+          "next_step": "Read from ALIBABA_CLOUD_ALI_UID env var, raise ConfigurationError if missing",
+          "verify_command": "grep -n '1960721413485912' app.py && echo FAIL || echo PASS",
+          "rollback": "Restore hardcoded value"
+        },
+        {
+          "id": "SEC-02",
+          "type": "design_flaw",
+          "evidence": "app.py:20-160 runtime replacement of urllib.parse.quote and agentrun model_adapter.wrap_model breaks library consistency",
+          "file_line": "app.py:20-160",
+          "risk_level": "high",
+          "risk_scheme_ref": "§1②",
+          "confidence": "medium",
+          "next_step": "Replace monkey patch with explicit wrapper class or upstream PR for dynamic headers",
+          "verify_command": "python -c \"import app; assert hasattr(app, '_apply_dynamic_headers_patch') == False\"",
+          "rollback": "Restore original monkey patch"
+        }
+      ],
+      "coverage": {
+        "status": "covered"
+      },
+      "meta": {
+        "intake_evidence_count": 6,
+        "files_read": [
+          "app.py",
+          "config_env.py"
+        ],
+        "notes": ""
+      }
+    },
+    {
+      "agent": "OpsAgent",
+      "dimension": "ops",
+      "evaluatedAt": "2026-08-31T14:15:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "O1",
+          "type": "other",
+          "evidence": "Dockerfile:86-88 ENTRYPOINT commented out (AgentRun platform bug fix in progress), relies on external orchestration for start command",
+          "file_line": "Dockerfile:86-88",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§1②",
+          "confidence": "high",
+          "next_step": "Track AgentRun platform bug fix, restore ENTRYPOINT after fix; temporarily specify command in docker-compose.yml",
+          "verify_command": "docker build -t cspm-test . && docker run --rm cspm-test echo entrypoint ok",
+          "rollback": "Re-comment ENTRYPOINT"
+        }
+      ],
+      "coverage": {
+        "status": "covered"
+      },
+      "meta": {
+        "intake_evidence_count": 3,
+        "files_read": [
+          "Dockerfile",
+          "docker-compose.yml"
+        ],
+        "notes": ""
+      }
+    },
+    {
+      "agent": "Bacon",
+      "dimension": "test",
+      "evaluatedAt": "2026-08-31T14:25:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "T1",
+          "type": "design_flaw",
+          "evidence": "pyproject.toml:15 fail_under = 64, threshold too low (industry good standard 80%), cannot prevent tech debt accumulation",
+          "file_line": "pyproject.toml:15",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§1②",
+          "confidence": "high",
+          "next_step": "Increase gradually: current 70.43% -> target 80%, lock ratchet every 2% increase",
+          "verify_command": "pytest -q && coverage report | tail -1",
+          "rollback": "Restore fail_under=64"
+        }
+      ],
+      "coverage": {
+        "status": "covered",
+        "current": "70.43%"
+      },
+      "meta": {
+        "intake_evidence_count": 5,
+        "files_read": [
+          "pyproject.toml"
+        ],
+        "notes": "Already swarm-evaluated, architecture mature"
+      }
+    },
+    {
+      "agent": "Halley",
+      "dimension": "design",
+      "evaluatedAt": "2026-08-31T14:28:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "DES1",
+          "type": "other",
+          "evidence": "loop-engine/circuit_breaker.py as pure state machine: small interface (allow_request/record_success/record_failure/snapshot), large implementation (~200 lines), follows deep module principle",
+          "file_line": "loop-engine/circuit_breaker.py",
+          "risk_level": "low",
+          "risk_scheme_ref": "§2",
+          "confidence": "high",
+          "next_step": "Maintain current design, continue monitoring interface/implementation ratio",
+          "verify_command": "wc -l loop-engine/circuit_breaker.py && grep -c def loop-engine/circuit_breaker.py",
+          "rollback": "N/A"
+        }
+      ],
+      "coverage": {
+        "status": "covered"
+      },
+      "meta": {
+        "intake_evidence_count": 8,
+        "files_read": [
+          "loop-engine/circuit_breaker.py",
+          "architecture/"
+        ],
+        "notes": "P1.2 port-adapter principle verified"
+      }
+    },
+    {
+      "agent": "Archimedes",
+      "dimension": "data",
+      "evaluatedAt": "2026-08-31T14:30:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "D1",
+          "type": "other",
+          "evidence": "W1-RESUME-01 invariant maintained: _checkpoint_payload stores snapshot(), restore uses .get(key, default) for safe pre-Slice-2 data recovery",
+          "file_line": "loop-engine/circuit_breaker.py",
+          "risk_level": "low",
+          "risk_scheme_ref": "§2",
+          "confidence": "high",
+          "next_step": "Continue maintaining invariant, new keys must have default values",
+          "verify_command": "pytest tests/test_circuit_breaker.py -k restore -q",
+          "rollback": "N/A"
+        }
+      ],
+      "coverage": {
+        "status": "covered"
+      },
+      "meta": {
+        "intake_evidence_count": 6,
+        "files_read": [
+          "loop-engine/circuit_breaker.py",
+          "tests/"
+        ],
+        "notes": "Q1 already closed"
+      }
+    },
+    {
+      "agent": "Bacon",
+      "dimension": "test",
+      "evaluatedAt": "2026-08-31T14:40:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "T1",
+          "type": "other",
+          "evidence": "AGENTS.md:65 test:coverage is CI coverage gate requiring per-file 100% on packages/*/*/src, extremely high but well-documented threshold",
+          "file_line": "AGENTS.md:65",
+          "risk_level": "low",
+          "risk_scheme_ref": "§2",
+          "confidence": "high",
+          "next_step": "Maintain current threshold, new packages must reach 100% simultaneously",
+          "verify_command": "pnpm run test:coverage",
+          "rollback": "N/A"
+        }
+      ],
+      "coverage": {
+        "status": "covered",
+        "gate": "per-file 100%"
+      },
+      "meta": {
+        "intake_evidence_count": 5,
+        "files_read": [
+          "AGENTS.md",
+          "package.json"
+        ],
+        "notes": "Very mature test strategy"
+      }
+    },
+    {
+      "agent": "Halley",
+      "dimension": "design",
+      "evaluatedAt": "2026-08-31T14:42:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "DES1",
+          "type": "other",
+          "evidence": "20+ packages under packages/, pnpm workspace, each package independently versioned, clear rescope strategy (vendor/ has upstream SHA records)",
+          "file_line": "packages/",
+          "risk_level": "low",
+          "risk_scheme_ref": "§2",
+          "confidence": "high",
+          "next_step": "Maintain current monorepo structure, monitor cross-package coupling",
+          "verify_command": "pnpm run build && pnpm run hygiene",
+          "rollback": "N/A"
+        },
+        {
+          "id": "DES2",
+          "type": "design_flaw",
+          "evidence": "AGENTS.md:101 full ESM, dsh CLI runs via tsx ESM-only hook; any CJS-only export breaks source-launch contract",
+          "file_line": "AGENTS.md:101",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§1②",
+          "confidence": "medium",
+          "next_step": "Add CJS-only export detection gate in CI to prevent accidental CJS dependency introduction",
+          "verify_command": "node --import tsx/esm packages/dsh-shell/src/index.ts --help",
+          "rollback": "N/A"
+        }
+      ],
+      "coverage": {
+        "status": "covered"
+      },
+      "meta": {
+        "intake_evidence_count": 12,
+        "files_read": [
+          "AGENTS.md",
+          "package.json",
+          "packages/"
+        ],
+        "notes": "Extremely detailed architecture docs"
+      }
+    },
+    {
+      "agent": "SecurityAgent",
+      "dimension": "security",
+      "evaluatedAt": "2026-08-31T14:45:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "SEC-01",
+          "type": "other",
+          "evidence": "AGENTS.md:96 Never commit credentials, CI e2e self-skips without key, .env in .gitignore",
+          "file_line": "AGENTS.md:96",
+          "risk_level": "low",
+          "risk_scheme_ref": "§2",
+          "confidence": "high",
+          "next_step": "Maintain current strategy, periodically audit git history for credential leaks",
+          "verify_command": "git log --all --source --remotes -- **/.env && echo CHECK PASSED || echo CHECK FAILED",
+          "rollback": "N/A"
+        }
+      ],
+      "coverage": {
+        "status": "covered"
+      },
+      "meta": {
+        "intake_evidence_count": 4,
+        "files_read": [
+          ".gitignore",
+          "AGENTS.md"
+        ],
+        "notes": "Security practices are sound"
+      }
+    },
+    {
+      "agent": "DocsAgent",
+      "dimension": "docs",
+      "evaluatedAt": "2026-08-31T14:48:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "DOC1",
+          "type": "doc_gap",
+          "evidence": "AGENTS.md 150 lines of extremely detailed rules, .agents/notes/implemented/ contains大量 architecture/process notes, steep learning curve for new contributors",
+          "file_line": "AGENTS.md",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§1②",
+          "confidence": "medium",
+          "next_step": "Add new contributor quick-start doc, split AGENTS.md views by role (developer/maintainer/architect)",
+          "verify_command": "wc -l AGENTS.md docs/*.md docs/**/*.md",
+          "rollback": "Restore single AGENTS.md"
+        }
+      ],
+      "coverage": {
+        "status": "covered"
+      },
+      "meta": {
+        "intake_evidence_count": 6,
+        "files_read": [
+          "AGENTS.md",
+          "docs/"
+        ],
+        "notes": "Very comprehensive but high barrier"
+      }
+    }
+  ],
+  "coverage": {}
+}

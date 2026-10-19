@@ -1,0 +1,119 @@
+{
+  "dimension": "router",
+  "checklist": [
+    {
+      "id": "ROUT-01",
+      "rule": "用户意图是否被正确路由到对应的 atom skill",
+      "trigger": "关键词匹配错误、多 skill 冲突未解决、意图遗漏",
+      "severity_if_fail": "high",
+      "guide_ref": "路由规则"
+    },
+    {
+      "id": "ROUT-02",
+      "rule": "复合任务是否覆盖所有必要维度",
+      "trigger": "复合意图只跑了主 skill，遗漏必须追加的维度",
+      "severity_if_fail": "high",
+      "guide_ref": "复合任务与交付协议"
+    },
+    {
+      "id": "ROUT-03",
+      "rule": "全面分析时是否先执行 Intake 建图",
+      "trigger": "未读入口/配置/依赖/目录树/测试/文档即下结论",
+      "severity_if_fail": "critical",
+      "guide_ref": "项目 Intake"
+    },
+    {
+      "id": "ROUT-04",
+      "rule": "维度覆盖矩阵是否基于实读证据",
+      "trigger": "covered 维未在映射表指到证据、脑补覆盖状态",
+      "severity_if_fail": "high",
+      "guide_ref": "证据→维度映射表"
+    },
+    {
+      "id": "ROUT-05",
+      "rule": "N/A 维度是否附带复检触发条件",
+      "trigger": "标 N/A 但未写'项目发生什么变化时重查'",
+      "severity_if_fail": "medium",
+      "guide_ref": "N/A 判定规则"
+    }
+  ],
+  "output_schema": {
+    "required": [
+      "id",
+      "type",
+      "evidence",
+      "risk_level",
+      "confidence",
+      "next_step"
+    ],
+    "fields": {
+      "id": {
+        "type": "string",
+        "pattern": "^ROUT-[0-9]{2}$",
+        "description": "必须引用 checklist 中的规则 ID"
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "routing_error",
+          "missing_dimension",
+          "intake_gap",
+          "coverage_misreport",
+          "other",
+          "unknown"
+        ],
+        "description": "发现类型"
+      },
+      "evidence": {
+        "type": "string",
+        "min_length": 10,
+        "description": "行级证据或路由决策记录"
+      },
+      "risk_level": {
+        "type": "string",
+        "enum": [
+          "critical",
+          "high",
+          "medium",
+          "low",
+          "unknown"
+        ],
+        "description": "按 risk-grading-scheme.md 量化口径判定"
+      },
+      "risk_scheme_ref": {
+        "type": "string",
+        "description": "引用 risk-grading-scheme.md 触发条件编号"
+      },
+      "confidence": {
+        "type": "string",
+        "enum": [
+          "high",
+          "medium",
+          "low",
+          "unknown"
+        ],
+        "description": "对定级和证据的置信度"
+      },
+      "next_step": {
+        "type": "string",
+        "min_length": 10,
+        "description": "具体可执行的下一步"
+      },
+      "verify_command": {
+        "type": "string",
+        "description": "可运行的验证命令"
+      },
+      "rollback": {
+        "type": "string",
+        "description": "失败时的撤退路径"
+      }
+    }
+  },
+  "meta": {
+    "version": "1.0",
+    "updated_at": "2026-09-14",
+    "source_skill": "architect-router",
+    "scene": "B",
+    "note": "Router 为总入口 skill，不产出 findings，只负责调度和全面分析协调。"
+  }
+}

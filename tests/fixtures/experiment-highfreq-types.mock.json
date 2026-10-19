@@ -1,0 +1,144 @@
+{
+  "project": "deepseek-harness-master",
+  "evaluatedAt": "2026-08-31T14:35:00Z",
+  "agents": [
+    {
+      "agent": "Bacon",
+      "dimension": "test",
+      "evaluatedAt": "2026-08-31T14:40:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "T1",
+          "type": "missing_coverage",
+          "evidence": "AGENTS.md:65 test:coverage is CI coverage gate requiring per-file 100% on packages/*/*/src, extremely high but well-documented threshold",
+          "file_line": "AGENTS.md:65",
+          "risk_level": "low",
+          "risk_scheme_ref": "§2",
+          "confidence": "high",
+          "next_step": "Maintain current threshold, new packages must reach 100% simultaneously",
+          "verify_command": "pnpm run test:coverage",
+          "rollback": "N/A"
+        }
+      ],
+      "coverage": {
+        "status": "covered",
+        "gate": "per-file 100%"
+      },
+      "meta": {
+        "intake_evidence_count": 5,
+        "files_read": [
+          "AGENTS.md",
+          "package.json"
+        ],
+        "notes": "Very mature test strategy"
+      }
+    },
+    {
+      "agent": "Halley",
+      "dimension": "design",
+      "evaluatedAt": "2026-08-31T14:42:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "DES1",
+          "type": "monkey_patch",
+          "evidence": "20+ packages under packages/, pnpm workspace, each package independently versioned, clear rescope strategy (vendor/ has upstream SHA records)",
+          "file_line": "packages/",
+          "risk_level": "low",
+          "risk_scheme_ref": "§2",
+          "confidence": "high",
+          "next_step": "Maintain current monorepo structure, monitor cross-package coupling",
+          "verify_command": "pnpm run build && pnpm run hygiene",
+          "rollback": "N/A"
+        },
+        {
+          "id": "DES2",
+          "type": "design_flaw",
+          "evidence": "AGENTS.md:101 full ESM, dsh CLI runs via tsx ESM-only hook; any CJS-only export breaks source-launch contract",
+          "file_line": "AGENTS.md:101",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§1②",
+          "confidence": "medium",
+          "next_step": "Add CJS-only export detection gate in CI to prevent accidental CJS dependency introduction",
+          "verify_command": "node --import tsx/esm packages/dsh-shell/src/index.ts --help",
+          "rollback": "N/A"
+        }
+      ],
+      "coverage": {
+        "status": "covered"
+      },
+      "meta": {
+        "intake_evidence_count": 12,
+        "files_read": [
+          "AGENTS.md",
+          "package.json",
+          "packages/"
+        ],
+        "notes": "Extremely detailed architecture docs"
+      }
+    },
+    {
+      "agent": "SecurityAgent",
+      "dimension": "security",
+      "evaluatedAt": "2026-08-31T14:45:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "SEC-01",
+          "type": "hardcoded_config",
+          "evidence": "AGENTS.md:96 Never commit credentials, CI e2e self-skips without key, .env in .gitignore",
+          "file_line": "AGENTS.md:96",
+          "risk_level": "low",
+          "risk_scheme_ref": "§2",
+          "confidence": "high",
+          "next_step": "Maintain current strategy, periodically audit git history for credential leaks",
+          "verify_command": "git log --all --source --remotes -- **/.env && echo CHECK PASSED || echo CHECK FAILED",
+          "rollback": "N/A"
+        }
+      ],
+      "coverage": {
+        "status": "covered"
+      },
+      "meta": {
+        "intake_evidence_count": 4,
+        "files_read": [
+          ".gitignore",
+          "AGENTS.md"
+        ],
+        "notes": "Security practices are sound"
+      }
+    },
+    {
+      "agent": "DocsAgent",
+      "dimension": "docs",
+      "evaluatedAt": "2026-08-31T14:48:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "DOC1",
+          "type": "doc_gap",
+          "evidence": "AGENTS.md 150 lines of extremely detailed rules, .agents/notes/implemented/ contains大量 architecture/process notes, steep learning curve for new contributors",
+          "file_line": "AGENTS.md",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§1②",
+          "confidence": "medium",
+          "next_step": "Add new contributor quick-start doc, split AGENTS.md views by role (developer/maintainer/architect)",
+          "verify_command": "wc -l AGENTS.md docs/*.md docs/**/*.md",
+          "rollback": "Restore single AGENTS.md"
+        }
+      ],
+      "coverage": {
+        "status": "covered"
+      },
+      "meta": {
+        "intake_evidence_count": 6,
+        "files_read": [
+          "AGENTS.md",
+          "docs/"
+        ],
+        "notes": "Very comprehensive but high barrier"
+      }
+    }
+  ]
+}

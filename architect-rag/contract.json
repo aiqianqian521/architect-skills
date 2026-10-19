@@ -1,0 +1,140 @@
+{
+  "dimension": "rag",
+  "checklist": [
+    {
+      "id": "RAG-01",
+      "rule": "检索是否多路并行？（至少2路：语义+关键词）",
+      "trigger": "单路检索: 至少加BM25关键词检索作为第二路",
+      "severity_if_fail": "high",
+      "guide_ref": "4路并行检索"
+    },
+    {
+      "id": "RAG-02",
+      "rule": "多路结果是否有融合策略？（RRF或其他）",
+      "trigger": "无融合: 实现RRF (k=60)",
+      "severity_if_fail": "high",
+      "guide_ref": "RRF融合"
+    },
+    {
+      "id": "RAG-03",
+      "rule": "是否分层检索？（mental_models > observations > raw_facts）",
+      "trigger": "单层: 实现三层分层，token预算 40/35/25",
+      "severity_if_fail": "high",
+      "guide_ref": "分层检索"
+    },
+    {
+      "id": "RAG-04",
+      "rule": "是否有重排序？（cross-encoder或LLM rerank）",
+      "trigger": "无重排: 加cross-encoder或LLM-based rerank on top-N",
+      "severity_if_fail": "medium",
+      "guide_ref": "Cross-encoder Reranking"
+    },
+    {
+      "id": "RAG-05",
+      "rule": "是否有去重/多样性机制？（MMR或dedup）",
+      "trigger": "无: 加MMR (λ=0.7) 防语义重复",
+      "severity_if_fail": "medium",
+      "guide_ref": "MMR多样性"
+    },
+    {
+      "id": "RAG-06",
+      "rule": "嵌入模型是否适合生产场景？（真实embedding vs bigram-hash）",
+      "trigger": "生产用bigram-hash: 评估语义精度，考虑迁移",
+      "severity_if_fail": "medium",
+      "guide_ref": "嵌入质量"
+    },
+    {
+      "id": "RAG-07",
+      "rule": "是否有Consolidation机制？（事实合并+去重+溯源链）",
+      "trigger": "无: 实现LLM驱动的合并，保留 new→derived_from [old_ids]",
+      "severity_if_fail": "medium",
+      "guide_ref": "Consolidation"
+    },
+    {
+      "id": "RAG-08",
+      "rule": "是否有Graph检索？（激活扩散+时间图）",
+      "trigger": "无但场景需要: 加Entity Links + Spreading Activation",
+      "severity_if_fail": "low",
+      "guide_ref": "Graph检索"
+    }
+  ],
+  "output_schema": {
+    "required": [
+      "id",
+      "type",
+      "evidence",
+      "risk_level",
+      "confidence",
+      "next_step"
+    ],
+    "fields": {
+      "id": {
+        "type": "string",
+        "pattern": "^RAG-[0-9]{2}$",
+        "description": "必须引用 checklist 中的规则 ID"
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "single_arm",
+          "no_fusion",
+          "flat_structure",
+          "no_rerank",
+          "no_diversity",
+          "weak_embedding",
+          "no_consolidation",
+          "no_graph",
+          "other"
+        ],
+        "description": "发现类型"
+      },
+      "evidence": {
+        "type": "string",
+        "min_length": 10,
+        "description": "行级证据：文件路径 + 行号 + 代码片段"
+      },
+      "risk_level": {
+        "type": "string",
+        "enum": [
+          "critical",
+          "high",
+          "medium",
+          "low"
+        ],
+        "description": "按 risk-grading-scheme.md 量化口径判定"
+      },
+      "risk_scheme_ref": {
+        "type": "string",
+        "description": "引用 risk-grading-scheme.md 触发条件编号"
+      },
+      "confidence": {
+        "type": "string",
+        "enum": [
+          "high",
+          "medium",
+          "low"
+        ],
+        "description": "对定级和证据的置信度"
+      },
+      "next_step": {
+        "type": "string",
+        "min_length": 10,
+        "description": "具体可执行的下一步，含验证命令或人工复核说明"
+      },
+      "verify_command": {
+        "type": "string",
+        "description": "可运行的验证命令（GREEN-first）"
+      },
+      "rollback": {
+        "type": "string",
+        "description": "失败时的撤退路径"
+      }
+    }
+  },
+  "meta": {
+    "version": "1.0",
+    "created_at": "2026-10-09",
+    "source": "hindsight-core (999) + DSH RAG KB + loop-dev dsh-rag-kb/dsh-mneme",
+    "note": "本契约仅用于集群模式（场景 B）的方案评审。原子输出必须绑定到 checklist 中的规则 ID。"
+  }
+}

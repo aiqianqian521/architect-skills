@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AgentSwarmEvaluationOutput",
+  "description": "蜂群模式下各 atom agent 评估输出的统一 schema。所有 agent 必须按此格式输出 JSON，renderer 据此聚合。v1.1 新增 rollback 字段（第二批 B6）。",
+  "type": "object",
+  "required": ["agent", "dimension", "evaluatedAt", "findings"],
+  "properties": {
+    "agent": {
+      "type": "string",
+      "description": "执行评估的代理标识，如 Bacon、Archimedes、Halley"
+    },
+    "dimension": {
+      "type": "string",
+      "enum": [
+        "design", "review", "data", "test", "workflow",
+        "agent", "git", "docs", "net", "security",
+        "ops", "observability", "cost", "compliance", "frontend"
+      ],
+      "description": "评估维度，对应 15 个 atom skill"
+    },
+    "evaluatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "评估完成时间 ISO8601"
+    },
+    "project": {
+      "type": "string",
+      "description": "被评估项目标识"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "partial", "failed", "timeout"],
+      "description": "该 agent 的评估执行状态"
+    },
+    "findings": {
+      "type": "array",
+      "description": "该维度下的所有发现",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "evidence", "risk_level", "confidence", "next_step"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "发现唯一标识，如 M5、Q1、C1"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "masked_bug", "missing_test", "god_file", "hardcoded_secret",
+              "config_drift", "missing_validation", "design_flaw", "performance_issue",
+              "doc_gap", "compliance_gap", "observability_gap", "other"
+            ],
+            "description": "发现类型，用于分类统计"
+          },
+          "evidence": {
+            "type": "string",
+            "description": "行级证据，格式：file:line 或 目录+大小。禁止主观描述，必须是可定位的代码事实"
+          },
+          "file_line": {
+            "type": "string",
+            "description": "可选的文件行号，格式：path/to/file.ext:123"
+          },
+          "risk_level": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"],
+            "description": "风险等级，依据 risk-grading-scheme.md §一触发条件"
+          },
+          "risk_scheme_ref": {
+            "type": "string",
+            "description": "风险分级触发条件引用，如 '§一①'、'§一②god-file>800行'"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["high", "medium", "low", "unknown"],
+            "description": "评估置信度。high=直接证据；medium=间接推断；low=模式匹配；unknown=无法评估"
+          },
+          "next_step": {
+            "type": "string",
+            "description": "可执行、可验证的下一步动作，含响应时间"
+          },
+          "verify_command": {
+            "type": "string",
+            "description": "可选的验证命令"
+          },
+          "rollback": {
+            "type": "string",
+            "description": "回滚路径/撤退方案。第二批 B6 新增：critical/high 发现必须提供回滚策略"
+          },
+          "response_time": {
+            "type": "string",
+            "description": "响应时间，如 '立即/24h'、'7d'、'30d'、'季度'"
+          },
+          "related_dimensions": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "与该发现相关的其他维度，用于冲突检测"
+          }
+        }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "description": "维度覆盖自评",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["covered", "partial", "missing", "not-applicable"]
+        },
+        "reason": {
+          "type": "string",
+          "description": "N/A 时必须填写判定理由"
+        },
+        "recheck_trigger": {
+          "type": "string",
+          "description": "N/A 时必须填写复检触发条件"
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "description": "评估元信息",
+      "properties": {
+        "intake_evidence_count": {
+          "type": "integer",
+          "description": "Intake 建图阶段读取的证据条数"
+        },
+        "files_read": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "本次评估读取的文件列表"
+        },
+        "notes": {
+          "type": "string",
+          "description": "评估过程中的备注、限制说明"
+        }
+      }
+    }
+  }
+}

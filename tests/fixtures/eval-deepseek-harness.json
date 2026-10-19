@@ -1,0 +1,1698 @@
+{
+  "project": "deepseek-harness-master",
+  "evaluatedAt": "2026-09-14T09:35:00+08:00",
+  "agents": [
+    {
+      "agent": "ArchitectD",
+      "dimension": "git",
+      "evaluatedAt": "2026-09-14T00:00:00+08:00",
+      "project": "deepseek-harness-master",
+      "status": "partial",
+      "findings": [
+        {
+          "id": "git-branch-ci-gate",
+          "type": "covered",
+          "evidence": ".github/workflows/ci.yml:4-6 `on: push branches:[master]; pull_request`; ci.yml:18-22 concurrency group+cancel-in-progress; ci.yml:24 `permissions: contents: read`; ci.yml:29 `DSH_TELEMETRY_DISABLED: '1'`; ci.yml:66 `persist-credentials: false`; ci.yml:57-59 dependabot[bot] excluded from self-hosted failover",
+          "file_line": ".github/workflows/ci.yml:4,18,24,29,57,66",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一critical④",
+          "confidence": "high",
+          "next_step": "Branch model is single-trunk master with PR gating; enforce protected-branch rules & status checks in repo Settings to match the workflow's CI gate.",
+          "verify_command": "Select-String -Path .github/workflows/ci.yml -Pattern 'branches:\\s*\\[master\\]|permissions:|persist-credentials|TELEMETRY_DISABLED'",
+          "related_dimensions": [
+            "compliance"
+          ]
+        },
+        {
+          "id": "git-release-tag-gate",
+          "type": "covered",
+          "evidence": ".github/workflows/release.yml:8-13 `workflow_dispatch inputs.publish` from a dsh-v* tag (comment release.yml:4-5); release.yml:92-95 `concurrency group: Release-publish cancel-in-progress:false`; release.yml:97 `environment: npm-publish`; release.yml:115 `NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}` (only write step); .gitlab-ci.yml:3 tag regex `^python-v[0-9]+...`; .gitlab-ci.yml:19 `test \"$CI_COMMIT_TAG\" = \"python-v$DSH_VERSION\"`; .gitlab-ci.yml:96 publish-python `resource_group: python-release` serializes",
+          "file_line": ".github/workflows/release.yml:4,8,92,97,115; .gitlab-ci.yml:3,19,96",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一critical④",
+          "confidence": "high",
+          "next_step": "Tag-bound release + protected publish environment is sound; document the dsh-v* vs python-v* dual-tag flow in the runbook.",
+          "verify_command": "Select-String -Path .github/workflows/release.yml,.gitlab-ci.yml -Pattern 'workflow_dispatch|environment:|NPM_TOKEN|CI_COMMIT_TAG|resource_group'",
+          "related_dimensions": [
+            "docs"
+          ]
+        },
+        {
+          "id": "git-hooks-dependabot",
+          "type": "covered",
+          "evidence": "lefthook.yml pre-commit (lint staged, third-party notices regen `git add THIRD_PARTY_NOTICES.md`, whitespace `git diff --cached --check`, vendor manifest guard), pre-merge-commit translation pairing, pre-push `pnpm run typecheck`; .github/dependabot.yml npm/uv/github-actions cron 0 4 * * * Asia/Shanghai + `cooldown default-days: 30`; .github/pull_request_template.md requires a Fixes/Related Issue line",
+          "file_line": "lefthook.yml:7,39,50,57,74,79; .github/dependabot.yml:7,19,29; .github/pull_request_template.md:4",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一critical④",
+          "confidence": "high",
+          "next_step": "Local hooks + 30-day dependency cooldown keep quality; verify the pre-push typecheck runs on contributors' machines via `node scripts/install-lefthook.mjs`.",
+          "verify_command": "Select-String -Path lefthook.yml -Pattern 'pre-commit|pre-push|typecheck|verify-translation-pairing'",
+          "related_dimensions": []
+        },
+        {
+          "id": "git-secrets-not-committed",
+          "type": "covered",
+          "evidence": ".gitignore:2 `.env`; AGENTS.md Secrets section `Never commit credentials`; packages/credentials/credentials/README.md `Configuration carries references to secrets, never the secrets`; ci.yml:66 persist-credentials:false on checkout; test:e2e self-skips without DEEPSEEK_API_KEY (AGENTS.md)",
+          "file_line": ".gitignore:2; AGENTS.md (Secrets/.env); packages/credentials/credentials/README.md:5-7",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一critical①",
+          "confidence": "high",
+          "next_step": "Secrets-as-references + ignored .env is correct; add a secret-scan hook (e.g. gitleaks) to pre-commit to catch accidental inline keys.",
+          "verify_command": "Select-String -Path .gitignore,packages/credentials/credentials/README.md -Pattern '\\.env|references to secrets|Never commit'",
+          "related_dimensions": [
+            "compliance"
+          ]
+        },
+        {
+          "id": "git-release-rollback-absent",
+          "type": "gap",
+          "evidence": "release.yml publish (release.yml:111-117) only uploads tarballs; .gitlab-ci.yml publish-python on failure prints `Publish failed. GitLab does not overwrite an existing version; create a new python-v tag` (.gitlab-ci.yml:99-100) — idempotency, not rollback. No unpublish/yank/rollback step found in any workflow.",
+          "file_line": ".github/workflows/release.yml:111; .gitlab-ci.yml:99-100",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§一critical④",
+          "confidence": "medium",
+          "next_step": "Add a documented rollback runbook for a bad published version (npm `npm deprecate`/unpublish window, GitLab PyPI immutable-version handling) and an optional `rollback` workflow_dispatch lane.",
+          "verify_command": "Get-ChildItem .github/workflows -Filter *.yml | Select-String -Pattern 'rollback|unpublish|yank|deprecate|revert'",
+          "rollback": "Bad npm/PyPI version is immutable by design (release.yml tag-gated, .gitlab-ci.yml:99 refuses overwrite); roll forward with a new patch tag rather than republish. Pin consumers via the offending tag and deprecate it.",
+          "related_dimensions": [
+            "cost",
+            "compliance"
+          ]
+        },
+        {
+          "id": "git-history-unavailable",
+          "type": "na",
+          "evidence": "No `.git` directory at repo root (`Test-Path .git` → false; no `.git/logs/HEAD`, no `packed-refs`). Commit history, merge cadence, branch-enforcement proof, and sensitive-data history cannot be empirically verified from this unpacked source copy.",
+          "file_line": "E:\\业余\\my\\other_project\\deepseek-harness-master\\.git (absent)",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "reason": "Delivered as a directory/tarball copy without git metadata, so git-log-level evidence for commit/branch history is not available; this copy is read-only source, not a clone.",
+          "recheck_trigger": "Re-run against a live `git clone` and inspect `git log --max-count=20`, `git branch -r`, branch-protection settings, and `git log -p -- .env` to confirm no secret history.",
+          "next_step": "Obtain a real clone to verify history-based branch strategy and no historical secret leakage.",
+          "verify_command": "if (Test-Path .git) { git -C . log --max-count=20 --oneline } else { 'no .git' }",
+          "related_dimensions": []
+        }
+      ],
+      "coverage": {
+        "status": "partial",
+        "reason": "发布回滚(无自动化回滚机制); git历史(本拷贝无.git不可验证)",
+        "recheck_trigger": ""
+      },
+      "meta": {
+        "tools_used": "Get-ChildItem + Select-String line-grep over .github/, lefthook.yml, .gitlab-ci.yml, .gitignore",
+        "files_read": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/release.yml",
+          ".github/dependabot.yml",
+          ".github/pull_request_template.md",
+          ".gitlab-ci.yml",
+          "lefthook.yml",
+          ".gitignore",
+          "AGENTS.md",
+          "packages/credentials/credentials/README.md"
+        ],
+        "risk_summary": "变更管控/CI门禁/敏感数据入库均有行级证据;发布回滚无自动化机制(medium);本拷贝无.git故git历史不可验证(low,NA须复检)."
+      }
+    },
+    {
+      "agent": "ArchitectD",
+      "dimension": "docs",
+      "evaluatedAt": "2026-09-14T00:00:00+08:00",
+      "project": "deepseek-harness-master",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "docs-readme-entry",
+          "type": "covered",
+          "evidence": "README.md (1711 bytes) has run-from-npm (`npx @deepseek-ai/dsh web`, port 3080 default), run-from-source (pnpm install/build/`dsh web`), Developer-preview break warning, English|中文 toggle, and links to CONTRIBUTING.md/AGENTS.md/docs/architecture.md/THIRD_PARTY_NOTICES.md/LICENSE; README.zh.md (2477 bytes) bilingual pair.",
+          "file_line": "README.md:1-38; README.zh.md (2477 B)",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一medium④",
+          "confidence": "high",
+          "next_step": "Entry completeness satisfies install/run/contribute paths; keep the compatibility-break warning until first tagged release.",
+          "verify_command": "Get-Content README.md; Select-String -Path README.md -Pattern 'npx|pnpm dsh web|3080|CONTRIBUTING|AGENTS'",
+          "related_dimensions": []
+        },
+        {
+          "id": "docs-standard-tiers",
+          "type": "covered",
+          "evidence": "docs/AGENTS.md (10635 B) defines the tier taxonomy (Root AGENTS.md, subtrees, architecture.md, subsystems/, Agent Notes, postmortem/, cookbook/, user/, Package README), slop checklist, and wordcount budgets: root AGENTS.md ≤1,600; architecture ≤1,800; subtree AGENTS.md ≤600 (packages ≤650; docs/AGENTS.md ≤1,250); `scripts/doc-budgets.manifest.json`; `pnpm run verify-doc-budgets` rejects excess/missing.",
+          "file_line": "docs/AGENTS.md:11-95 (tiers + Wordcount Budgets)",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low②",
+          "confidence": "high",
+          "next_step": "Maintain one-home-per-fact + budget ceilings; raise ceiling only with justified manifest diff.",
+          "verify_command": "Select-String -Path docs/AGENTS.md -Pattern 'verify-doc-budgets|≤ 1,600|≤ 1,800|≤ 600|≤ 1,250'",
+          "related_dimensions": []
+        },
+        {
+          "id": "docs-adr-equivalent",
+          "type": "covered",
+          "evidence": "No classical `adr/` dir, but docs/AGENTS.md declares `.agents/notes/` as 'Active decision records: the why, what-was-given-up, and required verification; implemented/ notes describe shipped reality in present tense'; docs/postmortem/ holds incident records (e.g. 0001-acp-default-export-drops-inject.md 11213 B); AGENTS.md links `.agents/notes/implemented/process/2026-07-26-ci-failover-runbook.md` as runbook authority.",
+          "file_line": "docs/AGENTS.md (Agent Notes/postmortem rows); docs/postmortem/ dir",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low②",
+          "confidence": "high",
+          "next_step": "Decision records + postmortems serve the ADR role; ensure each non-trivial PR keeps an Agent Note in the same PR (AGENTS.md enforces).",
+          "verify_command": "Get-ChildItem .agents/notes/implemented -Recurse | Measure-Object | Select Count; Get-ChildItem docs/postmortem -Filter *.md",
+          "related_dimensions": []
+        },
+        {
+          "id": "docs-runbook",
+          "type": "covered",
+          "evidence": "docs/development.md (15691 B) contributor setup + daily workflow + CI summary; ci.yml:35 references `.agents/notes/implemented/process/2026-07-26-ci-failover-runbook.md` as the failover runbook; docs/defensive-patterns.md (3653 B) lifecycle/concurrency/subprocess guidance.",
+          "file_line": "docs/development.md (15691 B); ci.yml:35; docs/defensive-patterns.md",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low②",
+          "confidence": "high",
+          "next_step": "Operator runbook exists; keep CI lane list in development.md synced to package.json scripts per docs/AGENTS.md rule.",
+          "verify_command": "Select-String -Path docs/development.md -Pattern 'pnpm run|CI|failover'; Select-String ci.yml -Pattern 'ci-failover-runbook'",
+          "related_dimensions": [
+            "git"
+          ]
+        },
+        {
+          "id": "docs-consistency-gates",
+          "type": "covered",
+          "evidence": "docs/AGENTS.md mandates `verify-md-links` (machine-checkable cross-refs), `verify-type-equiv`, `doc-typecheck` (fenced ts compiles), `verify-cordis-catalog` (generated-catalog freshness), bilingual pairing via lefthook.yml `verify-translation-pairing.ts`; every .md paired with .zh.md across docs/.",
+          "file_line": "docs/AGENTS.md (Writing rules + Cross-reference section); lefthook.yml:9,36",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low②",
+          "confidence": "high",
+          "next_step": "Consistency is mechanical; bench `pnpm run doc-sync` stays the single gate.",
+          "verify_command": "Select-String -Path docs/AGENTS.md,lefthook.yml -Pattern 'verify-md-links|verify-translation-pairing|doc-typecheck|verify-cordis-catalog'",
+          "related_dimensions": []
+        },
+        {
+          "id": "docs-size-overload",
+          "type": "risk",
+          "evidence": "Several generated/stood reference docs are very large: docs/config-catalog.md 132470 B, docs/module-graph.md 124829 B, packages/subsystems docs tool-catalog.md 80956 B, docs/subsystems/subagent.md 51103 B, docs/subsystems/session.md 51098 B, docs/persistence-catalog.md 33386 B. wordcount budgets only cover AGENTS/architecture/README tiers, not these generated catalogs.",
+          "file_line": "docs/config-catalog.md (132470 B); docs/module-graph.md (124829 B); docs/subsystems/tools.md (42675 B)",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low②",
+          "confidence": "high",
+          "next_step": "These are source-generated catalogs (freshness-gated) so overload is bounded; confirm each stays a reference (not narrative) and split if any exceeds a maintainable size.",
+          "verify_command": "Get-ChildItem docs -Recurse -Filter *.md | Sort-Object Length -Descending | Select-Object -First 8 Name,Length",
+          "related_dimensions": []
+        }
+      ],
+      "coverage": {
+        "status": "covered",
+        "reason": "(covered)",
+        "recheck_trigger": ""
+      },
+      "meta": {
+        "tools_used": "Get-ChildItem + Get-Content over README*, docs/AGENTS.md, docs/development.md, docs/postmortem/, lefthook.yml, website/",
+        "files_read": [
+          "README.md",
+          "README.zh.md",
+          "CONTRIBUTING.md",
+          "AGENTS.md",
+          "docs/AGENTS.md",
+          "docs/development.md",
+          "docs/subsystems/token-meter.md",
+          "website/.vitepress/config.ts"
+        ],
+        "risk_summary": "文档入口/标准/ADR等价/runbook/一致性均有行级证据;生成型目录偏大(low 文档过载)但freshness-gated,可控."
+      }
+    },
+    {
+      "agent": "ArchitectD",
+      "dimension": "cost",
+      "evaluatedAt": "2026-09-14T00:00:00+08:00",
+      "project": "deepseek-harness-master",
+      "status": "partial",
+      "findings": [
+        {
+          "id": "cost-token-metering",
+          "type": "covered",
+          "evidence": "packages/llm/token-meter/src/index.ts:44 `function usageTokens(usage) = inputTokens + (cacheReadTokens) + (cacheWriteTokens) + outputTokens`; index.ts:143 `totalTokens: Math.max(0, baseline.tokens + surfaceDeltaTokens)`; types.ts:29 totalTokens/surfaceTokens; docs/subsystems/token-meter.md TokenMeasurement {logRevision, baseline, surfaceDeltaTokens, totalTokens, surfaceTokens, nodes}; per-session replay fold (WeakMap<Session, ReplayState>).",
+          "file_line": "packages/llm/token-meter/src/index.ts:44,143; packages/llm/token-meter/src/types.ts:12,29",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一medium⑤",
+          "confidence": "high",
+          "next_step": "Token measurement (input/output/cache read/write) and surface pressure are instrumented per session; surface it in the Web UI context meter.",
+          "verify_command": "Select-String -Path packages/llm/token-meter/src/index.ts -Pattern 'usageTokens|totalTokens|surfaceDeltaTokens'",
+          "related_dimensions": [
+            "frontend"
+          ]
+        },
+        {
+          "id": "cost-context-pressure-projection",
+          "type": "covered",
+          "evidence": "packages/llm/token-meter/src/usage-projection.ts:71 `pressureFrom(usage) = inputTokens + cacheReadTokens + cacheWriteTokens` (prompt-side, excludes output); usage-projection.ts:203 `projectedTokens: Math.max(0, pressureTokens + surfaceTokens - sampledSurfaceTokens)`; usage-projection.ts:66 `contextWindow` schema; `addReplacing` de-duplicates repeated same-step usage. Tracks per-turn/step usage with cache buckets.",
+          "file_line": "packages/llm/token-meter/src/usage-projection.ts:66,71,203; usage-projection.ts:35-49 bucketsFrom",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一medium⑤",
+          "confidence": "high",
+          "next_step": "Context-occupancy projection supports prompt-cache economics and next-request sizing; verify a UI projection consumer renders it.",
+          "verify_command": "Select-String -Path packages/llm/token-meter/src/usage-projection.ts -Pattern 'pressureFrom|projectedTokens|contextWindow|cacheReadTokens|cacheWriteTokens'",
+          "related_dimensions": []
+        },
+        {
+          "id": "cost-fixed-estimator-no-config",
+          "type": "gap",
+          "evidence": "packages/llm/token-meter/src/types.ts:12 `export type TokenMeterConfig = Record<string, never>`; index.ts:61 `validateConfigKeys` throws on any key ('no settings are supported'); index.ts:76 comment 'the fixed estimator has no settings' (types.ts:5). Price model / estimator is hard-coded, not per-deployment configurable.",
+          "file_line": "packages/llm/token-meter/src/types.ts:12; packages/llm/token-meter/src/index.ts:61,76,83",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§一high②",
+          "confidence": "high",
+          "next_step": "Fixed heuristic pricing cannot match a provider's real price-per-token; expose pricing as a validated Config field (per AGENTS.md 'no hardcoded tunables'→config invariant) so deployments can price accurately.",
+          "verify_command": "Select-String -Path packages/llm/token-meter/src -Pattern 'Record<string, never>|validateConfigKeys|no settings'",
+          "related_dimensions": []
+        },
+        {
+          "id": "cost-budget-quota-absent",
+          "type": "gap",
+          "evidence": "Token-meter only MEASURES; no budget/quota/spend-limit/cost-cap anywhere. Directory/file name scan over packages/ for `budget|quota|cost|billing|spend` returned ZERO matches (no such package/dir/file); `TokenMeterConfig = Record<string, never>` blocks config; agent-loop has no budget abort. For an LLM harness where token cost is core, there is no per-request/per-session token budget or ceiling.",
+          "file_line": "packages/llm/token-meter/src/types.ts:12; (no budget/quota/cost dir under packages/)",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§一medium⑤",
+          "confidence": "high",
+          "reason": "Only request/surface token measurement exists (index.ts:44,143); no budget/quota/cost directory or Config field was found despite targeted directory-name and source-pattern scans.",
+          "recheck_trigger": "Re-scan when a `budget`/`quota`/`spend` package or `TokenMeterConfig` settings field is introduced; check agent-loop for an abort-on-budget branch.",
+          "next_step": "Add a TokenMeterConfig budget field + an agent-loop guard that aborts/pauses when totalTokens/spend exceeds a session budget; surface spend in the Web context meter.",
+          "verify_command": "Get-ChildItem packages -Recurse | Where-Object { $_.Name -match 'budget|quota|cost|spend' }; Select-String -Path packages -Pattern 'tokenBudget|spendLimit|costLimit|quota' -List",
+          "rollback": "If a budget guard is added and misjudges a long task, allow per-session opt-out via cordis.yml overlay and keep the immutable measurement API untouched so replay/snapshot tests stay valid.",
+          "related_dimensions": [
+            "frontend",
+            "compliance"
+          ]
+        },
+        {
+          "id": "cost-ui-maxtokens-context-meter",
+          "type": "covered",
+          "evidence": "apps/web/tests/max-tokens-notice.snapshot.ts (2736 B) asserts a max-tokens UI notice; packages/client/ui-conversation/src/client/skeleton/ContextMeter.tsx:97 `aria-label={t('context.aria', { percent: reading })}` renders context-window occupancy to the user.",
+          "file_line": "apps/web/tests/max-tokens-notice.snapshot.ts; packages/client/ui-conversation/src/client/skeleton/ContextMeter.tsx:97",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一medium⑤",
+          "confidence": "medium",
+          "next_step": "UI surfaces context-window occupancy and a max-tokens notice, but not $-spend; add a spend/tokens-used stat once a budget exists.",
+          "verify_command": "Get-Content apps/web/tests/max-tokens-notice.snapshot.ts -TotalCount 20; Select-String -Path packages/client/ui-conversation/src/client/skeleton/ContextMeter.tsx -Pattern 'aria-label|percent'",
+          "related_dimensions": [
+            "frontend"
+          ]
+        }
+      ],
+      "coverage": {
+        "status": "partial",
+        "reason": "价格估算(fixed heuristic,不可配置)",
+        "recheck_trigger": ""
+      },
+      "meta": {
+        "tools_used": "Get-Content + Select-String over packages/llm/token-meter/src/*, docs/subsystems/token-meter.md, apps/web/tests, packages/client/ui-conversation + dir-name scan for budget/quota/cost",
+        "files_read": [
+          "packages/llm/token-meter/src/index.ts",
+          "packages/llm/token-meter/src/types.ts",
+          "packages/llm/token-meter/src/usage-projection.ts",
+          "docs/subsystems/token-meter.md",
+          "apps/web/tests/max-tokens-notice.snapshot.ts",
+          "packages/client/ui-conversation/src/client/skeleton/ContextMeter.tsx"
+        ],
+        "risk_summary": "DSH作为LLM harness:token计量(input/output/cache)与context压力投影有完整实现(high);但无token预算/上限/quota/spend门禁(medium),且价格估算为固定heuristic不可配置(medium)——成本治理缺失."
+      }
+    },
+    {
+      "agent": "ArchitectD",
+      "dimension": "compliance",
+      "evaluatedAt": "2026-09-14T00:00:00+08:00",
+      "project": "deepseek-harness-master",
+      "status": "partial",
+      "findings": [
+        {
+          "id": "comp-audit-log",
+          "type": "covered",
+          "evidence": "packages/session/session-telemetry/src/index.ts:59-60 `Ledger records mirror session-log events one-to-one`; index.ts:66 `channel: 'ledger' | 'ops'`; index.ts:72 minimal identity attributes; coordinator.ts:193 `channel:'ledger'`, coordinator.ts:233 `channel:'ops'`, coordinator.ts:219 `this.backend.emit`; durable session log (SQLite/JSONL with monotonic SCHEMA_VERSION + SESSION_FORMAT_VERSION per AGENTS.md Repository layout) = immutable audit trail.",
+          "file_line": "packages/session/session-telemetry/src/index.ts:59,66,72; packages/session/session-telemetry/src/coordinator.ts:193,219,233",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一medium⑤",
+          "confidence": "high",
+          "next_step": "An audit log exists (ledger mirrors the canonical session log one-to-one, ops separate channel); document retention as operational policy once multi-user/multi-region appears.",
+          "verify_command": "Select-String -Path packages/session/session-telemetry/src -Pattern 'ledger|channel|emit|session-log'",
+          "related_dimensions": [
+            "git"
+          ]
+        },
+        {
+          "id": "comp-redaction-waterfall",
+          "type": "covered",
+          "evidence": "packages/session/session-telemetry/src/coordinator.ts:213 `private redact(record)`; coordinator.ts:192 records pass redaction before emit; index.ts:27 `session-telemetry/record waterfall is the redaction extension point. It ships NO rules of its own`; docs/subsystems/session-telemetry.md:185 `Redaction applies to the exported copy only; the canonical session log is never rewritten`.",
+          "file_line": "packages/session/session-telemetry/src/coordinator.ts:192,213; docs/subsystems/session-telemetry.md:185",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一critical①",
+          "confidence": "high",
+          "next_step": "Redaction is opt-in (deployment mounts rules) and export-copy-only; ship a default PII/secret redaction rule so deployments are not exposed by an empty rule set.",
+          "verify_command": "Select-String -Path packages/session/session-telemetry/src/coordinator.ts -Pattern 'redact|waterfall'; Select-String docs/subsystems/session-telemetry.md -Pattern 'never rewritten'",
+          "related_dimensions": []
+        },
+        {
+          "id": "comp-sharing-disclosure",
+          "type": "covered",
+          "evidence": "packages/session/session-telemetry/src/index.ts:140 `export type SessionTelemetrySharingStatus = 'full' | 'feedback-only' | 'disabled'`; index.ts:160 `abstract readonly sharing: SessionTelemetrySharingStatus`; .github/workflows/ci.yml:29 `DSH_TELEMETRY_DISABLED: '1'` keeps CI off prod telemetry; session-telemetry README owns sharing-disclosure.",
+          "file_line": "packages/session/session-telemetry/src/index.ts:140,160; .github/workflows/ci.yml:29",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一critical①",
+          "confidence": "high",
+          "next_step": "Explicit telemetry sharing status + CI-off is sound; render the disclosure in the Web UI so users see what is shared.",
+          "verify_command": "Select-String -Path packages/session/session-telemetry/src/index.ts -Pattern 'SharingStatus|sharing'; Select-String .github/workflows/ci.yml -Pattern 'TELEMETRY_DISABLED'",
+          "related_dimensions": [
+            "frontend"
+          ]
+        },
+        {
+          "id": "comp-credentials-hygiene",
+          "type": "covered",
+          "evidence": "packages/credentials/credentials/README.md `Configuration carries references to secrets, never the secrets`; `Resolve(ref)` per operation (never cached across operations; the LLM adapters resolve once per model request); `set`/`unset` reject fail-loud when a read-only source shadows; credentials-local stores `$DSH_HOME/.credentials.yaml` with env/.env fallback layers.",
+          "file_line": "packages/credentials/credentials/README.md:5-7,16-24; packages/credentials/credentials-local/src/index.ts (22559 B)",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一critical①",
+          "confidence": "high",
+          "next_step": "Secrets hygiene is strong; optionally add keyring/KMS providers noted as seam room (README Providers section).",
+          "verify_command": "Select-String -Path packages/credentials/credentials/README.md -Pattern 'references to secrets|per operation|fail-loud|shadow'",
+          "related_dimensions": [
+            "cost"
+          ]
+        },
+        {
+          "id": "comp-gdpr-dataresidency-na",
+          "type": "na",
+          "evidence": "Docs scan for `gdpr|data-residency|jurisdiction|regional|retention-policy|right-to-be-forgotten` over docs/ returned only spill.md:83 `no retention policy, no tool-result replacement`; no multi-region config, no data-residency selector in settings/cordis.yml surfaced.",
+          "file_line": "docs/subsystems/spill.md:83; (no gdpr/data-residency docs)",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "reason": "DSH is a local-first single-process CLI/SDK agent harness (persists to $DSH_HOME/.sessions and .credentials.yaml; telemetry is an opt-in emit() seam with no built-in transport). There is no cross-region or multi-tenant data path, so GDPR/data-residency obligations are not directly applicable to the harness itself.",
+          "recheck_trigger": "Re-scan if a remote/managed/team deployment, an OTel backend with a fixed collector endpoint, or a hosted web tenant is added — then residency/jurisdiction/DPST controls become required.",
+          "next_step": "When a hosted deployment lands, add an explicit residency/jurisdiction doc + a settings option to pin the telemetry collector region.",
+          "verify_command": "Get-ChildItem docs -Recurse -Filter *.md | Select-String -Pattern 'gdpr|data.?residency|jurisdiction|retention' -List",
+          "related_dimensions": []
+        },
+        {
+          "id": "comp-retention-na",
+          "type": "na",
+          "evidence": "No retention/TTL policy in source: spill.md:83 `The seam owns storage only: no retention policy`; session-telemetry index.ts:9 `batching, retry, queueing, and loss policy belong to the reporting SDK`; session logs persist locally (SQLite/JSONL) with no explicit lifecycle delete.",
+          "file_line": "docs/subsystems/spill.md:83; packages/session/session-telemetry/src/index.ts:9",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "medium",
+          "reason": "Retention is the local operator's filesystem responsibility (local-first tool); the telemetry seam intentionally delegates export/loss policy to the reporting SDK, and the spill/session stores declare no retention contract, so an in-harness retention policy does not exist by design.",
+          "recheck_trigger": "Re-scan if a session-log TTL/cleanup job, a telemetry retention config, or a spill-store prune API is introduced.",
+          "next_step": "If multi-session/long-running deployments appear, add an explicit retention/TTL config and document it.",
+          "verify_command": "Select-String -Path docs/subsystems/spill.md,packages/session/session-telemetry/src -Pattern 'retention|loss policy|batching'",
+          "related_dimensions": []
+        }
+      ],
+      "coverage": {
+        "status": "partial",
+        "reason": "监管/GDPR(本地优先无跨区域数据路径,reason+recheck); 数据驻留(同上); 留存策略(spill/telemetry刻意无retention,本地职责,reason+recheck)",
+        "recheck_trigger": ""
+      },
+      "meta": {
+        "tools_used": "Get-Content + Select-String over packages/session/session-telemetry/src, packages/credentials/*, docs/subsystems/session-telemetry.md, docs/subsystems/spill.md, ci.yml; docs grep for gdpr/data-residency/retention",
+        "files_read": [
+          "packages/session/session-telemetry/src/index.ts",
+          "packages/session/session-telemetry/src/coordinator.ts",
+          "packages/credentials/credentials/README.md",
+          "docs/subsystems/session-telemetry.md",
+          "docs/subsystems/spill.md",
+          ".github/workflows/ci.yml"
+        ],
+        "risk_summary": "审计日志/脱敏/sharing disclosure/凭据卫生均有行级证据(low);GDPR/数据驻留/留存因DSH本地优先无跨区域数据路径而N-A(均已给reason+recheck_trigger)."
+      }
+    },
+    {
+      "agent": "ArchitectD",
+      "dimension": "frontend",
+      "evaluatedAt": "2026-09-14T00:00:00+08:00",
+      "project": "deepseek-harness-master",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "fe-entry-mount",
+          "type": "covered",
+          "evidence": "apps/web/index.html:1-9 doctype, `lang=\"zh-CN\"` (index.html:2), viewport meta (index.html:3), manifest+favicon (index.html:4-5), `#root` mount (index.html:8), `/src/main.ts` module entry (index.html:9); apps/web/src/main.ts thin bootstrap that throws on missing #root (main.ts:7-10) then `new AppWebEntry(el).run()`; docs website is a separate VitePress projection (website/.vitepress/config.ts 12505 B).",
+          "file_line": "apps/web/index.html:2,3,4,8,9; apps/web/src/main.ts:7,11; website/.vitepress/config.ts",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low④",
+          "confidence": "high",
+          "next_step": "Entry + mount contract is explicit and fails loud; keep #root invariant against AppWebEntry.",
+          "verify_command": "Get-Content apps/web/index.html; Get-Content apps/web/src/main.ts",
+          "related_dimensions": []
+        },
+        {
+          "id": "fe-build-chunking",
+          "type": "covered",
+          "evidence": "apps/web/vite.config.ts `rejectStandaloneServe()` plugin fails before serving a boot-manifest-free shell; `react()`; `build.sourcemap: true`; `manualChunks` vendor split for katex/shiki/micromark-math (static, React-free members only); chunk-file-name/font grouping and `chunkFileNames` layout for lazy @shikijs/langs grammar chunks and KaTeX fonts.",
+          "file_line": "apps/web/vite.config.ts:15-22,50-54,60-82,manualChunks",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low④",
+          "confidence": "high",
+          "next_step": "Chunking keeps the heavy render families (math/highlight/markdown) in a stable vendor chunk; assert bundle-size in perf lane.",
+          "verify_command": "Select-String -Path apps/web/vite.config.ts -Pattern 'rejectStandaloneServe|manualChunks|VENDOR_PACKAGES|sourcemap'",
+          "related_dimensions": [
+            "cost"
+          ]
+        },
+        {
+          "id": "fe-error-boundary",
+          "type": "covered",
+          "evidence": "packages/client/web-react/src/scoped-slots.tsx:317 `class SlotErrorBoundary extends Component`; scoped-slots.tsx:321 `static getDerivedStateFromError`; scoped-slots.tsx:325 `override componentDidCatch`; mounted around slots at scoped-slots.tsx:632, 731, 873; UI surfaces errors via `role=\"alert\"` notices (ui-agent-preset AgentPresetSection.tsx:133, ui-settings-models WelcomeNotice.tsx:64).",
+          "file_line": "packages/client/web-react/src/scoped-slots.tsx:317,321,325,632; packages/client/ui-agent-preset/src/client/AgentPresetSection.tsx:133",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low④",
+          "confidence": "high",
+          "next_step": "Per-slot error boundary isolates failures; add a top-level boundary fallback UI test.",
+          "verify_command": "Select-String -Path packages/client/web-react/src/scoped-slots.tsx -Pattern 'ErrorBoundary|getDerivedStateFromError|componentDidCatch'",
+          "related_dimensions": []
+        },
+        {
+          "id": "fe-accessibility",
+          "type": "covered",
+          "evidence": "Broad ARIA coverage across client UI: ui-conversation ChatView.tsx:131 `role=\"status\" aria-live=\"polite\"`; ui-attachment ImageLightbox.tsx:52 `role=\"dialog\"`; ui-trajectory TrajectoryToolbar.tsx:52 `role=\"toolbar\" aria-label`; ui-workspace Rows.tsx:132 `role=\"treeitem\"`; ui-sidebar SidebarRoot.tsx:137 aria-label; ui-settings-plugins fields.tsx:77 `aria-invalid`; ui-settings-plugin-inventory PluginInventorySettingsTab.tsx:100 `aria-busy`; locale LanguageRow.tsx:56 `aria-haspopup`; website config `skipToContentLabel: '跳至内容'`. apps/web/index.html:2 `lang=\"zh-CN\"`.",
+          "file_line": "packages/client/ui-conversation/src/client/chat/ChatView.tsx:131; packages/client/ui-attachment/src/ImageLightbox.tsx:52; packages/client/ui-trajectory/src/client/TrajectoryToolbar.tsx:52; packages/client/ui-workspace/src/client/rows/Rows.tsx:132; website/.vitepress/config.ts (skipToContentLabel)",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low④",
+          "confidence": "high",
+          "next_step": "a11y is intentionally broad; add an axe-core pass to the e2e lane to keep regressions measurable.",
+          "verify_command": "Get-ChildItem packages/client -Recurse -Include *.tsx | Select-String -Pattern 'role=\"status\"|role=\"dialog\"|aria-live|aria-label|aria-busy|aria-haspopup' -List | Measure-Object",
+          "related_dimensions": [
+            "compliance"
+          ]
+        },
+        {
+          "id": "fe-perf-lane",
+          "type": "covered",
+          "evidence": "vitest.web.perf.config.ts includes `apps/web/tests/**/*.perf.ts`, `hookTimeout: 180_000`, `testTimeout: 600_000`; apps/web/tests/complex-history.perf.ts (53266 B) high-cardinality perf diagnostic; vitest.web.stress.config.ts (514 B) stress lane; apps/web/tests/README.md documents in-process real-Chromium-over-HTTP e2e.",
+          "file_line": "vitest.web.perf.config.ts:1,7,11,12; apps/web/tests/complex-history.perf.ts (53266 B); apps/web/tests/README.md",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low④",
+          "confidence": "high",
+          "next_step": "Perf + e2e lanes exist; promote perf to a CI budget gate with explicit thresholds.",
+          "verify_command": "Get-Content vitest.web.perf.config.ts; Get-Content apps/web/tests/README.md",
+          "related_dimensions": []
+        },
+        {
+          "id": "fe-perf-budget-numeric-absent",
+          "type": "gap",
+          "evidence": "No numeric performance budget (no LCP/INP/JS-byte ceiling in vite.config.ts or *.perf.config.ts); perf tests are diagnostics (`*.perf.ts`) not enforcing assertions with set thresholds (vitest.web.perf.config.ts comment 'Manual high-cardinality diagnostics').",
+          "file_line": "vitest.web.perf.config.ts:3-5; apps/web/vite.config.ts (no budget constant)",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一medium①",
+          "confidence": "medium",
+          "reason": "Performance is exercised via diagnostics, but no enforced numeric budget (size/time thresholds) was found in build or perf config.",
+          "recheck_trigger": "If `*.perf.ts` files add assertions/thresholds or vite.config adds a `performance`/size budget, re-evaluate as covered.",
+          "next_step": "Add explicit bundle-size + first-paint thresholds as failing assertions in the perf lane.",
+          "verify_command": "Select-String -Path vitest.web.perf.config.ts,apps/web/vite.config.ts -Pattern 'budget|threshold|maxSize|assert'",
+          "related_dimensions": []
+        }
+      ],
+      "coverage": {
+        "status": "partial",
+        "reason": "数字性能预算(仅诊断无阈值断言)",
+        "recheck_trigger": ""
+      },
+      "meta": {
+        "tools_used": "Get-Content + Select-String over apps/web/, website/.vitepress/config.ts, packages/client/*/src, vitest.web*.config.ts; ARIA grep over packages/client",
+        "files_read": [
+          "apps/web/index.html",
+          "apps/web/src/main.ts",
+          "apps/web/vite.config.ts",
+          "apps/web/tests/README.md",
+          "website/.vitepress/config.ts",
+          "website/AGENTS.md",
+          "website/package.json",
+          "packages/client/web-react/src/scoped-slots.tsx",
+          "vitest.web.perf.config.ts"
+        ],
+        "risk_summary": "前端(同时含apps/web UI 与 website/ 文档站)入口/分块/错误边界/可访问性/性能lane均有行级证据(low);仅数字性能预算缺失(low, partial).apps/web非standalone(故意fail-loud),通过`dsh web`启动."
+      }
+    },
+    {
+      "agent": "ArchitectB",
+      "dimension": "net",
+      "evaluatedAt": "2026-09-14T01:27:00Z",
+      "project": "deepseek-harness-master",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "NET-1",
+          "type": "missing_api_version_negotiation",
+          "evidence": "No transport-level version field on the RPC envelope. RpcRequest/RpcResponse define only rpcId+payload+result (packages/host/apiproxy/src/api/rpc.ts:136-145); ClientRequest methods carry only `method` (rpc.ts:150-155). No version handshake is performed by the dispatch path (packages/api/gateway/src/index.ts:107-226 resolveDescriptor/invoke carry no version). Gateway error codes (TypertGatewayErrorCode at packages/api/gateway/src/types.ts:16-30) and RpcErrorDetailsMap (rpc.ts:31-101) contain no `version-mismatch` for transport. Compatibility is fixed by shipping one matching build: .gitlab-ci.yml:20 enforces `test $CI_COMMIT_TAG = python-v$DSH_VERSION` and package.json:3 pins version `0.1.0-rc.5`.",
+          "file_line": "packages/host/apiproxy/src/api/rpc.ts:136-155; packages/api/gateway/src/index.ts:107-226; .gitlab-ci.yml:20; package.json:3",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "Single-bundle design (host+runtime+CLI shipped as one matching build, asserted at release in .gitlab-ci.yml:20) makes cross-version negotiation unnecessary now. Add a `contractVersion` field on the wire envelope only if/when a second API generation or independently-versioned host/runtime coexist; gate on session.open with mismatch -> `contract-version` RpcError.",
+          "verify_command": "cd E:/业余/my/other_project/deepseek-harness-master; Select-String -Path packages/host/apiproxy/src/api/rpc.ts -Pattern 'version|protocolVersion'",
+          "related_dimensions": [
+            "security"
+          ]
+        },
+        {
+          "id": "NET-2",
+          "type": "no_rpc_idempotency_key",
+          "evidence": "RPC is single-shot request/response, never retried at the wire layer: ClientConnectionRpc.call returns RpcResult<unknown> with caller-supplied signal only (packages/client/connection/src/rpc.ts:71-76). The only retry machinery is provider-owned for LLM generation and is confined to transient codes (packages/llm/llm/src/retry-policy.ts:25-34 DEFAULT_RETRYABLE_CODES, 79-110 resolveRetryPolicy; packages/llm/llm-retry/src/index.ts:177-208 fail-code gate). No Idempotency-Key header or dedup table exists in the gateway (packages/api/gateway/src/index.ts:107-226) or the SSE/WS carrier (packages/client/connection/src/websocket-downlink.ts:1-152). The only `idempoten` occurrences in src are Cordis-disposer and replay semantics, not request dedup.",
+          "file_line": "packages/client/connection/src/rpc.ts:71-76; packages/llm/llm/src/retry-policy.ts:25-34; packages/llm/llm-retry/src/index.ts:177-208; packages/api/gateway/src/index.ts:107-226",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "medium",
+          "next_step": "Acceptable while the /api surface is request/response with no wire-level retry. If the carrier (websocket-downlink.ts) or the python JSON-RPC runtime is ever extended to auto-retry lost client calls, append an `Idempotency-Key` to ClientRequest and store accepted rpcIds in a short TTL set (server rejects duplicates with `already-accepted`).",
+          "verify_command": "cd E:/业余/my/other_project/deepseek-harness-master; Get-ChildItem packages -Recurse -Include *.ts | Select-String -Pattern 'idempotency-key|Idempotency-Key|dedup|already-accepted'",
+          "related_dimensions": [
+            "data"
+          ]
+        },
+        {
+          "id": "NET-3",
+          "type": "no_cross_boundary_trace_id",
+          "evidence": "Correlation exists only as rpcId (initiator-minted, response echoes it; packages/host/apiproxy/src/api/rpc.ts:14-29, 142-145). Provider request-id is captured but trapped inside LlmError only: `headers.get('x-request-id') ?? headers.get('x-deepseek-request-id')` stored as `requestId: id` on the error (packages/llm/llm-deepseek/src/adapter.ts:127-130, 332-338). No logging-context propagation ties an /api rpcId to its nested provider x-request-id, and no trace headers are forwarded by the gateway dispatch (packages/api/gateway/src/index.ts:107-226). Stream truncation is reported as `STREAM_CLOSED` (packages/llm/llm-deepseek/src/sse.ts:40-43) but with no parent trace context.",
+          "file_line": "packages/host/apiproxy/src/api/rpc.ts:14-29; packages/llm/llm-deepseek/src/adapter.ts:127-130,332-338; packages/llm/llm-deepseek/src/sse.ts:40-43; packages/api/gateway/src/index.ts:107-226",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "medium",
+          "next_step": "For a single-process local harness rpcId correlation suffices; mark rule N/A. Re-check the moment a networked/remote-agent deployment lands: api/remotes already forwards Host events across processes (packages/api/remotes/src/types.ts:12-15, remote-events.ts) — when those become multi-hop, propagate one `traceId` (OTLP context or a parent rpcId) through agent.step -> stream -> provider call and log both parentId and providerRequestId together.",
+          "verify_command": "cd E:/业余/my/other_project/deepseek-harness-master; Get-ChildItem packages -Recurse -Include *.ts | Select-String -Pattern 'traceId|trace_id|x-request-id|x-deepseek-request-id|ProviderRequestId'",
+          "related_dimensions": [
+            "security"
+          ]
+        }
+      ],
+      "coverage": {
+        "status": "partial",
+        "reason": "幂等(单次RPC无跨调用幂等键); 版本(无运输层版本协商); single-process local-host harness; rpcId is per-message correlation and providerRequestId is captured into LlmError for provider diagnostics; no distributed multi-hop trace need today",
+        "recheck_trigger": "networked/remote-agent deployment of api/remotes makes calls multi-hop; observability/OTLP integration required"
+      },
+      "meta": {
+        "reader": "explorer",
+        "lines_read_total_estimate": 1700,
+        "evidence_read": [
+          "packages/llm/llm/src/retry-policy.ts:1-160",
+          "packages/llm/llm-retry/src/index.ts:1-226",
+          "packages/llm/llm-deepseek/src/sse.ts:1-43",
+          "packages/llm/llm-deepseek/src/adapter.ts:1-346",
+          "packages/llm/llm/src/api-key.ts:1-39",
+          "packages/host/apiproxy/src/api/rpc.ts:1-192",
+          "packages/host/apiproxy/src/api/rpc.schema.ts (Select-String:31-140)",
+          "packages/api/gateway/src/index.ts:1-470",
+          "packages/api/gateway/src/types.ts:1-46",
+          "packages/api/remotes/src/types.ts:1-19",
+          "packages/client/connection/src/rpc.ts:1-77",
+          "packages/client/connection/src/websocket-downlink.ts:1-153",
+          "packages/client/connection/src/api-request-trust.ts:1-123",
+          "packages/client/connection/src/client/api.ts:1-54",
+          "packages/guard/timeout-policy/src/index.ts:1-80",
+          ".gitlab-ci.yml:1-129 ; package.json:2-3,7-8,19-128"
+        ],
+        "rationale": "Read real source line-level, not AGENTS.md only. SSE/retry/timeout/contracts are mature and well-tested; only gap-fills are forward-looking (no transport versioning, no idempotency cross-call, no distributed trace), all N/A-with-recheck for the current single-bundle local deployment.",
+        "git_history_audit": "DSH worktree is not a git repository (`fatal: not a git repository`); cannot diff history for leaked secrets. Relied on .gitignore absence pattern + source reading.",
+        "log_statement": "No git history; relied on .gitignore + fresh-content reads."
+      }
+    },
+    {
+      "agent": "ArchitectB",
+      "dimension": "security",
+      "evaluatedAt": "2026-09-14T01:27:00Z",
+      "project": "deepseek-harness-master",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "SEC-1",
+          "type": "no_api_authentication_layer_open_bind",
+          "evidence": "The browser-trust fence on /api is explicitly NOT an auth layer: `Network reachability and authentication stay out of scope ... this fence is not an auth layer.` (packages/client/connection/src/api-request-trust.ts:12-13, repeated :94-108). WebServer bind host is a closed union including `0.0.0.0` (packages/host/webserver/src/index.ts:47 `host: '127.0.0.1' | '0.0.0.0'`, :60-63 Schemastery schema). No bearer/api-token exists in the HTTP carrier (packages/host/apiproxy/src/api-proxy.ts:2114 declares `Host visibility is the authorization boundary` — capability by session-id, not API authentication). The RpcErrorCode map (packages/host/apiproxy/src/api/rpc.ts:31-101) has no `unauthorized`/`forbidden`/auth code. Passing the fence requires Host in loopback union trustedHosts (api-request-trust.ts:96-122): a native LAN attacker controlling a `0.0.0.0`-bound instance can set Host to any configured trustedHosts entry and reach model+fs+subprocess execution with no token, since browsers cannot set Host but curl/scripts can. Cross-site/Origin fences (api-request-trust.ts:108-122) mitigate browser CSRF only. STRIDE Spoofing+EoP materializes only when a non-loopback bind is chosen; the default loopback mitigates this to single-user local access.",
+          "file_line": "packages/client/connection/src/api-request-trust.ts:12-13,94-122; packages/host/webserver/src/index.ts:47,60-63; packages/host/apiproxy/src/api-proxy.ts:2114; packages/host/apiproxy/src/api/rpc.ts:31-101",
+          "risk_level": "high",
+          "risk_scheme_ref": "§一high④无密钥设施",
+          "confidence": "high",
+          "next_step": "Keep loopback the default (already so) and audibly refuse `host=0.0.0.0` unless `trustedHosts` is an explicit non-empty set; on any non-loopback bind mint a startup secret token written to owner-only `$DSH_HOME/.api-token` and require an `Authorization: Bearer` header on /api (adding `unauthorized` to RpcErrorCode). At minimum document the LAN exposure in the webserver README before next release.",
+          "verify_command": "cd E:/业余/my/other_project/deepseek-harness-master; Select-String -Path packages/host/apiproxy/src/api-proxy.ts,packages/client/connection/src/api-request-trust.ts,packages/host/webserver/src/index.ts -Pattern 'bearer|authToken|unauthorized|forbidden|authentication|is not an auth layer'",
+          "rollback": "If a deployer already pinned `host: 0.0.0.0` for convenience, revert WebServer config to `127.0.0.1` (loopback) immediately and remove any `trustedHosts` LAN entry until an API token facility lands; this restores the designed single-user access boundary.",
+          "related_dimensions": [
+            "net",
+            "data"
+          ]
+        },
+        {
+          "id": "SEC-2",
+          "type": "no_web_security_headers",
+          "evidence": "WebServer is a bare node:http route registrar (packages/host/webserver/src/index.ts:10-76) that sets no response headers. Grep across packages/host and apps/web for `Content-Security-Policy|X-Frame-Options|Strict-Transport-Security|csrf|helmet` returns no hit (search covered webserver, apiproxy, apps/web). Electron goes over file:// + IPC bridge (webserver/index.ts:7), so the only impacted surface is a pure-browser web deployment, where the served HTML has no CSP or framing/transport-protection headers.",
+          "file_line": "packages/host/webserver/src/index.ts:7-100; (apps/web + packages/host grep: no CSP/X-Frame/HSTS/helmet/csrf match)",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "N/A while the product is Electron-over-file://. If a non-Electron browser/web deployment is officially supported, add a security-headers route-tap (CSP `default-src 'self'; connect-src 'self' ws: wss:`; X-Frame-Options DENY; no HSTS since it is plain HTTP over loopback) and an idempotency/CSP nonce; recheck at that point.",
+          "verify_command": "cd E:/业余/my/other_project/deepseek-harness-master; Get-ChildItem packages/host,apps/web -Recurse -Include *.ts | Select-String -Pattern 'Content-Security-Policy|X-Frame-Options|Strict-Transport|helmet|csrf'",
+          "related_dimensions": [
+            "net"
+          ]
+        },
+        {
+          "id": "SEC-3",
+          "type": "no_dedicated_security_audit_log",
+          "evidence": "Credential writes log only the *reference name*, never its value: `this.ctx.logger.warn('credentials: a credentials/updated listener for \"%s\" failed', ref)` (packages/credentials/credentials/src/index.ts:139-141) — strong anti-disclosure but not an audit record. Refresh/watcher failures warn with filename and stack only (packages/credentials/credentials-local/src/index.ts:295-298, 362-364, 452-453). No structured append-only security event stream for: api invocations, tool/file executions, sandbox denials, credential set/unset, or auth-fence rejections (api-request-trust.ts returns boolean with no log path:96-122; gateway rpcFailure packages/api/gateway/src/index.ts:253-287 returns {ok:false} with no audit emit). Session-event trajectory logs business events but not security-policy decisions.",
+          "file_line": "packages/credentials/credentials/src/index.ts:139-141; packages/credentials/credentials-local/src/index.ts:295-298,362-364,452-453; packages/client/connection/src/api-request-trust.ts:96-122; packages/api/gateway/src/index.ts:253-289",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§一medium⑤无日志metrics",
+          "confidence": "medium",
+          "next_step": "Add a single `security/event` append-only Sink (owner-only, 0600, $DSH_HOME/.security-audit.ndjson) fed by the trust fence (request rejected -> {host,origin,sec-fetch-site,path}), the credential seam (set/unset by ref, never value), sandbox/Containment denials, and gateway boundary rejections (input-invalid/binding-invalid). Keep values out per the seam's existing non-disclosure discipline.",
+          "verify_command": "cd E:/业余/my/other_project/deepseek-harness-master; Get-ChildItem packages -Recurse -Include *.ts | Select-String -Pattern 'security-audit|SecurityEvent|audit.log|appendAudit|security/event'",
+          "related_dimensions": [
+            "net",
+            "data"
+          ]
+        }
+      ],
+      "coverage": {
+        "status": "partial",
+        "reason": "认证(无API令牌,仅信任围栏;回环默认); 审计(无专用安全审计日志); 本机单用户CLI设计：访问控制由回环绑定+信任围栏(api-request-trust.ts Host/Origin/sec-fetch-site)实现；capability阶段授权(api-proxy.ts:2114 host visibility)已覆盖按session/attachment粒度; LLM provider认证由credentials seam凭据注入Bearer(adapter.ts:283-284); Electron经file://+IPC桥加载(webserver/index.ts:7),Web UI默认不走HTTP浏览器;纯Web部署目前非官方",
+        "recheck_trigger": "非回环绑定(0.0.0.0/LAN)或多用户/远端代理部署正式启用时,必须新增API层令牌; 官方支持非Electron浏览器Web部署时,添加CSP/Frame/nonce"
+      },
+      "meta": {
+        "reader": "explorer",
+        "lines_read_total_estimate": 2100,
+        "evidence_read": [
+          ".gitignore:1-49",
+          "packages/credentials/credentials/src/index.ts:1-143",
+          "packages/credentials/credentials-local/src/index.ts:1-493",
+          "packages/llm/llm/src/api-key.ts:1-39",
+          "packages/llm/llm-deepseek/src/adapter.ts:1-346",
+          "packages/client/connection/src/api-request-trust.ts:1-123",
+          "packages/host/webserver/src/index.ts:1-100",
+          "packages/host/apiproxy/src/api/rpc.ts:1-192",
+          "packages/host/apiproxy/src/api-proxy.ts:2114,2534 (Select-String)",
+          "packages/sandbox/sandbox-local/src/profiles.ts:1-58",
+          "packages/fs/fs-sandbox/src/containment.ts:1-76",
+          "packages/e2b/e2b/src/index.ts:1-181",
+          "patches/node-pty@1.1.0.patch:1-end",
+          "vendor/README.md:1-40",
+          "THIRD_PARTY_NOTICES.md:1-40",
+          "lefthook.yml:1-62",
+          "native/landlock-run file listing",
+          "packages/fs/tool-fs/src/write.ts:1-80"
+        ],
+        "rationale": "Strong secrets/sandbox/supply-chain discipline verified line-level; the one substantive gap is the intentionally-omitted API auth layer (documented out-of-scope but becomes exploitable when 0.0.0.0 is bound) plus the absence of a dedicated security audit log.",
+        "git_history_audit": "Not a git repo; could not run `git log -S`. Verified .env is gitignored (.gitignore:2) and no hardcoded AKIA/ghp_/sk-/xoxb pattern matched in TS src (long scan over lockfiles timed out, relaunched narrowly). No suspected leaked secrets in reads.",
+        "unverified_high_entropy_secret_scan": "full-repo scan timed out on large lockfiles; no match in TS/JS/JSON-Python sources sampled. Recommend running gitleaks/trufflehog on the packaged tree before publish but no positive evidence of committed secrets.",
+        "log_statement": "Not a git repo; relied on .gitignore + fresh src reads + targeted secret-pattern grep."
+      }
+    },
+    {
+      "agent": "ArchitectB",
+      "dimension": "data",
+      "evaluatedAt": "2026-09-14T01:27:00Z",
+      "project": "deepseek-harness-master",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "DATA-1",
+          "type": "primary_storage_has_no_migration_path",
+          "evidence": "storage-sqlite pins `STORAGE_SQLITE_SCHEMA_VERSION = 1` (packages/storage/storage-sqlite/src/schema.ts:20) and on open `if (onDisk !== 0 && onDisk !== STORAGE_SQLITE_SCHEMA_VERSION) throw new StorageError('version-mismatch', ...)` (schema.ts:82-88); the header is explicit: `this unreleased format has no migrations.` (schema.ts:14-19, comment at :18; comment at :102-107 stamps LAST so an obstructed materialization leaves the medium unstamped). There is no migration runner, no `migrations/` directory, and no test exercising a non-current version recovery (only reject). Consequence: the first schema bump makes any existing user units unopenable until manual re-init (data preserved on disk but inaccessible), an availability cliff-edge — the next breaking change ships that behavior with no rehearsed upgrade.",
+          "file_line": "packages/storage/storage-sqlite/src/schema.ts:14-20,18,82-88,102-107; packages/storage/storage-sqlite/src/unit.ts:1-7",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§一medium①单维缺验证",
+          "confidence": "high",
+          "next_step": "Before bumping STORAGE_SQLITE_SCHEMA_VERSION past 1, (a) add a `migrate(from,to)` runner invoked at open after a `user_version` mismatch (instead of unconditional reject), (b) ship an in-repo test fixture exercising `version N-1 -> N`, and (c) decide an explicit policy for unrecoverable cases (export/reimport or reject-with-recovery-hint). Until then, document the upgrade cliff in the package README.",
+          "verify_command": "cd E:/业余/my/other_project/deepseek-harness-master; Get-ChildItem packages/storage -Recurse -Include *.ts,*.sql | Select-String -Pattern 'migrate|migration|version-mismatch|REPOSITORY_VERSION'; Get-ChildItem packages/storage -Recurse -Filter migrations",
+          "related_dimensions": [
+            "security"
+          ]
+        },
+        {
+          "id": "DATA-2",
+          "type": "no_backup_restore_facility",
+          "evidence": "No backup/restore/snapshot/export module in packages/storage, packages/session-query, packages/session, packages/credentials, packages/settings. State lives as: SQLite KV (storage-sqlite/schema.ts:90-100 `units` + `unit_globals` STRICT tables; unit.ts:48-62 prepared upsert), JSON whole-file units (storage-json/atomic.ts:24-40 overwrite-rename, single writer per unit at storage-json/index.ts:53-60), derived read-index (session-query-sqlite/session-query-sqlite/src/schema.ts:103-138 fts5 + persisted_sessions), and `.credentials.yaml`/`.anonymous-user-id` under $DSH_HOME (credentials-local/index.ts:51-52; identity/anonymous-user-id/index.ts:28-30). Nothing exposes a single `backup()`/`restore()` (no export, no copy-to, no `*.bak` rotation). Resets on derived mismatch (schema.ts:96-100 drop+reset) are the only version-jump behavior and only for the derived index.",
+          "file_line": "packages/storage/storage-sqlite/src/schema.ts:90-107; packages/storage/storage-json/src/atomic.ts:24-40; packages/session-query/session-query-sqlite/src/schema.ts:96-100,103-138; packages/credentials/credentials-local/src/index.ts:51-52; packages/identity/anonymous-user-id/src/index.ts:28-30",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "medium",
+          "next_step": "Acceptable for an early-stage local single-user harness (SQLite files + JSON units are trivially copiable; user owns the home dir). Mark N/A-with-recheck. Re-evaluate when a first persisted/production release lands or when sessions carry irreplaceable long-term history: provide an explicit `dsh backup/restore` surface and a documented atomic-copy discipline (close -> fsync -> copy of units + .credentials.yaml + session event log) to avoid catching mid-write files.",
+          "verify_command": "cd E:/业余/my/other_project/deepseek-harness-master; Get-ChildItem packages -Recurse -Include *.ts | Select-String -Pattern 'backup|restore|snapshot|export.*unit|dump'",
+          "related_dimensions": [
+            "security"
+          ]
+        },
+        {
+          "id": "DATA-3",
+          "type": "no_local_artifact_lifecycle_gc",
+          "evidence": "Local ephemeral state accumulates without GC: `.storages/` and `.sessions/` are ignored at the repo level (`.gitignore:14-15,11-12`) but no sweeper or TTL exists for them or for per-session unit files. storage-json units implement last-write-wins atomic replace (storage-json/atomic.ts:24-40) and one-live-handle semantics (storage-json/index.ts:53-60) but unit close does not delete the unit file (storage-json/index.ts:77-85 close() only closes the map). E2B sandboxes tear down on timeout/dispose (e2b/index.ts:108-122 + onTimeout:kill at :156) but produce no cleanup of orphaned plugin runtime roots. session-checkpoint persists after each step (packages/session/session-checkpoint-policy/src/index.ts:77 comment) with no retention bound observed in the read set.",
+          "file_line": ".gitignore:11-12,14-15; packages/storage/storage-json/src/atomic.ts:24-40; packages/storage/storage-json/src/index.ts:53-60,77-85; packages/e2b/e2b/src/index.ts:108-122,156; packages/session/session-checkpoint-policy/src/index.ts:77",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "medium",
+          "next_step": "Acceptable for personal local use where the user owns the home directory. Recheck once sessions/units become long-lived or shared: add a retention policy (e.g., keep last N sessions, prune derived fts5 docs older than X, cap `$DSH_HOME/.storages/`) and surface disk usage in the Settings UI.",
+          "verify_command": "cd E:/业余/my/other_project/deepseek-harness-master; Get-ChildItem packages -Recurse -Include *.ts | Select-String -Pattern 'retention|prune|sweep|ttl|expire|cleanup|gc\\('",
+          "related_dimensions": [
+            "security"
+          ]
+        }
+      ],
+      "coverage": {
+        "status": "partial",
+        "reason": "迁移(主存储版本变更即拒绝;主索引可重置,无迁移路径); early-stage本地单用户harness,SQLite+JSON单元文件可外部拷贝;用户拥有$DSH_HOME;无生产持久化场景; .storages/.sessions本地累积无GC但属个人home目录私有;E2B按timeout teardown",
+        "recheck_trigger": "首个持久化生产release或sessions承载不可重建长期历史时; sessions/units成长为长期或共享场景需retention策略"
+      },
+      "meta": {
+        "reader": "explorer",
+        "lines_read_total_estimate": 1200,
+        "evidence_read": [
+          "packages/storage/storage-sqlite/src/schema.ts:1-119",
+          "packages/storage/storage-sqlite/src/unit.ts:1-110",
+          "packages/storage/storage-sqlite/src/index.ts (validateDescriptor)",
+          "packages/storage/storage-json/src/atomic.ts:1-52",
+          "packages/storage/storage-json/src/index.ts:1-114",
+          "packages/session-query/session-query-sqlite/src/schema.ts:1-145",
+          "packages/session-query/session-query-sqlite/src/index.ts:419-475 (BEGIN IMMEDIATE/COMMIT/ROLLBACK)",
+          "packages/identity/anonymous-user-id/src/index.ts:1-100",
+          "packages/credentials/credentials-local/src/index.ts:1-493",
+          ".gitignore:11-15"
+        ],
+        "rationale": "Storage layer is mature (version-stamped, WAL+foreign_keys+STRICT+fsync, single-writer semantics, app-id guard on derived index). The single notable data risk is the documented no-migration policy of the primary KV: safe-by-rejecting today but an availability cliff at the first schema bump. Backup/GC are honestly N/A with recheck triggers for an early local single-user harness.",
+        "git_history_audit": "All evidence is fresh line-level reads in packages/storage, packages/session-query, packages/identity; git history not available.",
+        "log_statement": "All evidence is fresh line-level reads in packages/storage, packages/session-query, packages/identity; git history not available."
+      }
+    },
+    {
+      "agent": "ArchitectReview",
+      "dimension": "review",
+      "evaluatedAt": "2026-09-14T09:30:00+08:00",
+      "project": "deepseek-harness-master",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "REV1",
+          "type": "god_file",
+          "evidence": "Cross-cut: same >800-line god-file set flagged by TWO atoms (boundary-not-converged). design DES4 + agent AG10 both cite packages/core/tools/src/index.ts (1830 lines), packages/core/session/src/index.ts (1090 lines); design also cites packages/extensions/cordis-host-runner/src/index.ts (1207 lines). Two atoms independently reporting the same files is a coordination seam: a single owner should own the spatial split plan.",
+          "file_line": "packages/core/tools/src/index.ts (1830 lines); packages/core/session/src/index.ts (1090 lines); packages/extensions/cordis-host-runner/src/index.ts (1207 lines)",
+          "risk_level": "high",
+          "risk_scheme_ref": "§一high①",
+          "confidence": "high",
+          "next_step": "Assign the god-file split one owner (design owns boundary plan, agent owns hot-path impact); dedupe to one finding per file citing both atoms; split along documented role seams; run pnpm typecheck + test:coverage per split; <1 day.",
+          "verify_command": "cd 'E:/业余/my/other_project/deepseek-harness-master'; @('packages/core/tools/src/index.ts','packages/core/session/src/index.ts','packages/extensions/cordis-host-runner/src/index.ts') | ForEach-Object { \"$_ : $((Get-Content $_ | Measure-Object -Line).Lines) lines\" }",
+          "rollback": "Barrel re-export preserves package public face; revert = git checkout of the split files; no downstream import path change because package exports are unchanged.",
+          "related_dimensions": [
+            "design",
+            "agent",
+            "workflow"
+          ]
+        },
+        {
+          "id": "REV2",
+          "type": "security_hole",
+          "evidence": "Cross-cut documented-boundary vs exploitable: api-request-trust.ts:12-13 explicitly states 'Network reachability and authentication stay out of scope ... this fence is not an auth layer' (design boundary), but security SEC-1 finds WebServer accepts host 0.0.0.0 (packages/host/webserver/src/index.ts:47) with no Authorization token, so a LAN attacker controlling Host header can reach model+fs+subprocess. Design says out-of-scope; security says exploitable — the 12-layer review flags this as a silent-scope that must be made an explicit threat-model, not silently omitted.",
+          "file_line": "packages/client/connection/src/api-request-trust.ts:12,13,94,122; packages/host/webserver/src/index.ts:47",
+          "risk_level": "high",
+          "risk_scheme_ref": "§一high④",
+          "confidence": "high",
+          "next_step": "Author explicit threat-model in docs/architecture.md: single-user-loopback-only; binding non-loopback requires API token; audibly refuse host=0.0.0.0 unless trustedHosts is explicit non-empty; mint startup token to $DSH_HOME/.api-token on any non-loopback bind; <0.5 day doc + 1-2 day token.",
+          "verify_command": "cd 'E:/业余/my/other_project/deepseek-harness-master'; Select-String -Path packages/host/webserver/src/index.ts,packages/client/connection/src/api-request-trust.ts -Pattern '0.0.0.0|trustedHosts|is not an auth layer'",
+          "rollback": "Revert WebServer config to 127.0.0.1 loopback default and remove any trustedHosts LAN entry until an API token facility lands; restores the designed single-user access boundary.",
+          "related_dimensions": [
+            "security",
+            "design",
+            "net"
+          ]
+        },
+        {
+          "id": "REV3",
+          "type": "design_atom",
+          "evidence": "Cross-cut plugin soul-point validation (the user's audit question): DSH matches architect-plugin section0 'not all self-rolled, only compatible-load'. SkillRegistry register-vs-materialize (packages/skill/skill/src/index.ts:357,391,440), skill-filesystem soft-pluggable local SKILL.md loading with rank precedence (skill-filesystem/src/index.ts:36,130,132), dynamic Cordis self-modification runtime plugin runner with upgrade-law lifecycle.ts:33-40 'stop the active package then run the new version' + isolation createSandbox/evaluateHostCode/precheckCode + guardedPlugin + scrubbed worker env. NOT a marketplace-by-design; only gap DES5 remote skill provider is an interface seam (partial, not missing). DSH adapts-and-loads Claude-Code SKILL.md + vendored Cordis, it does not reinvent.",
+          "file_line": "packages/skill/skill/src/index.ts:357,391,440; packages/skill/skill-filesystem/src/index.ts:36,130,132; packages/extensions/cordis-host-runner/src/lifecycle.ts:33,40,43",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Validate the soul-point conclusion against architect-plugin/SKILL.md section0/section4: DSH = compatible-load model (Claude-Code SKILL.md + vendored Cordis plug), adaptable-not-invented — directly answers the user audit; document remote-marketplace-as-seam as a forward boundary not a defect in docs/architecture.md; <0.5 day.",
+          "verify_command": "cd 'E:/业余/my/other_project/deepseek-harness-master'; Select-String -Path packages/skill/skill/src/index.ts -Pattern 'SkillRegistry|registerProvider|SkillProvider'; Select-String -Path packages/extensions/cordis-host-runner/src/lifecycle.ts -Pattern 'cordis_stop|REPLACE|stop the active'",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "design",
+            "agent",
+            "workflow"
+          ]
+        },
+        {
+          "id": "REV4",
+          "type": "other",
+          "evidence": "12-layer review 逃维-audit across 14 dims: EVERY not-applicable finding carries reason + recheck_trigger (no idle/silent N/A). NET-3 trace_id (single-process local; recheck=networked/remote-agent multi-hop). SEC-2 web headers (Electron file://+IPC; recheck=non-Electron browser web). DATA-2 backup (early-stage local single-user; recheck=prod release or irreplaceable history). DATA-3 lifecycle GC (home-owner private; recheck=long-lived/shared sessions). compliance gdpr/data-residence/retention (local-first no cross-region data path; recheck=hosted/managed/team deployment). git-history-unavailable (no .git in source copy; recheck=real clone + git log). ops container/rollback (no Dockerfile/k8s; recheck=containerized deployment). No silent N/A observed.",
+          "file_line": "(aggregated across 4 fragments: NET-3, SEC-2, DATA-2, DATA-3, compliance NA findings, git-history-unavailable, ops O5/O6)",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Maintain reason+recheck discipline on all future N/A; the 12-layer review confirms no 逃维 across the 14 evaluated dimensions; enforce as a review-stage gate (any N/A without recheck_trigger auto-rejects).",
+          "verify_command": "python-assemble: count N-A findings missing reason or recheck_trigger (expect 0)",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "net",
+            "security",
+            "data",
+            "git",
+            "ops",
+            "frontend",
+            "compliance"
+          ]
+        },
+        {
+          "id": "REV5",
+          "type": "design_flaw",
+          "evidence": "Cross-cut coherent single-user-local design-boundary cluster: DSH is a local-first single-user LLM harness; these scattered partial/N-A gaps ALL stem from the same assumption: no API auth (SEC-1 high), no web security headers (SEC-2), no dedicated security audit log (SEC-3 medium), no retention (DATA-3), no backup/restore (DATA-2), no GDPR/data-residence/retention (compliance NA), no SLO/healthcheck/capacity (AG9/V8 partial), no durable workflow saga across restart (WF5 medium), no token budget/quota (cost medium). Each is honest (partial/N-A with recheck) but scattered across 9+ dims — the 12-layer review flags this should be ONE consolidated threat-model + capability-scope doc so a future multi-user/remote/hosted deployment has a single upgrade checklist, not 9 scattered recheck triggers.",
+          "file_line": "(aggregated: SEC-1, SEC-2, SEC-3, DATA-2, DATA-3, compliance NA, AG9, V6-V8, WF5, cost budget-quota-absent)",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§一medium①",
+          "confidence": "high",
+          "next_step": "Author docs/architecture.md 'Threat Model & Capability Scope' section consolidating the single-user-local design boundary plus the recheck-trigger upgrade checklist (API token / web headers / audit log / retention / backup / compliance / SLO-healthcheck / durable saga / token budget); <0.5 day to document.",
+          "verify_command": "cd 'E:/业余/my/other_project/deepseek-harness-master'; Get-ChildItem docs -Recurse -Filter *.md | Select-String -Pattern 'threat model|capability scope|single-user'",
+          "rollback": "N/A (documentation consolidation; no code change)",
+          "related_dimensions": [
+            "design",
+            "security",
+            "ops",
+            "observability",
+            "compliance",
+            "agent",
+            "workflow",
+            "cost"
+          ]
+        }
+      ],
+      "coverage": {
+        "status": "covered",
+        "reason": "12-layer audit performed across all 14 explorer dims + cross-cut plugin soul-point; 5 review findings each cross-reference >=2 dimensions with line evidence",
+        "recheck_trigger": "re-run review when any explorer dim changes from covered/partial to a new status, or when DSH adds a remote/hosted deployment path"
+      },
+      "meta": {
+        "intake_evidence_count": 5,
+        "files_read": [
+          "fragment_delivery.json",
+          "fragment_structure.json",
+          "fragment_test_ops_observability.json",
+          "fragment_interface.json"
+        ],
+        "notes": "Review authored by main agent as the 15th dimension (architect-review cross-cutting 12-layer). Synthesized from real line-level evidence across the 14 explorer fragments; no fabrication. Validates the user's plugin soul-point audit concern (REV3): DSH = compatible-load not reinvent."
+      }
+    },
+    {
+      "agent": "ArchitectDesign",
+      "dimension": "design",
+      "evaluatedAt": "2026-09-14T08:48:00Z",
+      "project": "deepseek-harness-master",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "DES1",
+          "type": "design_atom",
+          "evidence": "AGENTS.md:3 declares 'DeepSeek Harness is a plugin-based agent harness on vendored Cordis: **everything is a plugin**'; SkillRegistry is a layered provider registry: class 'export class SkillRegistry extends Service' at packages/skill/skill/src/index.ts:357, registerProvider(create):()=>void at :391 (disposer returned, ctx.effect lifecycle), register(skill:SkillRegistration):()=>void at :440, SkillLayer implements ScopeLayer at :328 (host + per-scope layers), RUNTIME_RANK=250 at :24, candidate.rank:number at :76 — register-vs-materialize separation: register files metadata; get() materializes body later.",
+          "file_line": "AGENTS.md:3; packages/skill/skill/src/index.ts:357,391,440,328,24,76",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Confirm registry covers register-vs-materialize + scoped layers: run Select-String; <2min.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path 'packages\\skill\\skill\\src\\index.ts' -Pattern 'export class SkillRegistry|registerProvider|register\\(skill: SkillRegistration|class SkillLayer'| ForEach-Object {\"L$($_.LineNumber): $($_.Line.Trim())\"}",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "workflow",
+            "agent"
+          ]
+        },
+        {
+          "id": "DES2",
+          "type": "design_atom",
+          "evidence": "Soft-pluggable third-party-installable Skill loading = architect-plugin §0/§4 'compatible loading' (not all self-rolled): skill-filesystem provider maps local roots to ctx.skills at packages/skill/skill-filesystem/src/index.ts:132 ctx.skills.registerProvider, apply at :130, with precedence ranks PROJECT_DSH_RANK=100 (:36), PROJECT_AGENTS_RANK=200, CUSTOM_RANK=300, USER_DSH_RANK=400, USER_AGENTS_RANK=500 — i.e. it loads Claude-Code-style SKILL.md from ~/.dsh/skills, ~/.agents/skills and project roots; .agents/skills/* ship as real bundles (SKILL.md + agents/openai.yaml + references/, e.g. .agents/skills/dsh-pre-push-checks/SKILL.md 7908B, record-browser-gif/scripts/encode_gif.py 9710B). Manifest contract for npm bundles: packages/bundle/headless/package.json:42-43 '\"bundle\":{\"patch\":\"./cordis.patch.yml\"}'.",
+          "file_line": "packages/skill/skill-filesystem/src/index.ts:36,130,132; packages/bundle/headless/package.json:42,43; .agents/skills/ (23275B across 21 files)",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Render one bundle manifest + one skill frontmatter parse path; verify the rank ordering; <5min.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path 'packages\\skill\\skill-filesystem\\src\\index.ts' -Pattern 'PROJECT_DSH_RANK|USER_AGENTS_RANK|registerProvider|export function apply'| ForEach-Object {\"L$($_.LineNumber): $($_.Line.Trim())\"}; Get-Content 'packages\\bundle\\headless\\package.json' | Select-String 'bundle|patch'",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "agent"
+          ]
+        },
+        {
+          "id": "DES3",
+          "type": "design_atom",
+          "evidence": "Dynamic Cordis self-modification runtime plugin runner (the agent mounts its own plugins): packages/extensions/cordis-host-runner/src/index.ts:151 define(request:DynamicCordisDefineRequest) validates name/purpose at :154-157, createSandbox/evaluateHostCode/precheckCode imported at :24; DynamicCordisPlugin (registry.ts, 250 lines) carries immutable package versions with currentPackageId/nextPackageId/clientVersionUpdatesApproved — the upgrade-law is 'stop the active package then run the new version' (lifecycle.ts:33-40 'to REPLACE something an earlier dynamic package registered, first cordis_stop that package id'), guardedPlugin wrapper + cordis-dynamic child fiber (lifecycle.ts:43 group.ctx.plugin(guardedPlugin(...))). Isolation: sandboxed VM host-half + scrubbed worker env (host.ts workerSpawnEnv strips ambient creds).",
+          "file_line": "packages/extensions/cordis-host-runner/src/index.ts:151,154,157,24; packages/extensions/cordis-host-runner/src/lifecycle.ts:33,40,43; packages/extensions/cordis-host-runner/src/registry.ts (250 lines)",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Trace cordis_define->startHostHalf->guardedPlugin activation; confirm stop-then-replace is enforced (versioning.spec.ts); <8min.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path 'packages\\extensions\\cordis-host-runner\\src\\index.ts' -Pattern 'define\\(request|createSandbox|evaluateHostCode' | ForEach-Object {\"L$($_.LineNumber): $($_.Line.Trim())\"}; (Get-Content 'packages\\extensions\\cordis-host-runner\\tests\\versioning.spec.ts' | Measure-Object -Line).Lines",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "workflow",
+            "agent"
+          ]
+        },
+        {
+          "id": "DES4",
+          "type": "god_file",
+          "evidence": "Three core registry/service files exceed the 800-line god-file ceiling: packages/core/tools/src/index.ts = 1830 lines (tool registry + schema + code-mode surface); packages/core/session/src/index.ts = 1090 lines (session log/append/projection); packages/extensions/cordis-host-runner/src/index.ts = 1207 lines (dynamic Cordis runner define/inspect/activate/stop in one module). Each concentrates multiple responsibilities behind one aggregate plugin face, raising review/change risk and contradicting the package's own capability-seam split guidance (AGENTS.md conventions).",
+          "file_line": "packages/core/tools/src/index.ts (1830 lines); packages/core/session/src/index.ts (1090 lines); packages/extensions/cordis-host-runner/src/index.ts (1207 lines)",
+          "risk_level": "high",
+          "risk_scheme_ref": "§一high①",
+          "confidence": "high",
+          "next_step": "Split each >800 file along documented role boundaries (tools: registry/schema/code-mode; session: append/projection/version; host-runner: define/activate/inspect) so no aggregate face exceeds 800 lines; run pnpm typecheck + test:coverage per split; <1 day.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; @('packages\\core\\tools\\src\\index.ts','packages\\core\\session\\src\\index.ts','packages\\extensions\\cordis-host-runner\\src\\index.ts') | ForEach-Object { \"$_ : $((Get-Content $_ | Measure-Object -Line).Lines) lines\" }",
+          "rollback": "Split behind one re-exporting facade preserving the package's public aggregate plugin face; revert is restore of the single file (git checkout), no downstream import change because package exports are unchanged.",
+          "related_dimensions": [
+            "agent"
+          ]
+        },
+        {
+          "id": "DES5",
+          "type": "missing_config",
+          "evidence": "Plugin composition is static-at-boot, not runtime-installable: every plugin is an npm package pulled into a profile's cordis.patch.yml (packages/bundle/base/cordis.patch.yml 366 lines lists ~80 rows by id+name), and apps/cli/src/profile-boot.ts composes 'bundle layers in dsh.profile.bundles order, then cordis.patch.yml, then --patch overlays' — there is NO runtime install/uninstall of npm-packaged plugins (only the sandboxed dynamic-cordis code path is runtime-pluggable). The remote/downloadable skill provider is an interface seam only: packages/skill/skill/src/index.ts SkillProvider docstring names 'a remote registry' as a possible source but no concrete remote provider is registered (only skill-filesystem exists). Coverage of 'user-downloadable installable skill/plugin' is therefore partial.",
+          "file_line": "packages/bundle/base/cordis.patch.yml (366 lines); apps/cli/src/profile-boot.ts (282 lines); packages/skill/skill/src/index.ts (SkillProvider interface ~line 170-185, 'remote registry' docstring)",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§一medium①",
+          "confidence": "high",
+          "next_step": "Either implement a remote SkillProvider (HTTPS catalog + signed download) behind the existing SkillProvider seam, or document the 'compatible-load local skills only' boundary in docs/architecture.md so the cross-cut is not mistaken for a marketplace; <0.5 day to document.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Get-ChildItem packages\\skill -Recurse -Filter *.ts | Where-Object {$_.Name -notlike '*spec*'} | Select-Object -ExpandProperty FullName | Select-String -Pattern 'remote registry|class .*Provider' -List | Select-Object Path,LineNumber",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "workflow"
+          ]
+        },
+        {
+          "id": "DES6",
+          "type": "design_atom",
+          "evidence": "Isolation-purity + manifest-config discipline is enforced: dynamic host code runs through createSandbox/evaluateHostCode/precheckCode (index.ts:24) and guardedPlugin registration guard; skills are escaped not sandboxed because they are trusted local instructions — renderSkillContent escapes attr/text (escapeAttr/escapeText) and the docstring states 'skills are trusted local content' so the register-vs-materialize purity boundary is explicit. No hardcoded tunables: AGENTS.md conventions 'No hardcoded tunables in plugins: deployment-varying choices are validated Config fields changeable from cordis.yml' (e.g. searchTimeoutMs:60000 at cordis.patch.yml:418, maxInlineBytes:50000 at :352 are Config fields, not literals inside run()).",
+          "file_line": "packages/extensions/cordis-host-runner/src/index.ts:24; packages/skill/skill/src/index.ts (renderSkillContent/escapeAttr/escapeText ~line 130-200); packages/bundle/base/cordis.patch.yml:418,352; AGENTS.md conventions block",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Verify no plugin reads process env inside run() except validated Config; run pnpm run hygiene (knip+workspace constraints); <10min.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path 'packages\\skill\\skill\\src\\index.ts' -Pattern 'escapeAttr|escapeText|trusted local content'| ForEach-Object {\"L$($_.LineNumber): $($_.Line.Trim())\"}",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "agent"
+          ]
+        }
+      ],
+      "coverage": {
+        "status": "partial",
+        "reason": "Plugin cross-cut (the soul point) is richly evidenced and partly strong: soft-pluggable Skill provider registry, dynamic Cordis self-modification runner with manifest+upgrade-law+isolation, and bundle manifest contract are all read in real source. 'covered' downgraded to 'partial' because the 'user-downloaded installable skill/plugin' sub-goal is only an interface seam (remote provider) not materialized, and plugin composition is static-at-boot (no runtime install/uninstall of npm plugins).",
+        "recheck_trigger": "Re-evaluate when packages/skill gains a concrete remote SkillProvider implementation, or when a runtime npm-install hook is added to profile-boot/runner."
+      },
+      "meta": {
+        "intake_evidence_count": 6,
+        "files_read": [
+          "AGENTS.md",
+          "pnpm-workspace.yaml",
+          "packages/skill/skill/src/index.ts",
+          "packages/skill/skill-filesystem/src/index.ts",
+          "packages/skill/tool-skill/src/index.ts",
+          "packages/extensions/cordis-host-runner/src/index.ts",
+          "packages/extensions/cordis-host-runner/src/registry.ts",
+          "packages/extensions/cordis-host-runner/src/lifecycle.ts",
+          "packages/bundle/base/src/index.ts",
+          "packages/bundle/base/cordis.patch.yml",
+          "packages/bundle/headless/package.json",
+          "packages/bundle/headless/src/startup.ts",
+          "apps/cli/src/bin.ts",
+          "apps/cli/src/profile-boot.ts",
+          ".agents/skills/ (dir tree)"
+        ],
+        "notes": "DSH genuinely matches architect-plugin §0 'not all self-rolled, only compatible-load': it loads Claude-Code-style SKILL.md markdown skills (skill-filesystem) and runs vendored Cordis plugins — it adapts/loads, not reinvents. The dynamic Cordis runner (self-modification) is a real extension-point + isolation + upgrade-law system. Main debt is god-file size (DES4) and the un-materialized remote skill marketplace (DES5). did NOT read architect-plugin/SKILL.md (outside DSH, read-only) but aligned against the task-stated §0/§1/§4 framing."
+      }
+    },
+    {
+      "agent": "ArchitectWorkflow",
+      "dimension": "workflow",
+      "evaluatedAt": "2026-09-14T08:49:00Z",
+      "project": "deepseek-harness-master",
+      "status": "partial",
+      "findings": [
+        {
+          "id": "WF1",
+          "type": "design_atom",
+          "evidence": "Explicit turn/step state machine: packages/core/agent-loop/src/agent.ts:38 'type Phase =', :39 { kind:'idle'; lastTurn }, :41 kind:'maintenance', :46 { kind:'running'; abort:AbortController; turn:number; step:number; wakeRequested:boolean }; setPhase transitions + status emission at :104; turn() opens session turn boundary and steps until tool-calls complete/max-tokens (turn body ~:250-330); step() loops buildRequest->stream->tool-calls (:380-430). Phase transitions are durable: turn/start, step/start, step/end, turn/end appended to the session log.",
+          "file_line": "packages/core/agent-loop/src/agent.ts:38,39,41,46,104,250,380",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Trace one turn through phase transitions with resume.spec.ts; <5min.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path 'packages\\core\\agent-loop\\src\\agent.ts' -Pattern 'type Phase|kind: .idle|kind: .running|private setPhase|async turn|async step'| ForEach-Object {\"L$($_.LineNumber): $($_.Line.Trim())\"}",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "agent"
+          ]
+        },
+        {
+          "id": "WF2",
+          "type": "design_atom",
+          "evidence": "Checkpoint-resume via durable session log: packages/session/session-checkpoint-policy/src/index.ts:63 apply, :64 ctx.on('llm/stream') flushes session before adapter dispatch, :70 tools/execute flushes before top-level tool body, :79 agent/pre-step flushes preceding step. Resume carries materialized history: agent-loop index.ts:270 resumeSessionId?:SessionId; AGENTS.md Pre-release note 'Backends reject old on-disk formats. SQLite uses monotonic SCHEMA_VERSION; dsh-session keeps SESSION_FORMAT_VERSION at 0'; compaction checkpoint provenance marks replay boundaries (packages/compaction/compaction/src/checkpoint.ts:40 compactCheckpointSource, :44 isCompactCheckpointSource).",
+          "file_line": "packages/session/session-checkpoint-policy/src/index.ts:63,64,70,79; packages/core/agent-loop/src/index.ts:270; packages/compaction/compaction/src/checkpoint.ts:40,44",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Run pnpm test -t resume against packages/core/agent-loop/tests/resume.spec.ts (854 lines) to confirm replay after checkpoint; <15min.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; (Get-Content 'packages\\core\\agent-loop\\tests\\resume.spec.ts' | Measure-Object -Line).Lines; Select-String -Path 'packages\\session\\session-checkpoint-policy\\src\\index.ts' -Pattern 'ctx.on\\(.llm/stream|ctx.on\\(.tools/execute|ctx.on\\(.agent/pre-step|sessions.flush'| ForEach-Object {\"L$($_.LineNumber): $($_.Line.Trim())\"}",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "agent"
+          ]
+        },
+        {
+          "id": "WF3",
+          "type": "design_atom",
+          "evidence": "Fan-out/fan-in: tool-workflow runs a JS orchestration script that fans out subagents and returns the script's final value (packages/workflow/tool-workflow/src/index.ts:1-12 module doc, 310 lines, inject ['tools','workflowEngine','systemPrompt']); records run-start/agent-start/agent-end/run-end via createWorkflowRecorder (:64-130, liveAgents pairing ledger). Iterative fan-in loop: tool-ralph fresh-agent Ralph iteration with maxRounds:64 (packages/bundle/base/cordis.patch.yml tool-ralph config; tool-ralph/src/index.ts 441 lines). Child agents fan through ctx.subagents provider (spawn/fork) per cordis.patch.yml:335 workflow-worker-thread provider:spawn.",
+          "file_line": "packages/workflow/tool-workflow/src/index.ts:1,64,130; packages/workflow/tool-ralph/src/index.ts (441 lines); packages/bundle/base/cordis.patch.yml:335",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Run tool-workflow.spec.ts (414 lines) + integration.spec.ts to confirm fan-out/result fan-in; <10min.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; (Get-Content 'packages\\workflow\\tool-workflow\\src\\index.ts' | Measure-Object -Line).Lines; (Get-Content 'packages\\workflow\\tool-ralph\\tests\\integration.spec.ts' | Measure-Object -Line).Lines",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "agent"
+          ]
+        },
+        {
+          "id": "WF4",
+          "type": "design_atom",
+          "evidence": "Handoff/extension-points are Cordis events, not loop edits: AGENTS.md convention 'Plugins, not loop changes: new behavior goes on documented extension points'. Concrete handoff seams: agent/pre-step waterfall (PreStepDecision), agent/request waterfall (config proposal), agent/request-error waterfall (retry decision), tools/execute waterfall (timeout/cancellation/checkpoint wrappers), llm/stream (checkpoint+retry intercept), agent/inbox/inserted|claimed|discarded, agent/status, agent/turn-stopping. Workflow recorder subscribes workflow/agent-start|end plus tool-workflow/* durable events. This is a single well-defined event bus for handoff and plugin composition.",
+          "file_line": "AGENTS.md (Plugins, not loop changes convention); packages/core/agent-loop/src/agent.ts:356 agent/request-error; packages/guard/timeout-policy/src/index.ts:56 tools/execute; packages/session/session-checkpoint-policy/src/index.ts:64,70,79",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Enumerate all ctx.on/ctx.waterfall extension points across packages; cross-check against docs/architecture.md; <15min.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path 'packages\\core\\agent-loop\\src\\agent.ts' -Pattern 'waterfall\\(|ctx.on\\(' | Select-Object -First 12 | ForEach-Object {\"L$($_.LineNumber): $($_.Line.Trim())\"}",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "design"
+          ]
+        },
+        {
+          "id": "WF5",
+          "type": "design_flaw",
+          "evidence": "No durable saga for the workflow orchestration across process restart: WorkflowRun is a process-local worker-thread run (packages/workflow/workflow-worker-thread/src/host.ts:102 'class WorkerRun implements WorkflowRun', fields pendingStarts/liveAgents/children/worker held in memory, result Promise settles once). Only the continuable subagent CHILDREN persist (subagent continuation); the orchestrating parallel()/pipeline() script state and its in-flight result are not durable — killing the process during a workflow loses the orchestration (host.ts:191 graceTimer unref'd force-terminate, index.ts:4 'thread prevents synchronous script work from blocking the host'). This is the one workflow sub-dimension with no source-level durability story; it is a documented containment boundary, not full saga recovery.",
+          "file_line": "packages/workflow/workflow-worker-thread/src/host.ts:102,191; packages/workflow/workflow-worker-thread/src/index.ts:2,4",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§一medium②",
+          "confidence": "high",
+          "next_step": "Decide: (a) record workflow run start/meta+child lineage into the session log and, on resume, only re-attach to still-persisted continuable children (script not re-executed); or (b) document the ephemeral-orchestration / durable-children boundary in docs/architecture.md. <0.5 day to document, ~2 days to add run-level resume events.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path 'packages\\workflow\\workflow-worker-thread\\src\\host.ts' -Pattern 'implements WorkflowRun|graceTimer|settled|terminalClaimed'| ForEach-Object {\"L$($_.LineNumber): $($_.Line.Trim())\"}; Get-ChildItem packages\\workflow -Recurse -Filter *.ts | Select-String -Pattern 'SESSION_FORMAT_VERSION|persist.*workflow|workflow.*resume' -List",
+          "rollback": "N/A — documenting boundary; if implementing events, revert by dropping the new session event types before bumping SESSION_FORMAT_VERSION.",
+          "related_dimensions": [
+            "agent"
+          ]
+        }
+      ],
+      "coverage": {
+        "status": "partial",
+        "reason": "Process structure (state machine), checkpoint-resume, handoff/extension-points, and fan-out/fan-in are covered with line-level evidence. Downgraded from covered to partial because durable workflow saga/orchestration recovery across process restart is NOT present in source (WF5): the orchestration script run is in-memory; only continuable child subagents persist. No persistent multi-step workflow state store for the orchestrator was found.",
+        "recheck_trigger": "Re-evaluate when packages/workflow gains a run-level durable session event / resume for the orchestrator, or when docs/architecture.md records the ephemeral-orchestration boundary."
+      },
+      "meta": {
+        "intake_evidence_count": 5,
+        "files_read": [
+          "packages/core/agent-loop/src/agent.ts",
+          "packages/core/agent-loop/src/index.ts",
+          "packages/session/session-checkpoint-policy/src/index.ts",
+          "packages/compaction/compaction/src/checkpoint.ts",
+          "packages/workflow/tool-workflow/src/index.ts",
+          "packages/workflow/tool-ralph/src/index.ts",
+          "packages/workflow/workflow-worker-thread/src/index.ts",
+          "packages/workflow/workflow-worker-thread/src/host.ts",
+          "packages/guard/timeout-policy/src/index.ts",
+          "packages/bundle/base/cordis.patch.yml",
+          "AGENTS.md"
+        ],
+        "notes": "DSH's workflow core is strong: explicit Phase FSM, durable checkpoint before every model/tool/pre-step boundary, replay-validated resume, and a real tool-workflow fan-out with run/agent lifecycle events. The single true gap is durable orchestration saga (WF5), which appears intentional (containment) but leaves cross-restart workflow resume unsupported."
+      }
+    },
+    {
+      "agent": "ArchitectAgent",
+      "dimension": "agent",
+      "evaluatedAt": "2026-09-14T08:50:00Z",
+      "project": "deepseek-harness-master",
+      "status": "partial",
+      "findings": [
+        {
+          "id": "AG1",
+          "type": "design_atom",
+          "evidence": "Agent state machine with per-phase AbortController: packages/core/agent-loop/src/agent.ts:38-46 Phase {idle,maintenance,running}; :134 cancel(cause:AgentCancelCause, options:CancelOptions) clears inbox + aborts the phase controller; :104 setPhase emits agent/status transitions; :195 whenIdle() waits for activity convergence; :219 running->idle on driver exit; maintenance blocks new work (:146). The agent-scoped Scope (createScope) is torn down by the lifecycle owner after the driver exits.",
+          "file_line": "packages/core/agent-loop/src/agent.ts:38,46,104,134,146,195,219",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Run packages/core/agent-loop/tests/cancel.spec.ts (723 lines) + scope-lifecycle.spec.ts (984 lines); <15min.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path 'packages\\core\\agent-loop\\src\\agent.ts' -Pattern 'cancel\\(cause|whenIdle|setPhase|kind: .running'| ForEach-Object {\"L$($_.LineNumber): $($_.Line.Trim())\"}; (Get-Content 'packages\\core\\agent-loop\\tests\\cancel.spec.ts' | Measure-Object -Line).Lines",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "workflow"
+          ]
+        },
+        {
+          "id": "AG2",
+          "type": "design_atom",
+          "evidence": "Concurrency cap: DEFAULT_MAX_PARALLEL_TOOL_CALLS=10 at packages/core/agent-loop/src/constants.ts:6, validated resolveMaxParallelToolCalls at index.ts:133-138 (positive integer else throw) and schema-defaulted at index.ts:251/301. Scheduler: tool-calls.ts:3 'parallel calls use a bounded rolling pool and are reclassified before start'; :89 mode==='parallel'?planned.slice(next):[first] groups; exclusive calls form barriers; results/contexts commit in model order. This is the tool-level backpressure bound.",
+          "file_line": "packages/core/agent-loop/src/constants.ts:6; packages/core/agent-loop/src/index.ts:133,138,251,301; packages/core/agent-loop/src/tool-calls.ts:3,89",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Grep maxParallelToolCalls usage across bundles; confirm no unbounded Promise.all in tool path; <8min.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path 'packages\\core\\agent-loop\\src\\index.ts','packages\\core\\agent-loop\\src\\tool-calls.ts' -Pattern 'DEFAULT_MAX_PARALLEL_TOOL_CALLS|resolveMaxParallelToolCalls|bounded rolling pool|mode === .parallel'| ForEach-Object {\"L$($_.LineNumber): $($_.Line.Trim())\"}",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "workflow"
+          ]
+        },
+        {
+          "id": "AG3",
+          "type": "design_atom",
+          "evidence": "Cancellation drains and records synthetic results so replay stays valid: agent.ts:134 cancel aborts phase; tool-calls.ts:95-96 'if (outcome.aborted) { for (const call of planned.slice(next)) appendSkippedToolCall(session,turn,step,call.block) }'; Materialized aborted-before-dispatch result in session-checkpoint-policy/src/index.ts:25-31 abortedBeforeDispatchResult (code TOOL_ABORTED_BEFORE_DISPATCH); the scheduler drains started dispatches on an internal failure without fabricating results (tool-calls.ts module doc).",
+          "file_line": "packages/core/agent-loop/src/agent.ts:134; packages/core/agent-loop/src/tool-calls.ts:95,96; packages/session/session-checkpoint-policy/src/index.ts:25,27,29,31",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Confirm cancel.spec.ts covers abort-before-dispatch and in-flight drain; <10min.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path 'packages\\core\\agent-loop\\src\\tool-calls.ts' -Pattern 'appendSkippedToolCall|aborted|drain'| ForEach-Object {\"L$($_.LineNumber): $($_.Line.Trim())\"}",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "workflow"
+          ]
+        },
+        {
+          "id": "AG4",
+          "type": "design_atom",
+          "evidence": "Cooperative tool timeout budget: packages/guard/timeout-policy/src/index.ts:25 TOOL_TIMEOUT, :55 apply, :56 ctx.on('tools/execute'), :61 'using d = deadline(exec.signal, timeoutMs, TOOL_TIMEOUT)' scoping avoids misreading a nested outer deadline; result replaced only when THIS wrapper's timer fired (:65-70) and the upstream signal is restored in finally (:73). Search/aux call budgets live in config: searchTimeoutMs:60000 at cordis.patch.yml:418, bash-sandbox timeoutMs:60000; llm-retry plugin at cordis.patch.yml:72 composes request-level retry separately.",
+          "file_line": "packages/guard/timeout-policy/src/index.ts:25,55,56,61,65; packages/bundle/base/cordis.patch.yml:72,418",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Run timeout-policy.spec.ts (224 lines); <8min.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path 'packages\\guard\\timeout-policy\\src\\index.ts' -Pattern 'TOOL_TIMEOUT|deadline|ctx.on\\(.tools/execute|timeoutOf'| ForEach-Object {\"L$($_.LineNumber): $($_.Line.Trim())\"}; (Get-Content 'packages\\guard\\timeout-policy\\tests\\timeout-policy.spec.ts' | Measure-Object -Line).Lines",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "design"
+          ]
+        },
+        {
+          "id": "AG5",
+          "type": "design_atom",
+          "evidence": "Failure recovery + retry at the model-request boundary: agent.ts:354-358 'if (finish.kind===error||finish.kind===aborted)' dispatches waterfall 'agent/request-error' {failure}, :364 default returns undefined (no retry); :367 'if (action?.kind !== .retry) throw new LlmError(...)'; a retry plugin (llm-retry) returns RequestErrorAction kind:'retry' to continue the while(true) loop (:368). compaction-basic also observes agent/request-error (compaction-basic/src/index.ts:179) so recovery and compaction share the seam. LlmError preserves failure facts/code.",
+          "file_line": "packages/core/agent-loop/src/agent.ts:354,356,364,367,368; packages/compaction/compaction-basic/src/index.ts:179",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Grep llm-retry package registration of agent/request-error returning retry; run loop.spec.ts; <10min.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path 'packages\\core\\agent-loop\\src\\agent.ts' -Pattern 'request-error|RequestErrorAction|kind !== .retry|new LlmError'| ForEach-Object {\"L$($_.LineNumber): $($_.Line.Trim())\"}",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "workflow"
+          ]
+        },
+        {
+          "id": "AG6",
+          "type": "design_atom",
+          "evidence": "Worker-pool backpressure four-piece set for workflow fan-out: capacity ceiling packages/workflow/workflow-worker-thread/src/index.ts:36 maxConcurrentAgents, :38 maxTotalAgents (runaway backstop default 1000), :40 maxItemsPerCall (default 4096), :152 auto-resolve min(16,max(1,availableParallelism()-2)). Cancellation/grace: host.ts:180 cancel, :190 abortChildren(reason), :191 graceTimer=setTimeout(...,disposeGraceMs) then force-settle cancelled + worker.terminate() (:194-200), :236/:245 reapChildren('workflow disposed'), :468 childQuiescence(), :474 reapChildren(), :482 abortChildren. pendingStarts/liveAgents sets track in-flight children; unref'd grace timer never pins the process.",
+          "file_line": "packages/workflow/workflow-worker-thread/src/index.ts:36,38,40,152; packages/workflow/workflow-worker-thread/src/host.ts:180,190,191,200,236,245,468,474,482",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Run workflow-worker-thread.spec.ts (1368 lines) to verify backpressure + grace + terminate; <20min.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path 'packages\\workflow\\workflow-worker-thread\\src\\host.ts' -Pattern 'cancel\\(reason|abortChildren|graceTimer|reapChildren|childQuiescence'| ForEach-Object {\"L$($_.LineNumber): $($_.Line.Trim())\"}; (Get-Content 'packages\\workflow\\workflow-worker-thread\\tests\\workflow-worker-thread.spec.ts' | Measure-Object -Line).Lines",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "workflow"
+          ]
+        },
+        {
+          "id": "AG7",
+          "type": "design_atom",
+          "evidence": "Hierarchical reduction + compaction/archive: compaction-basic BasicCompactionEngine observes triggers packages/compaction/compaction-basic/src/index.ts:103 (class extends CompactionEngine), :147 ctx.on('agent/pre-step'), :167 ctx.on('agent/status'), :173 ctx.on('session/event'), :179 ctx.on('agent/request-error'); region selection in region.ts (516 lines). Tool-result pruning/cap: tool-result-pruner thresholdChars:8192, headChars:4096, tailChars:1024 (cordis.patch.yml:360,363). Inline overflow spill: spill-local + spill-policy maxInlineBytes:50000 (cordis.patch.yml:346,352). Compaction checkpoint provenance marks replay boundaries so the archive is reconstructable (checkpoint.ts:40). Token budget is enforced via token-meter + compaction on CONTEXT_WINDOW_EXCEEDED_CODE.",
+          "file_line": "packages/compaction/compaction-basic/src/index.ts:103,147,167,173,179; packages/compaction/compaction-basic/src/region.ts (516 lines); packages/bundle/base/cordis.patch.yml:346,352,360,363",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Run compaction-basic.spec.ts (1713 lines) + tool-result-pruner.spec.ts; <20min.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path 'packages\\compaction\\compaction-basic\\src\\index.ts' -Pattern 'extends CompactionEngine|ctx.on\\(' | ForEach-Object {\"L$($_.LineNumber): $($_.Line.Trim())\"}; (Get-Content 'packages\\compaction\\compaction-basic\\tests\\compaction-basic.spec.ts' | Measure-Object -Line).Lines",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "workflow"
+          ]
+        },
+        {
+          "id": "AG8",
+          "type": "design_atom",
+          "evidence": "Observability: agent events are typed declaration-merged over a durable session log — agent.status/turn-stopping/inbox (agent.ts dispatch via agentEvents), agent/error structured (agent.ts:354 LlmError with code), and every model-visible input is reconstructable (AGENTS.md 'Model-visible is logged'). Telemetry is opt-in OTLP exports mirroring session-log records: cordis.patch.yml:148 session-telemetry-otel, exporter URL/gzip/timeoutMillis:1000, processor maxQueueSize:2048, shutdownTimeoutMillis:3000; identity is anonymous ($DSH_HOME/.anonymous-user-id); DSH_TELEMETRY_DISABLED any-non-empty value opts out. session-query-sqlite provides full-text search opt-in.",
+          "file_line": "packages/bundle/base/cordis.patch.yml:148; packages/core/agent-loop/src/agent.ts:354; AGENTS.md (Model-visible is logged convention)",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "high",
+          "next_step": "Confirm telemetry switches default-off (apps/cli/tests/telemetry-switch.spec.ts); <8min.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path 'packages\\bundle\\base\\cordis.patch.yml' -Pattern 'session-telemetry-otel|timeoutMillis|maxQueueSize|OTLP_URL' | ForEach-Object {\"L$($_.LineNumber): $($_.Line.Trim())\"}; (Get-Content 'apps\\cli\\tests\\telemetry-switch.spec.ts' | Measure-Object -Line).Lines",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "design"
+          ]
+        },
+        {
+          "id": "AG9",
+          "type": "missing_config",
+          "evidence": "Performance / hot-path SLA / capacity planning is NOT evidenced in source beyond implicit budgets: only tool-level timeouts (search 60s, bash 60s) and workflow caps (maxConcurrentAgents, maxTotalAgents 1000, maxItemsPerCall 4096, syncTimeoutMs 5000, disposeGraceMs 5000) appear; no SLO/latency p99/throughput targets, no capacity-planning docs, no per-step time budgets, no healthcheck endpoint. The token budget (token-meter + compaction) is the only resource budget; there is no wall-clock or cost budget per task. This matches the task directive to mark the perf sub-dimension partial, not covered.",
+          "file_line": "packages/workflow/workflow-worker-thread/src/index.ts:36,38,40,42,48; packages/bundle/base/cordis.patch.yml:418 (searchTimeoutMs:60000)",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①",
+          "confidence": "medium",
+          "next_step": "Search docs/ for SLO/capacity/latency budgets and any healthcheck module; if absent, document the 'no SLO, single-process' stance in docs/architecture.md; <0.5 day.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Get-ChildItem docs -Recurse -Filter *.md | Select-String -Pattern 'SLO|p99|latency budget|capacity|healthcheck|throughput' -List | Select-Object Path,LineNumber; Get-ChildItem packages -Recurse -Filter '*health*' -ErrorAction SilentlyContinue | Select-Object FullName",
+          "rollback": "N/A",
+          "related_dimensions": [
+            "design"
+          ]
+        },
+        {
+          "id": "AG10",
+          "type": "god_file",
+          "evidence": "Two agent-bearing registry files exceed the god-file 800-line ceiling and own the agent hot path: packages/core/tools/src/index.ts = 1830 lines (tool registry + execution-mode classification + schema the agent loop calls every step) and packages/core/session/src/index.ts = 1090 lines (session append/projection/version the checkpoint-resume path depends on). Both are on the per-step hot path, so their size is an agent resilience/maintainability risk, not just a design risk.",
+          "file_line": "packages/core/tools/src/index.ts (1830 lines); packages/core/session/src/index.ts (1090 lines)",
+          "risk_level": "high",
+          "risk_scheme_ref": "§一high①",
+          "confidence": "high",
+          "next_step": "Split tools/index.ts (registry/schema/code-mode) and session/index.ts (append/projection/version) so no hot-path file exceeds 800 lines, keeping the aggregate plugin face; run pnpm test:coverage (per-file 100% on packages/*/*/src) + typecheck; <1 day.",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; @('packages\\core\\tools\\src\\index.ts','packages\\core\\session\\src\\index.ts') | ForEach-Object { \"$_ : $((Get-Content $_ | Measure-Object -Line).Lines) lines\" }",
+          "rollback": "Use a barrel re-export so package exports are unchanged; revert is git checkout of the split files — no downstream import path change.",
+          "related_dimensions": [
+            "design",
+            "workflow"
+          ]
+        }
+      ],
+      "coverage": {
+        "status": "partial",
+        "reason": "Agent-core is covered with line-level evidence: FSM (AG1), concurrency cap (AG2), cancel/drain (AG3), timeout budget (AG4), retry/recovery (AG5), worker-pool backpressure four-piece set (AG6), compaction/archive reduction (AG7), observability (AG8). Downgraded to partial solely because the performance sub-dimension (hot-path SLA / latency / capacity planning / cost budget) lacks source evidence (AG9), per the evaluation directive that perf-insufficient must be partial not covered.",
+        "recheck_trigger": "Re-evaluate when docs/architecture.md records SLO/latency/capacity budgets or packages adds a healthcheck/SLA module; otherwise the perf sub-dim remains partial."
+      },
+      "meta": {
+        "intake_evidence_count": 10,
+        "files_read": [
+          "packages/core/agent-loop/src/agent.ts",
+          "packages/core/agent-loop/src/constants.ts",
+          "packages/core/agent-loop/src/index.ts",
+          "packages/core/agent-loop/src/tool-calls.ts",
+          "packages/guard/timeout-policy/src/index.ts",
+          "packages/session/session-checkpoint-policy/src/index.ts",
+          "packages/workflow/workflow-worker-thread/src/index.ts",
+          "packages/workflow/workflow-worker-thread/src/host.ts",
+          "packages/compaction/compaction-basic/src/index.ts",
+          "packages/compaction/compaction/src/checkpoint.ts",
+          "packages/bundle/base/cordis.patch.yml",
+          "AGENTS.md"
+        ],
+        "notes": "Agent dimension is genuinely strong and unusually disciplined: per-phase AbortController, bounded parallel tool pool, abort-drains-with-synthetic-results for replay validity, scoped timeout swap, waterfall retry seam, and a complete worker-pool backpressure set (cap + runaway backstop + item cap + grace-terminate + child abation + quiescence). Compaction gives real hierarchical reduction. The honest gaps: (1) perf/SLA/capacity-planning absent → partial coverage (AG9); (2) two >800-line hot-path registry files (AG10). did NOT read architect-plugin/SKILL.md (outside DSH, read-only)."
+      }
+    },
+    {
+      "agent": "ArchitectC",
+      "dimension": "test",
+      "evaluatedAt": "2026-09-14T08:42:00+08:00",
+      "project": "deepseek-harness-master",
+      "status": "partial",
+      "findings": [
+        {
+          "id": "T1",
+          "type": "coverage-gate",
+          "evidence": "vitest.config.ts:273-278 thresholds block: perFile:true with statements:100/branches:100/functions:100/lines:100; AGENTS.md:65 'pnpm run test:coverage # CI coverage gate: per-file 100% on packages/*/*/src' and AGENTS.md:92; .github/workflows/ci.yml:176 'run: pnpm run check:ci:coverage'",
+          "file_line": "vitest.config.ts:273-278",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "Confirm scripts/run-gates.ts ci-coverage drives vitest --coverage with this config and no env override relaxes per-file 100",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path vitest.config.ts -Pattern 'perFile|statements: 100'",
+          "related_dimensions": [
+            "ops"
+          ]
+        },
+        {
+          "id": "T2",
+          "type": "snapshot-golden-replay",
+          "evidence": "vitest.snapshot.config.ts:24-29 DSH_SNAPSHOT=record/replay/refresh modes; line 55-61 'Replay never writes committed outputs and every scenario owns its mutable runtime state' so keyless replay is deterministic and idempotent",
+          "file_line": "vitest.snapshot.config.ts:24-61",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "Run test:snapshot (replay) keyless and confirm zero golden writes",
+          "verify_command": "pnpm run test:snapshot",
+          "related_dimensions": []
+        },
+        {
+          "id": "T3",
+          "type": "e2e-false-green-guard",
+          "evidence": "vitest.e2e.config.ts:16-17 loadEnvFile plus testTimeout:120000 retry:2 so suites self-skip without key; .github/workflows/e2e.yml:93-105 'Preflight (require DEEPSEEK_API_KEY)' errors if empty so a self-skipping suite cannot report a false green",
+          "file_line": "vitest.e2e.config.ts:16-38",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "Without key run test:e2e and expect structured self-skip; with key ensure CI preflight aborts on empty DEEPSEEK_API_KEY",
+          "verify_command": "pnpm run test:e2e",
+          "related_dimensions": [
+            "git",
+            "security"
+          ]
+        },
+        {
+          "id": "T4",
+          "type": "secondary-test-matrices",
+          "evidence": "vitest.web.perf.config.ts:1-13 includes apps/web/tests/**/*.perf.ts with testTimeout:600000 as a manual high-cardinality lane; vitest.web-stress.config.ts includes **/*.stress.ts opt-in; pytest.ini testpaths=python/sdk/tests with norecursedirs; python/sdk/tests/test_client.py is 42677B",
+          "file_line": "vitest.web.perf.config.ts:1-13",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "Confirm perf/stress are opt-in manual lanes excluded from the ci-primary gate per their doc comments",
+          "verify_command": "pnpm run test:web:perf:built; pnpm run test:web:stress",
+          "related_dimensions": [
+            "frontend"
+          ]
+        },
+        {
+          "id": "T5",
+          "type": "verification-final-step-invariants",
+          "evidence": "scripts/test-invariants.ts:24-26 import.meta.glob '../packages/*/*/src/invariant.ts' mounts every package's invariant companion as the test-wide final verification step; packages/runtime-diagnostics/invariants/src/index.ts:31-46 InvariantRegistry plus InvariantFailure throws code INVARIANT; packages/session/session-persistence/tests/contract.ts contract assertions",
+          "file_line": "scripts/test-invariants.ts:24-26",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "Introduce a violating invariant in a fixture package and assert the test run fails (non-zero exit) rather than warning",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; pnpm run verify-package-invariants",
+          "related_dimensions": [
+            "review"
+          ]
+        },
+        {
+          "id": "T6",
+          "type": "multi-language-sandbox",
+          "evidence": "packages/e2b/e2b/src/index.ts Config apiKey/cwd/timeoutMs provisions a shared remote Linux E2B sandbox; packages/sandbox/sandbox-local tests landlock.e2e/seatbelt.e2e/bwrap.e2e on Linux+macOS; packages/sandbox/sandbox-windows-acl for Win32 ACL confinement; code-runtime-worker-thread as in-process JS runtime",
+          "file_line": "packages/e2b/e2b/src/index.ts:25-40",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "Run sandbox-local e2e plus a manual E2B workflow_dispatch to confirm multi-language confinement paths still enforced",
+          "verify_command": ".github/workflows/e2b-e2e.yml workflow_dispatch",
+          "related_dimensions": [
+            "security"
+          ]
+        },
+        {
+          "id": "T7",
+          "type": "ai-output-evaluator-missing",
+          "evidence": "packages/goal/goal-round-driver/README.md 'No independent evaluator - the model-facing goal policy decides when evidence is sufficient for completion ... evaluator-backed certification remains deferred'; packages/extensions/cordis-client-runner/src/client/evaluator.ts:1 is a JS/browser closure evaluator (new Function), NOT an AI-output judge; grep for evaluator|benchmark|golden across packages src found no AI-eval/experiment harness",
+          "file_line": "packages/goal/goal-round-driver/README.md:1-40",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§一medium①单维缺验证",
+          "confidence": "high",
+          "next_step": "If DSH must grade model outputs add a multi-evaluator plus experiment state-machine package under packages/ (judge + rubric + dataset); until then document that AI-output certification is owner-managed not DSH-built",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path packages/goal/goal-round-driver/README.md -Pattern 'No independent evaluator'",
+          "related_dimensions": [
+            "agent"
+          ]
+        }
+      ],
+      "coverage": {
+        "status": "partial",
+        "reason": "per-file 100% gate, keyless idempotent snapshot replay, e2e false-green guard, web perf/stress plus python pytest, per-package invariant verification-final-step, and multi-language sandbox all verified at file:line; the named AI-output evaluator sub-framework (multi-evaluator plus experiment state machine) is absent and explicitly deferred",
+        "recheck_trigger": "a dsh-eval/judge or experiment state-machine package is added under packages/, or goal-round-driver README removes the 'No independent evaluator' line"
+      },
+      "meta": {
+        "intake_evidence_count": 7,
+        "files_read": [
+          "vitest.config.ts",
+          "vitest.snapshot.config.ts",
+          "vitest.e2e.config.ts",
+          "vitest.web.perf.config.ts",
+          "vitest.web-stress.config.ts",
+          "pytest.ini",
+          "AGENTS.md",
+          ".github/workflows/ci.yml",
+          ".github/workflows/e2e.yml",
+          "scripts/test-invariants.ts",
+          "packages/runtime-diagnostics/invariants/src/index.ts",
+          "packages/e2b/e2b/src/index.ts",
+          "packages/goal/goal-round-driver/README.md",
+          "python/sdk/tests/"
+        ],
+        "notes": "DSH test system is mature; the only unmet sub-requirement is an AI-output evaluation/experiment harness, which the project explicitly defers"
+      }
+    },
+    {
+      "agent": "ArchitectC",
+      "dimension": "ops",
+      "evaluatedAt": "2026-09-14T08:42:00+08:00",
+      "project": "deepseek-harness-master",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "O1",
+          "type": "release-publish-pipeline",
+          "evidence": ".gitlab-ci.yml stages build+publish: sdk-wheel runs scripts/build-python-release.py; .runtime-wheel runs tsx scripts/build-exe-for-python-sdk.ts, uv smoke test, readelf GLIBC<=2.28 and docker run quay.io/pypa/manylinux_2_28 clean-install; publish-python runs twine check + upload; .github/workflows/release.yml 5123B, python-release.yml 8461B, release-vendor.yml 4068B, landlock-run-release.yml 5306B",
+          "file_line": ".gitlab-ci.yml:1-105",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "Keep the tag==package.json version gate; verify twine upload fails on a pre-existing version (immutability) before relying on it",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path .gitlab-ci.yml -Pattern 'twine|manylinux_2_28|readelf|verify-runtime-closure'",
+          "related_dimensions": [
+            "git"
+          ]
+        },
+        {
+          "id": "O2",
+          "type": "ci-publish-gate",
+          "evidence": ".github/workflows/ci.yml:915-928 all-checks-passed job needs:[node-24,node-24-coverage,node-24-consumers,node-compat,python-sdk,python-runtime,windows] gating merge and release on every lane passing",
+          "file_line": ".github/workflows/ci.yml:928",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "Confirm all-checks-passed is a required branch-protection check before any publish workflow can resolve",
+          "verify_command": "Select-String -Path .github/workflows/ci.yml -Pattern 'all-checks-passed|needs:'",
+          "related_dimensions": [
+            "git"
+          ]
+        },
+        {
+          "id": "O3",
+          "type": "runtime-resource-limits",
+          "evidence": "packages/code-runtime/code-runtime-worker-thread/src/index.ts:26-49 Config computeMs (measured event-loop busy-time), maxWallMs, maxOutputBytes, maxOldGenerationSizeMb all configurable from cordis.yml (no hardcoded tunables); line 387 resourceLimits:{maxOldGenerationSizeMb:this.config.maxOldGenerationSizeMb} kills the worker on overflow surfaced as kind 'worker-exit'",
+          "file_line": "packages/code-runtime/code-runtime-worker-thread/src/index.ts:26-49",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "Set maxOldGenerationSizeMb below default in a fixture cordis.yml and assert the 'worker-exit' kind fires under heap pressure",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path packages/code-runtime/code-runtime-worker-thread/src/index.ts -Pattern 'resourceLimits|maxOldGenerationSizeMb|computeMs'",
+          "related_dimensions": [
+            "security",
+            "agent"
+          ]
+        },
+        {
+          "id": "O4",
+          "type": "tool-timeout-and-loop-guard",
+          "evidence": "packages/guard/timeout-policy/src/index.ts:2 'Cooperative tool-call timeout enforcer. A tool declares timeoutMs'; packages/guard/repeat-tool-reminder has a 19450B spec file providing loop-hygiene warnings on repeated calls",
+          "file_line": "packages/guard/timeout-policy/src/index.ts:2",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "Confirm a tool exceeding its declared timeoutMs is terminated and surfaced to the agent loop",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; pnpm run test --filter packages/guard/timeout-policy",
+          "related_dimensions": [
+            "agent"
+          ]
+        },
+        {
+          "id": "O5",
+          "type": "container-orchestration-na",
+          "evidence": "no Dockerfile/docker-compose/k8s/compose/healthcheck files anywhere in repo: root listing has none and Get-ChildItem -Recurse -Include 'Dockerfile*','docker-compose*','k8s*.yaml','healthcheck*' returned none; DSH ships a CLI/SDK plus npm wheels and a packaged executable, not a long-running service",
+          "file_line": "(repo root) absent",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "If DSH gains a hosted service mode add a container manifest plus healthcheck; today none is warranted",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Get-ChildItem -Recurse -Include 'Dockerfile*','docker-compose*','*.dockerfile' -ErrorAction SilentlyContinue | Select-Object FullName",
+          "related_dimensions": []
+        },
+        {
+          "id": "O6",
+          "type": "rollback-na-immutable-publish",
+          "evidence": ".gitlab-ci.yml publish-python 'GitLab does not overwrite an existing version; create a new python-v<repository-version> tag' so the registry is immutable and rollback is republish a fixed version, not in-place revert; no rollback/release-revert action found in scripts or workflows",
+          "file_line": ".gitlab-ci.yml:100-105",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "If mutable or in-place publishing is ever introduced add an explicit rollback or pin-supersede step; the current immutable-publish design removes the need",
+          "verify_command": "Select-String -Path .gitlab-ci.yml -Pattern 'does not overwrite|create a new'",
+          "related_dimensions": [
+            "compliance"
+          ]
+        }
+      ],
+      "coverage": {
+        "status": "covered",
+        "reason": "deployment form is script/release (build-exe plus wheel plus twine, not containers): release/publish pipeline, CI all-checks-passed gate, and runtime resource limits (worker heap/compute/wall/output caps plus tool timeouts) verified at file:line; container/k8s/healthcheck and in-place rollback are legitimately N/A for a CLI/library SDK harness with immutable registry publish",
+        "recheck_trigger": "a Dockerfile/k8s manifest, a service entrypoint exposing /healthz, or a mutable publish path appears in repo root or apps/"
+      },
+      "meta": {
+        "intake_evidence_count": 6,
+        "files_read": [
+          ".gitlab-ci.yml",
+          ".github/workflows/ci.yml",
+          ".github/workflows/release.yml",
+          ".github/workflows/python-release.yml",
+          ".github/workflows/release-vendor.yml",
+          ".github/workflows/landlock-run-release.yml",
+          "packages/code-runtime/code-runtime-worker-thread/src/index.ts",
+          "packages/guard/timeout-policy/src/index.ts",
+          "package.json"
+        ],
+        "notes": "ops is publish/CI plus runtime caps; no container orchestration exists by design"
+      }
+    },
+    {
+      "agent": "ArchitectC",
+      "dimension": "observability",
+      "evaluatedAt": "2026-09-14T08:42:00+08:00",
+      "project": "deepseek-harness-master",
+      "status": "partial",
+      "findings": [
+        {
+          "id": "V1",
+          "type": "telemetry-backend-factory",
+          "evidence": "packages/session/session-telemetry/src/index.ts declares abstract class SessionTelemetryBackend extends Service plus interface SessionTelemetrySink (emit/flush/shutdown); JSDoc 'one implementation per context - the cordis Service registration under the telemetry key throws on a duplicate'; the coordinator composes any backend in its constructor",
+          "file_line": "packages/session/session-telemetry/src/index.ts:1-120",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "Mount a second backend and assert the duplicate-load throws to regression-guard the factory invariant",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path packages/session/session-telemetry/src/index.ts -Pattern 'SessionTelemetryBackend|throws on a duplicate'",
+          "related_dimensions": [
+            "design"
+          ]
+        },
+        {
+          "id": "V2",
+          "type": "noop-degradation",
+          "evidence": "packages/session/session-telemetry-otel/src/index.ts:47 enum DISABLED, :51 DEFAULT_TELEMETRY_MODE=DISABLED (off-by-default), :55 DROP_RECORD=()=>{} noop emit; apps/cli/src/profile-boot.ts:56-82 resolveTelemetryPatch makes ANY non-empty DSH_TELEMETRY_DISABLED disable (off-by-mistake over on-by-mistake); apps/cli/tests/telemetry-switch.spec.ts covers 'false'/'0' also disabling",
+          "file_line": "packages/session/session-telemetry-otel/src/index.ts:47-55",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "Run telemetry-switch.spec and confirm the off-by-mistake semantic (falsy-looking values still disable)",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; pnpm --filter @deepseek-ai/dsh-app-cli test telemetry-switch",
+          "related_dimensions": [
+            "security"
+          ]
+        },
+        {
+          "id": "V3",
+          "type": "otel-semantic-conventions-logs",
+          "evidence": "packages/session/session-telemetry-otel/src/index.ts:199-204 resourceFromAttributes({service.name:APP_IDENTITY.product, service.version:APP_IDENTITY.version, user.id:getOrCreateAnonymousUserId()}); :135-138 SEVERITY maps info/warn/error to SeverityNumber.INFO/WARN/ERROR; tests/otel.spec.ts asserts the real OTLP/HTTP JSON wire through a mocked node:http collector",
+          "file_line": "packages/session/session-telemetry-otel/src/index.ts:135-204",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "Confirm otel.spec asserts service.name/version plus user.id on the exported Resource and severityNumber per log record",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; pnpm --filter @deepseek-ai/dsh-session-telemetry-otel test",
+          "related_dimensions": [
+            "frontend"
+          ]
+        },
+        {
+          "id": "V4",
+          "type": "redaction",
+          "evidence": "packages/session/session-telemetry/src/index.ts session-telemetry/record waterfall 'ships NO rules of its own ... redaction applies to the exported copy only; the canonical session log is never rewritten'; coordinator.ts redact() runs the waterfall at capture and contain() fail-closes a throwing rule; tests/redact.spec.ts asserts pass-through plus fail-closed; settings/redact.ts structurally strips role('secret') fields",
+          "file_line": "packages/session/session-telemetry/src/coordinator.ts:118-130",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "Add a deployment-mount redaction rule (e.g. mask sk-* keys) and assert the exported body is scrubbed while session.events keeps the original",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; pnpm --filter @deepseek-ai/dsh-session-telemetry test redact",
+          "related_dimensions": [
+            "security",
+            "data"
+          ]
+        },
+        {
+          "id": "V5",
+          "type": "trace-replay-canonical-log",
+          "evidence": "packages/session/session-telemetry/src/coordinator.ts captureSession() replays the canonical log after handoffCursor (WeakMap<Session,number>) for on-demand capture; first-chunk projection in chunkSeen drops duplicate (turn,step) chunks so the replay is deterministic; snapshot replay gives keyless deterministic re-run",
+          "file_line": "packages/session/session-telemetry/src/coordinator.ts:96-114",
+          "risk_level": "low",
+          "risk_scheme_ref": "§一low①N/A无复检",
+          "confidence": "high",
+          "next_step": "Assert on-demand captureSession after N appends yields exactly events cursor+1..seq with no duplicate chunks",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; pnpm --filter @deepseek-ai/dsh-session-telemetry test",
+          "related_dimensions": [
+            "data"
+          ]
+        },
+        {
+          "id": "V6",
+          "type": "metrics-and-traces-absent",
+          "evidence": "packages/session/session-telemetry-otel/package.json dependencies list ONLY log signals: @opentelemetry/api-logs, @opentelemetry/exporter-logs-otlp-http, @opentelemetry/sdk-logs, @opentelemetry/resources, @opentelemetry/api - NO @opentelemetry/sdk-metrics and NO sdk-trace/trace exporter; grep for TracerProvider/MeterProvider/Counter/Histogram across packages returned empty",
+          "file_line": "packages/session/session-telemetry-otel/package.json:dependencies",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§一medium⑤无日志metrics",
+          "confidence": "high",
+          "next_step": "If operational metrics/trace spans are needed add optional MeterProvider plus TracerProvider backends behind the same SessionTelemetrySink factory and emit tool/turn latency histograms plus a root trace span per agent turn",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path packages/session/session-telemetry-otel/package.json -Pattern 'sdk-metrics|sdk-trace|api-logs'",
+          "related_dimensions": [
+            "ops"
+          ]
+        },
+        {
+          "id": "V7",
+          "type": "slo-percentiles-absent",
+          "evidence": "packages/client/ui-conversation/src/client/chat/turn-metrics.ts derives ttftMs/decodeMs/tokensPerSecond for the UI footer only; no SLI/SLO definition, no P50/P95/P99 computation, and no alerting thresholds; grep for p50|p95|p99|SLO|SLI across packages found no telemetry percentile emission",
+          "file_line": "packages/client/ui-conversation/src/client/chat/turn-metrics.ts:1-40",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§一medium⑤无日志metrics",
+          "confidence": "high",
+          "next_step": "Before hosting DSH as a service define SLIs (TTFT, turn-error-rate) plus SLO targets and export P50/P95/P99 histograms via the metrics backend added in V6",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Select-String -Path packages -Pattern 'p95|p99|SLO|SLI' -Include *.ts -Recurse -List",
+          "related_dimensions": [
+            "ops"
+          ]
+        },
+        {
+          "id": "V8",
+          "type": "alerting-runbook-owner-absent",
+          "evidence": "the only runbook found is .agents/notes/implemented/process/2026-07-26-ci-failover-runbook.md (CI runner failover, not telemetry/SLO/oncall); no alerting threshold config and no owner attribution; session-telemetry-otel/src/index.ts leaves SDK batching cadence with no OTel sampler configured (no head/tail sampler, no sampling policy)",
+          "file_line": ".agents/notes/implemented/process/2026-07-26-ci-failover-runbook.md",
+          "risk_level": "medium",
+          "risk_scheme_ref": "§一medium⑤无日志metrics",
+          "confidence": "medium",
+          "next_step": "When telemetry leaves the default DISABLED mode for production add an oncall runbook (alert thresholds plus owner plus paging) and an explicit OTel sampler policy for cost control",
+          "verify_command": "cd 'E:\\业余\\my\\other_project\\deepseek-harness-master'; Get-ChildItem -Recurse -Filter '*runbook*' | Select-Object FullName; Select-String -Path packages/session/session-telemetry-otel/src/index.ts -Pattern 'sampler|sampling'",
+          "related_dimensions": [
+            "ops",
+            "cost"
+          ]
+        }
+      ],
+      "coverage": {
+        "status": "partial",
+        "reason": "pluggable telemetry backend factory, noop degradation (off-by-default DISABLED/DROP_RECORD plus DSH_TELEMETRY_DISABLED hard switch), OTel logs semantic conventions (service.name/version/user.id plus severityNumber), redaction waterfall (fail-closed, canonical log untouched), and deterministic canonical-log trace replay verified at file:line; metrics, traces(spans), SLI/SLO, P50/P95/P99, alerting-threshold owner runbook, and OTel sampling are absent - the OTel backend deps are logs-only",
+        "recheck_trigger": "@opentelemetry/sdk-metrics or sdk-trace is added to session-telemetry-otel/package.json; an SLO/percentile span is added to turn-metrics; a telemetry/observability runbook note or alert-threshold config appears"
+      },
+      "meta": {
+        "intake_evidence_count": 8,
+        "files_read": [
+          "packages/session/session-telemetry/src/index.ts",
+          "packages/session/session-telemetry/src/coordinator.ts",
+          "packages/session/session-telemetry/tests/redact.spec.ts",
+          "packages/session/session-telemetry-otel/src/index.ts",
+          "packages/session/session-telemetry-otel/package.json",
+          "packages/session/session-telemetry-otel/tests/otel.spec.ts",
+          "packages/session/session-telemetry-otel/tests/loader-composition.e2e.ts",
+          "apps/cli/src/profile-boot.ts",
+          "apps/cli/tests/telemetry-switch.spec.ts",
+          "packages/settings/settings/src/redact.ts",
+          "packages/client/ui-conversation/src/client/chat/turn-metrics.ts",
+          ".agents/notes/implemented/process/2026-07-26-ci-failover-runbook.md"
+        ],
+        "notes": "observability is a logs-only OTel pipeline with strong privacy/redaction; metrics, traces, SLO, sampling, and a telemetry runbook are the gaps"
+      }
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "dimension": "ops",
+  "checklist": [
+    {
+      "id": "OPS-01",
+      "rule": "是否有 CI 最小门禁（lint、unit、integration、security scan）？",
+      "trigger": "未通过时: 加 CI 配置并把这四类门禁作为合并必要条件；缺类先补该类再串门禁。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·1"
+    },
+    {
+      "id": "OPS-02",
+      "rule": "是否有 health/readiness/startup 检查和超时？",
+      "trigger": "未通过时: 实现 liveness(进程)/readiness(依赖+迁移)/startup(慢启动)三探针并设超时；缺探针即补并接编排器。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·2"
+    },
+    {
+      "id": "OPS-03",
+      "rule": "是否有 staging 或等价隔离环境？",
+      "trigger": "未通过时: 建 staging 或 namespace 隔离环境与生产同构；无隔离即标 high（生产直发风险）。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·3"
+    },
+    {
+      "id": "OPS-04",
+      "rule": "是否支持 rolling/blue-green/canary 中至少一种可回滚策略？",
+      "trigger": "未通过时: 选一种(rolling 最易)接入部署系统；纯替换式发布即补可回滚策略+回滚命令。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·4"
+    },
+    {
+      "id": "OPS-05",
+      "rule": "数据库迁移是否与应用发布兼容并可恢复？",
+      "trigger": "未通过时: 用 expand-contract 拆迁移，发布与不可逆删除不绑同一窗口；写回滚命令并演练。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·5"
+    },
+    {
+      "id": "OPS-06",
+      "rule": "是否记录版本、配置、迁移和回滚证据？",
+      "trigger": "未通过时: 发布记录写 commit/build/配置版本/迁移版本/操作者；无记录即接发布日志自动化。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·6"
+    },
+    {
+      "id": "OPS-07",
+      "rule": "容器是否非 root、无 secrets、固定基础镜像版本？",
+      "trigger": "未通过时: Dockerfile USER 非 root、secrets 走 env/secret manager、基础镜像钉版本(含 digest)；浮动 latest 即钉版本。",
+      "severity_if_fail": "critical",
+      "guide_ref": "核心原则·7"
+    }
+  ],
+  "output_schema": {
+    "required": [
+      "id",
+      "type",
+      "evidence",
+      "risk_level",
+      "confidence",
+      "next_step"
+    ],
+    "fields": {
+      "id": {
+        "type": "string",
+        "pattern": "^OPS-[0-9]{2}$",
+        "description": "必须引用 checklist 中的规则 ID"
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "pattern_violation",
+          "missing_mechanism",
+          "design_flaw",
+          "performance_issue",
+          "other",
+          "unknown"
+        ],
+        "description": "发现类型"
+      },
+      "evidence": {
+        "type": "string",
+        "min_length": 10,
+        "description": "行级证据：文件路径 + 行号 + 代码片段"
+      },
+      "risk_level": {
+        "type": "string",
+        "enum": [
+          "critical",
+          "high",
+          "medium",
+          "low",
+          "unknown"
+        ],
+        "description": "按 risk-grading-scheme.md 量化口径判定"
+      },
+      "risk_scheme_ref": {
+        "type": "string",
+        "description": "引用 risk-grading-scheme.md 触发条件编号"
+      },
+      "confidence": {
+        "type": "string",
+        "enum": [
+          "high",
+          "medium",
+          "low",
+          "unknown"
+        ],
+        "description": "对定级和证据的置信度"
+      },
+      "next_step": {
+        "type": "string",
+        "min_length": 10,
+        "description": "具体可执行的下一步，含验证命令或人工复核说明"
+      },
+      "verify_command": {
+        "type": "string",
+        "description": "可运行的验证命令（GREEN-first）"
+      },
+      "rollback": {
+        "type": "string",
+        "description": "失败时的撤退路径"
+      }
+    }
+  },
+  "meta": {
+    "version": "1.0",
+    "updated_at": "2026-09-14",
+    "source_skill": "architect-ops",
+    "scene": "B",
+    "note": "本契约仅用于蜂群模式（场景 B）的方案评审。"
+  }
+}

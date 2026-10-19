@@ -1,0 +1,96 @@
+{
+  "dimension": "security",
+  "checklist": [
+    {
+      "id": "SEC-01",
+      "rule": "认证与授权：是否区分认证和授权，且权限默认最小化",
+      "trigger": "发现无认证机制、授权检查缺失、或默认开放权限",
+      "severity_if_fail": "critical",
+      "guide_ref": "核心原则·1 认证与授权"
+    },
+    {
+      "id": "SEC-02",
+      "rule": "输入校验：所有外部输入是否经过白名单校验（含配置文件、环境变量、JSON payload）",
+      "trigger": "发现外部入口无 validate()、使用黑名单过滤、或静默丢弃非法输入",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·2 输入校验铁律"
+    },
+    {
+      "id": "SEC-03",
+      "rule": "SQL 注入防护：是否使用参数化查询，禁止字符串拼接 SQL",
+      "trigger": "发现 f-string/format 拼接 SQL 字符串",
+      "severity_if_fail": "critical",
+      "guide_ref": "核心原则·2 输入校验铁律"
+    },
+    {
+      "id": "SEC-04",
+      "rule": "密钥管理：密钥是否硬编码或提交到 git",
+      "trigger": "代码中出现明文密钥、.env 未 gitignore、CI 无 secret 扫描",
+      "severity_if_fail": "critical",
+      "guide_ref": "核心原则·3 密钥管理"
+    },
+    {
+      "id": "SEC-05",
+      "rule": "审计日志：关键操作是否有不可篡改的审计日志（who/when/what/result）",
+      "trigger": "发现关键操作无日志、日志可篡改、或日志泄露敏感信息",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·5 常见边界攻击面·日志泄露"
+    },
+    {
+      "id": "SEC-06",
+      "rule": "SSRF 防护：URL 解析后只允许 HTTPS + allow-list 主机",
+      "trigger": "发现 URL 开放解析、未拒绝私网/回环/link-local/重定向到内网",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·5 常见边界攻击面·SSRF"
+    },
+    {
+      "id": "SEC-07",
+      "rule": "路径穿越防护：使用固定根目录 + resolve() 后目录前缀校验",
+      "trigger": "发现用户输入直接拼接路径、无固定根目录校验",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·5 常见边界攻击面·路径穿越"
+    },
+    {
+      "id": "SEC-08",
+      "rule": "命令注入防护：优先调用库 API，必须子进程时使用参数数组 + 固定 executable + 无 shell",
+      "trigger": "发现 shell=True、字符串拼接命令、或未限制资源",
+      "severity_if_fail": "critical",
+      "guide_ref": "核心原则·5 常见边界攻击面·命令注入"
+    },
+    {
+      "id": "SEC-09",
+      "rule": "Webhook 重放防护：校验签名、时间窗和 nonce/idempotency key",
+      "trigger": "发现 webhook 无签名校验、无过期拒绝、无重复事件拒绝",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·5 常见边界攻击面·Webhook 重放"
+    },
+    {
+      "id": "SEC-10",
+      "rule": "策略 vs 机制：安全规则是否映射到可强制执行机制（.gitignore/CI 扫描/secret manager/代码中间件）",
+      "trigger": "发现仅有文档规则、无对应执行点、或口头规则无法验证",
+      "severity_if_fail": "high",
+      "guide_ref": "检查清单·[策略 vs 机制]"
+    }
+  ],
+  "output_schema": {
+    "required": ["id", "type", "evidence", "risk_level", "confidence", "next_step"],
+    "fields": {
+      "id": { "type": "string", "pattern": "^SEC-[0-9]{2}$", "description": "必须引用 checklist 中的规则 ID" },
+      "type": { "type": "string", "enum": ["pattern_violation", "missing_mechanism", "masked_bug", "unknown"], "description": "发现类型" },
+      "evidence": { "type": "string", "min_length": 10, "description": "行级证据：文件路径 + 行号 + 代码片段" },
+      "risk_level": { "type": "string", "enum": ["critical", "high", "medium", "low", "unknown"], "description": "按 risk-grading-scheme.md 量化口径判定" },
+      "risk_scheme_ref": { "type": "string", "description": "引用 risk-grading-scheme.md 触发条件编号，如 §一①" },
+      "confidence": { "type": "string", "enum": ["high", "medium", "low", "unknown"], "description": "对定级和证据的置信度" },
+      "next_step": { "type": "string", "min_length": 10, "description": "具体可执行的下一步，含验证命令或人工复核说明" },
+      "verify_command": { "type": "string", "description": "可运行的验证命令（GREEN-first）" },
+      "rollback": { "type": "string", "description": "失败时的撤退路径" }
+    }
+  },
+  "meta": {
+    "version": "1.0",
+    "updated_at": "2026-08-31",
+    "source_skill": "architect-security",
+    "scene": "B",
+    "note": "本契约仅用于蜂群模式（场景 B）的方案评审。场景 A 单原子设计咨询仍走完整 guide，不强制填表。"
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "dimension": "plugin",
+  "checklist": [
+    {
+      "id": "PLU-01",
+      "rule": "软插拔: 新增第三方能力核心改动=0?",
+      "trigger": "① 找每加一能力要改的核心文件 ② 抽扩展点+manifest加载 ③ 核心只依赖扩展点抽象不依赖具体插件",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·1"
+    },
+    {
+      "id": "PLU-02",
+      "rule": "Manifest契约: 有无插件声明契约?",
+      "trigger": "① 定义manifest schema(id/entry/inject/extension_points/version) ② 核心只读manifest不读插件源 ③ 缺manifest=非插件",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·2"
+    },
+    {
+      "id": "PLU-03",
+      "rule": "注册vs物化: 加载是否立即执行副作用?",
+      "trigger": "① 入口改factory注册 ② 副作用移入factory闭包 ③ 首次调用才物化",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·3"
+    },
+    {
+      "id": "PLU-04",
+      "rule": "扩展点: 核心暴露的扩展点是否明确稳定?",
+      "trigger": "① 列所有扩展点(hook/command/tool/slot/event) ② 每个写契约+版本 ③ 插件只经扩展点接入",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·4"
+    },
+    {
+      "id": "PLU-05",
+      "rule": "隔离/纯度门: 插件间有无直接依赖?",
+      "trigger": "① 扫插件import图 ② 跨插件直接import→改走service/事件 ③ 构建期纯度门",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·5"
+    },
+    {
+      "id": "PLU-06",
+      "rule": "生命周期: 能否卸载/热重载不残留?",
+      "trigger": "① 每插件记录注册的副作用 ② unload清这些 ③ 热重载invalidate→reload",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·6"
+    },
+    {
+      "id": "PLU-07",
+      "rule": "失败隔离: 一插件挂是否阻塞全局?",
+      "trigger": "① 物化期try/except隔离 ② 注册期fail-loud报哪个插件 ③ 坏插件不mask其他",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·7"
+    },
+    {
+      "id": "PLU-08",
+      "rule": "Roster: mount决策是否配置化?",
+      "trigger": "① 部署roster声明启哪些 ② discovery-by-scan不替roster ③",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·8"
+    }
+  ],
+  "output_schema": {
+    "required": [
+      "id",
+      "type",
+      "evidence",
+      "risk_level",
+      "confidence",
+      "next_step"
+    ],
+    "fields": {
+      "id": {
+        "type": "string",
+        "pattern": "^PLU-[0-9]{2}$",
+        "description": "必须引用 checklist 中的规则 ID"
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "pattern_violation",
+          "missing_mechanism",
+          "design_flaw",
+          "performance_issue",
+          "other",
+          "unknown"
+        ],
+        "description": "发现类型"
+      },
+      "evidence": {
+        "type": "string",
+        "min_length": 10,
+        "description": "行级证据：文件路径 + 行号 + 代码片段"
+      },
+      "risk_level": {
+        "type": "string",
+        "enum": [
+          "critical",
+          "high",
+          "medium",
+          "low",
+          "unknown"
+        ],
+        "description": "按 risk-grading-scheme.md 量化口径判定"
+      },
+      "risk_scheme_ref": {
+        "type": "string",
+        "description": "引用 risk-grading-scheme.md 触发条件编号"
+      },
+      "confidence": {
+        "type": "string",
+        "enum": [
+          "high",
+          "medium",
+          "low",
+          "unknown"
+        ],
+        "description": "对定级和证据的置信度"
+      },
+      "next_step": {
+        "type": "string",
+        "min_length": 10,
+        "description": "具体可执行的下一步，含验证命令或人工复核说明"
+      },
+      "verify_command": {
+        "type": "string",
+        "description": "可运行的验证命令（GREEN-first）"
+      },
+      "rollback": {
+        "type": "string",
+        "description": "失败时的撤退路径"
+      }
+    }
+  },
+  "meta": {
+    "version": "1.0",
+    "updated_at": "2026-09-14",
+    "source_skill": "architect-plugin",
+    "scene": "B",
+    "note": "本契约仅用于蜂群模式（场景 B）的方案评审。"
+  }
+}

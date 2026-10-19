@@ -1,0 +1,35 @@
+{
+  "project": "loop-dev-broken",
+  "evaluatedAt": "2026-08-31T10:00:00Z",
+  "agents": [
+    {
+      "agent": "Bacon",
+      "dimension": "test",
+      "evaluatedAt": "2026-08-31T10:05:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "M5",
+          "type": "masked_bug",
+          "evidence": "threshold-restore logic masked",
+          "file_line": "event_store_test.go:312",
+          "risk_level": "medium",
+          "confidence": "high",
+          "next_step": "add assertion"
+        },
+        {
+          "id": "M6",
+          "type": "invalid_type_xyz",
+          "evidence": "bad evidence",
+          "risk_level": "super_critical",
+          "confidence": "maybe",
+          "next_step": ""
+        }
+      ],
+      "coverage": { "status": "covered" },
+      "meta": { "intake_evidence_count": 5, "files_read": [], "notes": "" }
+    }
+  ],
+  "archMap": [],
+  "narratives": {}
+}

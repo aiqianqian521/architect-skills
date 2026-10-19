@@ -1,0 +1,104 @@
+# 架构师技能覆盖矩阵（ARCHITECTURE-COVERAGE）
+
+> 定位：本文件是 architect-skills「全面项目分析模式」的**覆盖维度口径源**。
+> 被 `architect-router/SKILL.md`「全面项目分析模式」段引用（`../ARCHITECTURE-COVERAGE.md`，即本文件位于 architect-skills 根目录）。
+> 被 loop-dev `docs/knowledge-distillation/PROJECT-ANALYSIS-TEMPLATE.md` 的 16 矩阵行口径引用。
+> **本文件 = 19 矩阵行（18 atom skill + 1「性能/延迟/容量/资源预算」partial，主属 architect-agent，尚无独立 atom）**。
+> 创建于 2026-09-05（B 阶段断链修复：原 router/TEMPLATE 引用本文件但文件缺失，D4 断链；本次补建使口径源真实可回溯）。最后更新：2026-10-09（新增 architect-context/architect-rag，升级 architect-agent 检查项）。
+
+## §1 固定分析顺序（10 维）→ atom 映射
+
+逐维度扫描顺序（来自 router「固定分析顺序」，不得跳序）：
+
+| # | 维度 | 主 atom skill | 备注 |
+|---|------|--------------|------|
+| ① | 上下文与约束（目标/非目标/Tier/合规/预算/SLO/期限） | architect-design | Intake 建图先行 |
+| ② | 需求与领域（术语/边界/实体·值对象·聚合/用户故事/验收） | architect-design | 领域建模归 design |
+| ③ | 系统结构（模块边界/依赖方向/组合根/架构模式/演进迁移） | architect-design + architect-workflow | workflow 承流程结构 |
+| ④ | 接口与通信（API 契约/版本/错误/超时/重试/幂等/消息流式） | architect-net | |
+| ⑤ | 数据与状态（schema/迁移/事务/一致性/备份恢复/生命周期/隐私） | architect-data | |
+| ⑥ | Agent/异步流程（状态机/checkpoint/并发/取消/预算/失败恢复/可观测） | architect-agent | 性能 partial 主归此 |
+| ⑦ | 安全与信任边界（认证/授权/输入校验/密钥/沙箱/供应链/审计/STRIDE） | architect-security | |
+| ⑧ | 测试与质量门禁（单测/契约/集成/E2E/金数据/回归/覆盖率/证据） | architect-test | |
+| ⑨ | 交付与变更（Spec/ADR/工单/Git/CI/发布/回滚/文档一致） | architect-git + architect-docs | |
+| ⑩ | 运行与产品能力（部署/可观测/成本/合规/前端体验） | architect-ops + architect-observability + architect-cost + architect-compliance + architect-frontend | 展开 5 atom，缺则标 partial/missing |
+
+> 横切：`architect-review`（12 层审计）跨维适用，不占单维行，在每维可引为复检。
+> 横评：`architect-router` 跨项目横评（≥2 项目必产出）见 router「跨项目横评」段。
+
+## §2 覆盖矩阵（19 行 = 18 atom + 1 partial）
+
+| # | atom skill | 覆盖维度 | 核心检查项要点 | 证据要求 | 输出物 | 校正 |
+|---|-----------|---------|--------------|---------|--------|------|
+| 1 | architect-design | ①②③ | 目标/非目标/Tier；领域实体·聚合；模块边界/依赖方向/组合根/架构模式/演进迁移 | 行级 file:line（组合根/边界/迁移路径） | 四件套 | |
+| 2 | architect-review | 横切(12层) | 12 层审计逐层证据；评而不修两种失效模式区分 | 行级证据 + 复检钩子 | 四件套 | |
+| 3 | architect-data | ⑤ | schema/迁移/事务/一致性/备份恢复/生命周期/隐私分类 | 行级 file:line | 四件套 | |
+| 4 | architect-test | ⑧ | 单测/契约/集成/E2E/金数据/回归/覆盖率/验证末步；AI 输出评测框架(多 evaluator+实验状态机+多语言沙箱+幂等) | 测试入口+覆盖率+验证命令+评测契约 | 四件套 | ✅ 2026-09-06 |
+| 5 | architect-workflow | ③⑥ | 流程/状态图/checkpoint-resume/handoff/fan-out·in/saga | 行级 file:line | 四件套 | |
+| 6 | architect-agent | ⑥ | 状态机/checkpoint/并发上限/取消/预算/失败恢复/可观测；分层降维+压缩归档；worker-pool 背压四件套；单一路径原则；Async Generator模式(backpressure+TerminalReason)；三段式状态分离(Config/State/Deps≤4)；死亡螺旋5层防护；错误恢复阶梯(5级)；多Agent编排(Fan-out/Saga/Map-reduce) | 行级 file:line（状态机/池/队列） | 四件套 | ✅ 2026-09-05 |
+| 7 | architect-git | ⑨ | 变更管控/分支策略/CI 门禁/发布回滚/敏感数据入库 | git log/CI 配置 file:line | 四件套 | |
+| 8 | architect-docs | ⑨ | README/ADR/runbook/文档一致性/入口完整 | 文档入口 file:line | 四件套 | |
+| 9 | architect-net | ④ | API 契约/版本/错误码/超时/重试/幂等/消息流式/trace_id | 行级 file:line | 四件套 | |
+| 10 | architect-security | ⑦ | 认证/授权/输入校验/密钥管理/沙箱/供应链/审计/STRIDE | 行级 file:line（密钥/校验点） | 四件套 | |
+| 11 | architect-ops | ⑩·部署 | 部署/编排/healthcheck/resource limit/回滚/发布动作 | compose/k8s/脚本 file:line | 四件套 | |
+| 12 | architect-observability | ⑩·可观测 | SLI/SLO；logs/metrics/traces 跳转；P50/P95/P99；告警阈值/owner/runbook；采样/时钟/高基数；脱敏；trace 重放；**telemetry 后端可插拔 factory + noop 降级**；OTel 标准语义约定；trace exporter/路由多范式(SDK直发/平台存储/collector扇出多租户) | 行级 file:line（后端工厂/noop/语义约定/exporter 路由） | 四件套 | ✅ 2026-09-05+09-06 |
+| 13 | architect-cost | ⑩·成本 | token/用量计费/资源预算/成本基线 | 用量/计费 file:line | 四件套 | |
+| 14 | architect-compliance | ⑩·合规 | 监管/数据驻留/审计日志/合规检查点 | 合规配置 file:line | 四件套 | |
+| 15 | architect-frontend | ⑩·前端 | 入口/可访问性/性能预算/错误边界/体验 | 前端入口 file:line | 四件套 | |
+| 16 | architect-plugin | ③·插件化(横切) | 软插拔第三方可安装/manifest契约/注册vs物化/扩展点/隔离纯度门/生命周期/roster/upgrade-law; 哪些该插件化哪些不该; GitHub学习注入 | plugins目录+manifest file:line | 四件套 | |
+| 17 | N/A（性能/延迟/容量/资源预算） | ⑥（主）+⑩ | 当前无独立 atom；当项目涉及高并发/大流量/资源敏感场景时，需在 ⑥Agent 或 ⑩运行维度备注线落证据并触发复检。本行标 N/A 而非 partial，避免误导用户以为已实质评审。复检触发条件：项目 README 提及性能目标或存在 load-test/benchmark 目录。 | 热路径/容量 file:line | 四件套(N/A) | |
+| 18 | architect-context | 上下文预算 | 上下文窗口预算/Tier分配；四层压缩(顺序: collapse先于compact)；Auto-Compact熔断器(连续3次)；Surface/Log分层；8段结构化摘要；token监控告警；压缩可逆性/trace重放 | 行级 file:line | 四件套 | |
+| 19 | architect-rag | RAG/记忆检索 | 多路并行检索(≥2路: 语义+关键词)；RRF融合(k=60)；分层检索(mental_models>observations>raw_facts)；Cross-encoder重排；MMR多样性(λ=0.7)；嵌入质量评估；Consolidation合并+溯源；Graph检索(激活扩散+时间图) | 行级 file:line | 四件套 | |
+
+> 「输出物=四件套」= 结论 / 证据（行级）/ 风险分级（引 `reference/risk-grading-scheme.md` §一触发条件编号）/ 下一步（可执行可验证）。未经 Router 单独调用 atom 时按此骨架自补。
+> 「校正」列：✅ 标记本 atom 检查点经大厂实测真值校正（见 §5）。
+
+## §3 状态语义与 N/A 规则
+
+- 维度状态：`covered`（≥1 条已读行级证据）/ `partial` / `missing` / `not-applicable`。
+- `covered` 不得脑补：必须在 Intake「证据→维度映射表」指到已读证据；未读到证据只能 `partial/missing/N-A`。
+- `N/A` 必须同时给「判定理由 + 复检触发条件」；无复检钩子的 N/A 视为「逃维」，补钩子或改 `partial`。详见 router「N/A 判定规则」。
+- `partial`（性能维度）：整维证据不足但项目涉该能力时标 partial，不升 covered。
+
+## §4 继续填充规则（指针 router）
+
+新增 atom 必须同时更新四处（详见 router「继续填充规则」）：① 新建 `architect-{name}/SKILL.md`；② router 路由表+固定顺序登记；③ **本文件 §2 增加覆盖维度行**；④ `tests/validate-architect-skills.mjs` 增结构/路由/意图测试。
+**修旧优先于加新**：新增 atom 前先核验现有 atom 是否兑现 covered 四要素（清单配修复 / 修复含验证末步 / 有独立交付段 / 风险分级引骨架）；裸问句/缺验证末步/缺交付段的 atom 须先还债再扩展。
+
+## §5 校正记录（口径演进 changelog）
+
+### 2026-09-05 · B 阶段 · TencentDB-Agent-Memory iter#3 实测真值校正
+- **architect-agent（⑥，行 6）**：分布式模式表 Backpressure 行由「`max_size` 待实现」校正为真实四件套实现模式（worker-pool 并发上限 + buffer-storage + oversize-strategy + agent-task-queue）；检查清单新增「分层降维/压缩归档（L0→L1→compact→fast-path）」「worker-pool 并发上限+buffer+oversize 背压」两项。真值实测 file:行段：`worker-pool.ts:41-52`/`buffer-storage.ts:23-30`/`oversize-strategy.ts:18-24`/`agent-task-queue.ts:36-45`/`l0-recorder.ts:28-34`/`l1-extractor.ts:64-72`/`compressor.ts:90-98`/`fast-path.ts:17-20`（均 D3 核验存在✅）。
+- **architect-observability（⑨，行 12）**：检查清单新增「telemetry 后端可插拔 factory + noop 降级」一项。真值实测：`factory.ts:49-60`（createObservabilityBackend switch type,默认 noop,internal 回退 console）/`noop-backend.ts:64-70`（NoopTraceBackend report=no-op）/`metric-tracking-{l1-latency,l2-latency,l3-latency,recall,runner}.ts`（5 后端）。
+- **本文件（ARCHITECTURE-COVERAGE.md）**：原被 router L91（`../ARCHITECTURE-COVERAGE.md`）与 loop-dev PROJECT-ANALYSIS-TEMPLATE 引用但**文件缺失**（D4 断链）；本次补建为 16 行矩阵口径源，使引用可回溯。
+- 完整校正验证报告：`output/loop-dev/2026-09-05/report.md`；本轮 tracker：`docs/iteration-tracker/loop-dev-2026-09-05.md`；金样 changelog：`output/golden/INDEX.md`。
+
+### 2026-09-06 · B 阶段 round2 · adk-python+coze-loop+eino+librechat 10 candidate 实测真值校正（口径演进，非定级锚点变更）
+- **architect-observability（⑩，行 12）**：检查清单 +2 项（OTel 标准语义约定 OpenInference/OpenTelemetry；trace exporter/路由多范式 SDK 直发/平台存储/collector 扇出+多租户隔离）；§2 要点补 3 点。真值三源 file:行段：google-adk `telemetry/tracing.py:196`+`sqlite_span_exporter.py:36`（SDK 端 OTel+SQLite exporter）/ coze-loop `infra/repo/ck/spans.go:52`+`lib/otel/open_inference/openinference.go:13`（平台 ClickHouse+OpenInference）/ librechat `otel/langfuse-fanout/otelcol.yaml:17`+`cmd/langfuse-fanout/main.go:613`+`metrics.go:138`（采集器 OTel collector 多租户路由+fanout metrics）。
+- **architect-test（⑧，行 4）**：检查清单 +1 项（AI 输出评测框架：多 evaluator 类型 code/prompt/agent/custom_rpc + 实验运行 run/item/turn 状态机 + 多语言沙箱执行 + Redis SetNX 幂等）；此前清单仅传统单测/TDD，缺 AI 评测维度（真缺口）。§2 要点补 1 点。真值 file:行段：coze-loop `domain/entity/evaluator.go:53-58`（四类型）+`expt_run.go:40/56`（ItemRun/TurnRunState）+`execution_request.go:9/30`（SandboxExecutionRequest/RuntimeCapabilities）+`infra/runtime/manager.go:37`（GetRuntime 多语言）+`domain/component/idem/idem.go:12`（SetNX 幂等）；google-adk evaluation framework（multi-evaluator+eval 契约，部分 llm-as-judge model-gated）。
+- **金样对照点**：NEW `output/loop-dev/2026-09-06/report.md`（B 阶段 round2 校正验证报告），与 2026-09-05/2026-08-25 并列对照演进；本轮口径演进（检查点新增），未改 risk-grading-scheme 定级锚点，仅记 changelog。
+- 详细：`output/loop-dev/2026-09-06/report.md` + `docs/iteration-tracker/loop-dev-2026-09-06.md` + `output/golden/INDEX.md`。
+
+
+### 2026-09-12 · 新增 architect-plugin 维度(软插拔/第三方插件化, 补 design 缺口)
+- 触发: 用户指出架构师Skill缺'软插拔用户可安装Skill/插件'维度, 使用不提示. 参考 DSH cordis plugin-loader.
+- 新增: architect-plugin/SKILL.md(8原则+检查清单+适配性判据+GitHub学习注入机制). router路由表+子技能+复合任务已登记. 本文件§2+第16行.
+- 修复前测试: 结构合规9项PASS; 蜂群验证用 loop-dev 给插件化建议.
+
+### 2026-10-09 · 新增 architect-context + architect-rag 维度，升级 architect-agent
+
+- **architect-context（新增，行 18）**：上下文窗口预算/Tier分配；四层压缩(顺序: collapse先于compact)；Auto-Compact熔断器(连续3次)；Surface/Log分层；8段结构化摘要；token监控告警；压缩可逆性/trace重放。
+- **architect-rag（新增，行 19）**：多路并行检索(≥2路: 语义+关键词)；RRF融合(k=60)；分层检索(mental_models>observations>raw_facts)；Cross-encoder重排；MMR多样性(λ=0.7)；嵌入质量评估；Consolidation合并+溯源；Graph检索(激活扩散+时间图)。
+- **architect-agent（升级，行 6）**：检查清单新增「单一路径原则；Async Generator模式(backpressure+TerminalReason)；三段式状态分离(Config/State/Deps≤4)；死亡螺旋5层防护；错误恢复阶梯(5级)；多Agent编排(Fan-out/Saga/Map-reduce)」。
+- router 路由表、复合任务表、固定分析顺序同步登记。
+## §6 金样对照
+
+`output/golden/` 为本矩阵+风险分级口径的金样回归基线（三项目 v2 报告）。新增/改模板后用同口径重评一项目产新日期报告，对照金样定级/触发条件/共病是否漂移；漂移=模板退化(修模板)或口径演进(新日期目录+更新金样锚点+记 §5 changelog)。
+
+### 2026-10-01 · C 阶段 · Runtime2026 WebUI 展示系统架构能力增强
+- **architect-frontend（⑩，行 10）**：新增"展示系统架构（Dashboard/Display System）专项"。
+  - 蒸馏来源：`other_project/NextChat-main`（Next.js+React+react-router+zustand+clsx，前后端分离 + export 静态产物）与 `webui_skill/pick-ui-library`（recharts/liveline、Virtuoso、motion 等）。
+  - 新增核验清单：FRO-08 六层分页（总览/币种/引擎/方案/回测/账户）；FRO-09 hash 路由深链接直达；FRO-0A 前后端分离只消费 REST+token 鉴权；FRO-0B 大表虚拟滚动+图表池懒实例化+节流刷新；FRO-0C 空/加载/错误三态；FRO-0D 展示层禁未来数据（红线）。
+  - `guide.md` 增补"展示系统架构专项"一节；`contract.json` checklist 7 → 13 项。
+- 对齐设计文档：`量化知识库/02_项目/lh-量化交易/PM/30-框架设计/2026-10-01-Runtime2026-WebUI展示系统架构设计.md`（六层嵌套路由 + 前后端分离 + 禁未来红线）。
+- 本次校准：面向"多币种×多指标×多止盈方案"实时展示系统；已覆盖架构师技能欠缺的"展示系统结构评估"能力。

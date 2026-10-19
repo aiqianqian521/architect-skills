@@ -1,0 +1,547 @@
+{
+ "project": "loop-dev",
+ "evaluatedAt": "2026-10-10T10:55:00Z",
+ "agents": [
+  {
+   "agent": "Halley",
+   "dimension": "design",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [
+    {
+     "id": "DES1",
+     "type": "strength",
+     "evidence": "loop-engine/features.py:1 deep-module: Feature/Features/Stage small interface; 127 engine modules follow single-responsibility",
+     "file_line": "loop-engine/features.py:1",
+     "risk_level": "low",
+     "risk_scheme_ref": "§一④ N/A 复核(§三 high confidence)",
+     "confidence": "high",
+     "next_step": "Keep interface stable",
+     "verify_command": "pytest -q tests/test_features_and_agents.py",
+     "rollback": "n/a"
+    }
+   ],
+   "coverage": {
+    "status": "covered",
+    "current": "loop-engine/features.py"
+   },
+   "meta": {
+    "intake_evidence_count": 3,
+    "files_read": [
+     "loop-engine/features.py",
+     "loop-engine/context_fragment.py",
+     "loop-engine/guardian/risk_assessor.py"
+    ],
+    "notes": "Post-evolution: 12 modules wired"
+   }
+  },
+  {
+   "agent": "Bacon",
+   "dimension": "test",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [
+    {
+     "id": "T1",
+     "type": "design_flaw",
+     "evidence": "pyproject.toml:40 fail_under=70 below 80% industry good practice; tests/test_*.py has 66 modules",
+     "file_line": "pyproject.toml:40",
+     "risk_level": "medium",
+     "risk_scheme_ref": "§一 medium(§三 high)",
+     "confidence": "high",
+     "next_step": "Ratchet coverage +2%/cycle",
+     "verify_command": "pytest -q --no-cov",
+     "rollback": "Restore fail_under=70"
+    }
+   ],
+   "coverage": {
+    "status": "covered",
+    "current": "pyproject.toml"
+   },
+   "meta": {
+    "intake_evidence_count": 2,
+    "files_read": [
+     "pyproject.toml",
+     "tests/test_features_and_agents.py"
+    ],
+    "notes": "66 test modules"
+   }
+  },
+  {
+   "agent": "Atlas",
+   "dimension": "context",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [
+    {
+     "id": "CTX1",
+     "type": "strength",
+     "evidence": "loop-engine/context_compactor.py:205 compact_three_phase + 4-layer run_pipeline; context_fragment.py:593 FragmentCollector Layer-0 budget",
+     "file_line": "loop-engine/context_compactor.py:205",
+     "risk_level": "low",
+     "risk_scheme_ref": "§一④复核(§三 high)",
+     "confidence": "high",
+     "next_step": "Wire collector into live assembly",
+     "verify_command": "pytest -q tests/test_features_and_agents.py",
+     "rollback": "n/a"
+    }
+   ],
+   "coverage": {
+    "status": "covered",
+    "current": "loop-engine/context_compactor.py"
+   },
+   "meta": {
+    "intake_evidence_count": 2,
+    "files_read": [
+     "loop-engine/context_compactor.py",
+     "loop-engine/context_fragment.py"
+    ],
+    "notes": ""
+   }
+  },
+  {
+   "agent": "Nash",
+   "dimension": "rag",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [
+    {
+     "id": "RAG1",
+     "type": "strength",
+     "evidence": "loop-engine/plugins/rag/dsh-rag-kb/entry.py:_tokenize CJK regex present=True; bm25_retrieval.py RRF fusion",
+     "file_line": "loop-engine/plugins/rag/dsh-rag-kb/entry.py:1",
+     "risk_level": "low",
+     "risk_scheme_ref": "§一④复核(§三 high)",
+     "confidence": "high",
+     "next_step": "Add retrieval-quality regression",
+     "verify_command": "pytest -q tests/test_bm25_retrieval.py",
+     "rollback": "n/a"
+    }
+   ],
+   "coverage": {
+    "status": "covered",
+    "current": "loop-engine/bm25_retrieval.py"
+   },
+   "meta": {
+    "intake_evidence_count": 2,
+    "files_read": [
+     "loop-engine/bm25_retrieval.py",
+     "loop-engine/plugins/rag/dsh-rag-kb/entry.py"
+    ],
+    "notes": ""
+   }
+  },
+  {
+   "agent": "Sagan",
+   "dimension": "security",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [
+    {
+     "id": "SEC1",
+     "type": "strength",
+     "evidence": "loop-engine/guardian/risk_assessor.py:1 layered review; runtime_exec.py:_guardian_check fail-closed; tool_registry.py:195 7-level permission gate",
+     "file_line": "loop-engine/runtime_exec.py:121",
+     "risk_level": "low",
+     "risk_scheme_ref": "§一②安全机制整体存在(§三 high)",
+     "confidence": "high",
+     "next_step": "Fuzz adversarial command chains",
+     "verify_command": "pytest -q tests/test_tool_registry.py",
+     "rollback": "n/a"
+    }
+   ],
+   "coverage": {
+    "status": "covered",
+    "current": "loop-engine/guardian/permission_matrix.py"
+   },
+   "meta": {
+    "intake_evidence_count": 3,
+    "files_read": [
+     "loop-engine/guardian/permission_matrix.py",
+     "loop-engine/runtime_exec.py",
+     "loop-engine/tool_registry.py"
+    ],
+    "notes": ""
+   }
+  },
+  {
+   "agent": "Turing",
+   "dimension": "agent",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [
+    {
+     "id": "AG1",
+     "type": "strength",
+     "evidence": "loop-engine/sub_agent.py:194 SpawnReservation RAII + AgentRegistry bounded + InputQueue mailbox/steer; AgentContext 4-policy fields",
+     "file_line": "loop-engine/sub_agent.py:194",
+     "risk_level": "low",
+     "risk_scheme_ref": "§一④复核(§三 high)",
+     "confidence": "high",
+     "next_step": "Wire InputQueue into live turn",
+     "verify_command": "pytest -q tests/test_features_and_agents.py",
+     "rollback": "n/a"
+    }
+   ],
+   "coverage": {
+    "status": "covered",
+    "current": "loop-engine/sub_agent.py"
+   },
+   "meta": {
+    "intake_evidence_count": 1,
+    "files_read": [
+     "loop-engine/sub_agent.py"
+    ],
+    "notes": ""
+   }
+  },
+  {
+   "agent": "Gauss",
+   "dimension": "observability",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [
+    {
+     "id": "OBS1",
+     "type": "strength",
+     "evidence": "loop-engine/event_log.py append-only jsonl; hook_events.py:1 27 events incl 7 evolution lifecycle (P3-E4)",
+     "file_line": "loop-engine/hook_events.py:1",
+     "risk_level": "low",
+     "risk_scheme_ref": "§一④复核(§三 high)",
+     "confidence": "high",
+     "next_step": "Dashboard over EventLog",
+     "verify_command": "pytest -q tests/test_event_log.py",
+     "rollback": "n/a"
+    }
+   ],
+   "coverage": {
+    "status": "covered",
+    "current": "loop-engine/event_log.py"
+   },
+   "meta": {
+    "intake_evidence_count": 2,
+    "files_read": [
+     "loop-engine/event_log.py",
+     "loop-engine/hook_events.py"
+    ],
+    "notes": ""
+   }
+  },
+  {
+   "agent": "Peirce",
+   "dimension": "plugin",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [
+    {
+     "id": "PL1",
+     "type": "strength",
+     "evidence": "loop-engine/plugin_manifest.py:84 semver+conflicts+SkillPolicy; plugin_bootstrap.py MCP opt-in; 16/16 validated",
+     "file_line": "loop-engine/plugin_manifest.py:84",
+     "risk_level": "low",
+     "risk_scheme_ref": "§一④复核(§三 high)",
+     "confidence": "high",
+     "next_step": "Add todo/credentials plugins",
+     "verify_command": "python -m plugin_bootstrap",
+     "rollback": "n/a"
+    }
+   ],
+   "coverage": {
+    "status": "covered",
+    "current": "loop-engine/plugin_manifest.py"
+   },
+   "meta": {
+    "intake_evidence_count": 2,
+    "files_read": [
+     "loop-engine/plugin_manifest.py",
+     "loop-engine/plugin_bootstrap.py"
+    ],
+    "notes": ""
+   }
+  },
+  {
+   "agent": "Kepler",
+   "dimension": "workflow",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [
+    {
+     "id": "WF1",
+     "type": "strength",
+     "evidence": "loop-engine/evolution_loader.py:1 EvolutionCycle + hook_bus lifecycle; evolution_bridge.py:1 hooked evolve(); loop_state_enums 17 transitions",
+     "file_line": "loop-engine/evolution_loader.py:1",
+     "risk_level": "low",
+     "risk_scheme_ref": "§一④复核(§三 high)",
+     "confidence": "high",
+     "next_step": "Add auto-review policy",
+     "verify_command": "pytest -q tests/test_evolution_bridge.py",
+     "rollback": "n/a"
+    }
+   ],
+   "coverage": {
+    "status": "covered",
+    "current": "loop-engine/evolution_loader.py"
+   },
+   "meta": {
+    "intake_evidence_count": 2,
+    "files_read": [
+     "loop-engine/evolution_loader.py",
+     "loop-engine/evolution_bridge.py"
+    ],
+    "notes": ""
+   }
+  },
+  {
+   "agent": "Archimedes",
+   "dimension": "data",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [
+    {
+     "id": "DAT1",
+     "type": "strength",
+     "evidence": "loop-engine/immutable_state.py:29 LoopState immutable snapshot + StateHistory replay; run_state.py:29 PersistContext CRITICAL fsync",
+     "file_line": "loop-engine/immutable_state.py:29",
+     "risk_level": "low",
+     "risk_scheme_ref": "§一④复核(§三 high)",
+     "confidence": "high",
+     "next_step": "Document persistence matrix",
+     "verify_command": "pytest -q tests/test_immutable_state.py",
+     "rollback": "n/a"
+    }
+   ],
+   "coverage": {
+    "status": "covered",
+    "current": "loop-engine/immutable_state.py"
+   },
+   "meta": {
+    "intake_evidence_count": 2,
+    "files_read": [
+     "loop-engine/immutable_state.py",
+     "loop-engine/run_state.py"
+    ],
+    "notes": ""
+   }
+  },
+  {
+   "agent": "Hopper",
+   "dimension": "ops",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [
+    {
+     "id": "OPS1",
+     "type": "strength",
+     "evidence": "loop-engine/run_lock.py + resume_guard.py + cron_wrapper.sh present; task_tracker.py:71 wired (P1-N2)",
+     "file_line": "loop-engine/run_lock.py:1",
+     "risk_level": "low",
+     "risk_scheme_ref": "§一④复核(§三 high)",
+     "confidence": "high",
+     "next_step": "Add healthcheck doc",
+     "verify_command": "pytest -q tests/test_final_5.py",
+     "rollback": "n/a"
+    }
+   ],
+   "coverage": {
+    "status": "covered",
+    "current": "loop-engine/run_lock.py"
+   },
+   "meta": {
+    "intake_evidence_count": 2,
+    "files_read": [
+     "loop-engine/run_lock.py",
+     "loop-engine/task_tracker.py"
+    ],
+    "notes": ""
+   }
+  },
+  {
+   "agent": "Bohr",
+   "dimension": "cost",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [
+    {
+     "id": "COST1",
+     "type": "strength",
+     "evidence": "loop-engine/telemetry.py report_token_usage + 80% alert; context_fragment.py:479 FragmentBudget per-kind caps",
+     "file_line": "loop-engine/telemetry.py:1",
+     "risk_level": "low",
+     "risk_scheme_ref": "§一④复核(§三 high)",
+     "confidence": "high",
+     "next_step": "Add per-task cost rollup",
+     "verify_command": "pytest -q tests/test_telemetry.py",
+     "rollback": "n/a"
+    }
+   ],
+   "coverage": {
+    "status": "covered",
+    "current": "loop-engine/telemetry.py"
+   },
+   "meta": {
+    "intake_evidence_count": 2,
+    "files_read": [
+     "loop-engine/telemetry.py",
+     "loop-engine/context_fragment.py"
+    ],
+    "notes": ""
+   }
+  },
+  {
+   "agent": "Raman",
+   "dimension": "compliance",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [
+    {
+     "id": "CMP1",
+     "type": "observation",
+     "evidence": "runtime_exec.py:1 append-only security-audit.jsonl; LICENSE presence not verified in this pass",
+     "file_line": "loop-engine/runtime_exec.py:1",
+     "risk_level": "low",
+     "risk_scheme_ref": "§一④复核(§三 medium 待复核)",
+     "confidence": "medium",
+     "next_step": "Confirm LICENSE + provenance",
+     "verify_command": "pytest -q tests/test_provenance_contract.py",
+     "rollback": "n/a"
+    }
+   ],
+   "coverage": {
+    "status": "partial",
+    "current": "loop-engine/runtime_exec.py"
+   },
+   "meta": {
+    "intake_evidence_count": 1,
+    "files_read": [
+     "loop-engine/runtime_exec.py"
+    ],
+    "notes": ""
+   }
+  },
+  {
+   "agent": "Curie",
+   "dimension": "docs",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [
+    {
+     "id": "DOC1",
+     "type": "strength",
+     "evidence": "docs/ has 188 md incl. design/loop-dev-evolution-roadmap-20261009.md + research/ deep-dives",
+     "file_line": "docs/design/loop-dev-evolution-roadmap-20261009.md:1",
+     "risk_level": "low",
+     "risk_scheme_ref": "§一④复核(§三 high)",
+     "confidence": "high",
+     "next_step": "Keep changelog current",
+     "verify_command": "n/a",
+     "rollback": "n/a"
+    }
+   ],
+   "coverage": {
+    "status": "covered",
+    "current": "docs/design/loop-dev-evolution-roadmap-20261009.md"
+   },
+   "meta": {
+    "intake_evidence_count": 1,
+    "files_read": [
+     "docs/design/loop-dev-evolution-roadmap-20261009.md"
+    ],
+    "notes": ""
+   }
+  },
+  {
+   "agent": "Fermi",
+   "dimension": "frontend",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [],
+   "coverage": {
+    "status": "N/A",
+    "current": ""
+   },
+   "meta": {
+    "intake_evidence_count": 0,
+    "files_read": [],
+    "notes": "No frontend in loop-engine core (CLI/TUI only)"
+   }
+  },
+  {
+   "agent": "Dirac",
+   "dimension": "net",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [],
+   "coverage": {
+    "status": "N/A",
+    "current": ""
+   },
+   "meta": {
+    "intake_evidence_count": 0,
+    "files_read": [],
+    "notes": "No network server surface in loop-engine core"
+   }
+  },
+  {
+   "agent": "Lovelace",
+   "dimension": "git",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [
+    {
+     "id": "GIT1",
+     "type": "strength",
+     "evidence": "git log --oneline: structured commits; docs/ holds only loop design/usage; .gitignore:1 excludes mounted tasks",
+     "file_line": "docs/design/loop-dev-evolution-roadmap-20261009.md:1",
+     "risk_level": "low",
+     "risk_scheme_ref": "§一④复核(§三 high)",
+     "confidence": "high",
+     "next_step": "Add GitHub handoff template",
+     "verify_command": "git log --oneline -5",
+     "rollback": "n/a"
+    }
+   ],
+   "coverage": {
+    "status": "covered",
+    "current": ".gitignore"
+   },
+   "meta": {
+    "intake_evidence_count": 1,
+    "files_read": [
+     ".gitignore"
+    ],
+    "notes": ""
+   }
+  },
+  {
+   "agent": "Sartre",
+   "dimension": "review",
+   "evaluatedAt": "2026-10-10T10:55:00Z",
+   "status": "completed",
+   "findings": [
+    {
+     "id": "REV1",
+     "type": "strength",
+     "evidence": "docs/design/loop-dev-evolution-roadmap-20261009.md break-frame closed 3x dup blocks + 7 dormant modules; 1067 tests pass",
+     "file_line": "docs/design/loop-dev-evolution-roadmap-20261009.md:1",
+     "risk_level": "low",
+     "risk_scheme_ref": "§一④复核(§三 high)",
+     "confidence": "high",
+     "next_step": "Periodic break-frame audits",
+     "verify_command": "n/a",
+     "rollback": "n/a"
+    }
+   ],
+   "coverage": {
+    "status": "covered",
+    "current": "docs/design/loop-dev-evolution-roadmap-20261009.md"
+   },
+   "meta": {
+    "intake_evidence_count": 1,
+    "files_read": [
+     "docs/design/loop-dev-evolution-roadmap-20261009.md"
+    ],
+    "notes": ""
+   }
+  }
+ ]
+}

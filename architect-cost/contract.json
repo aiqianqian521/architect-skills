@@ -1,0 +1,133 @@
+{
+  "dimension": "cost",
+  "checklist": [
+    {
+      "id": "COS-01",
+      "rule": "是否有业务单位成本（而非只有月账单）？",
+      "trigger": "未通过时: 把总账单拆成每请求/每活跃用户/每任务/GB-month 单位成本；只有总数即补拆分与业务量。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·1"
+    },
+    {
+      "id": "COS-02",
+      "rule": "流量、存储、峰值和保留期假设是否可追溯？",
+      "trigger": "未通过时: 记录每条容量假设的来源/置信度/复算触发条件；无来源即补依据并标置信度。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·2"
+    },
+    {
+      "id": "COS-03",
+      "rule": "是否区分固定/变动/迁移/灾备成本？",
+      "trigger": "未通过时: 分账为固定/变动/迁移/灾备四类并显式标出；混为总账即拆分。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·3"
+    },
+    {
+      "id": "COS-04",
+      "rule": "是否评估多区域、备份、日志和出口流量的隐藏成本？",
+      "trigger": "未通过时: 补多区域跨区费/备份存储费/日志量费/出口流量费估算；未估即标 hidden-cost 风险。",
+      "severity_if_fail": "medium",
+      "guide_ref": "核心原则·4"
+    },
+    {
+      "id": "COS-05",
+      "rule": "是否有预算阈值、owner、告警和超支动作？",
+      "trigger": "未通过时: 设预算阈值+owner+超支告警+降级/限流/复审动作；无门禁即接 FinOps 告警。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·5"
+    },
+    {
+      "id": "COS-06",
+      "rule": "是否记录供应商锁定点、导出能力和替代方案？",
+      "trigger": "未通过时: 记专有 API/格式/出口/合同锁定点与导出能力+替代路径+退出成本；无记录即建供应商退出 ADR。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·6"
+    },
+    {
+      "id": "COS-07",
+      "rule": "复杂架构是否通过规模 Tier 和 YAGNI 论证？",
+      "trigger": "未通过时: 按 Tier 论证是否需要此复杂度并写 YAGNI 复算触发条件；过度设计即降级到当前 Tier 方案。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·7"
+    }
+  ],
+  "output_schema": {
+    "required": [
+      "id",
+      "type",
+      "evidence",
+      "risk_level",
+      "confidence",
+      "next_step"
+    ],
+    "fields": {
+      "id": {
+        "type": "string",
+        "pattern": "^COS-[0-9]{2}$",
+        "description": "必须引用 checklist 中的规则 ID"
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "pattern_violation",
+          "missing_mechanism",
+          "design_flaw",
+          "performance_issue",
+          "other",
+          "unknown"
+        ],
+        "description": "发现类型"
+      },
+      "evidence": {
+        "type": "string",
+        "min_length": 10,
+        "description": "行级证据：文件路径 + 行号 + 代码片段"
+      },
+      "risk_level": {
+        "type": "string",
+        "enum": [
+          "critical",
+          "high",
+          "medium",
+          "low",
+          "unknown"
+        ],
+        "description": "按 risk-grading-scheme.md 量化口径判定"
+      },
+      "risk_scheme_ref": {
+        "type": "string",
+        "description": "引用 risk-grading-scheme.md 触发条件编号"
+      },
+      "confidence": {
+        "type": "string",
+        "enum": [
+          "high",
+          "medium",
+          "low",
+          "unknown"
+        ],
+        "description": "对定级和证据的置信度"
+      },
+      "next_step": {
+        "type": "string",
+        "min_length": 10,
+        "description": "具体可执行的下一步，含验证命令或人工复核说明"
+      },
+      "verify_command": {
+        "type": "string",
+        "description": "可运行的验证命令（GREEN-first）"
+      },
+      "rollback": {
+        "type": "string",
+        "description": "失败时的撤退路径"
+      }
+    }
+  },
+  "meta": {
+    "version": "1.0",
+    "updated_at": "2026-09-14",
+    "source_skill": "architect-cost",
+    "scene": "B",
+    "note": "本契约仅用于蜂群模式（场景 B）的方案评审。"
+  }
+}

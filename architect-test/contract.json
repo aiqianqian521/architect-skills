@@ -1,0 +1,154 @@
+{
+  "dimension": "test",
+  "checklist": [
+    {
+      "id": "TES-01",
+      "rule": "实现耦合测试 — 测试绑定了内部实现细节（mock了不该mock的）",
+      "trigger": "",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·1"
+    },
+    {
+      "id": "TES-02",
+      "rule": "同义反复测试 — getX() 的测试验证 x==x，无意义",
+      "trigger": "",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·2"
+    },
+    {
+      "id": "TES-03",
+      "rule": "水平切片测试 — 按层测试而非按功能垂直切片",
+      "trigger": "",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·3"
+    },
+    {
+      "id": "TES-04",
+      "rule": "新功能是否有对应的失败测试？（先红后绿）",
+      "trigger": "没有: 写 @pytest.mark.xfail 测试，描述预期行为",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·4"
+    },
+    {
+      "id": "TES-05",
+      "rule": "测试是否通过公共接口？（没有mock内部实现）",
+      "trigger": "有mock内部: 改为只mock端口（ABC），适配器用 fake",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·5"
+    },
+    {
+      "id": "TES-06",
+      "rule": "测试命名是否描述场景？",
+      "trigger": "命名模糊: 改为 test_<what>_<condition>_<expected> 格式",
+      "severity_if_fail": "medium",
+      "guide_ref": "核心原则·6"
+    },
+    {
+      "id": "TES-07",
+      "rule": "是否覆盖了边界条件？（空输入、最大值、超时）",
+      "trigger": "补: @pytest.mark.parametrize 加边界用例",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·7"
+    },
+    {
+      "id": "TES-08",
+      "rule": "是否有永真断言？（excluded >= 0 毫无意义）",
+      "trigger": "改为具体断言: excluded > 0 或检查排除的具体信号名",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·8"
+    },
+    {
+      "id": "TES-09",
+      "rule": "是否有依赖随机性的 flaky 测试？",
+      "trigger": "有: 用固定 seed 或确定性 mock 替换随机数据",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·9"
+    },
+    {
+      "id": "TES-10",
+      "rule": "AI/Agent 输出是否有评测框架（eval sets + 多 evaluator 类型 + 实验运行状态机 + 评测沙箱执行 + 幂等防重跑）？",
+      "trigger": "未通过时: 建 AI 评测框架——多 evaluator 类型抽象（code/prompt/agent/custom_rpc）+ 实验运行 run/item/turn 三级状态机 + 多语言沙箱执行评测代码（资源限额 NetworkAccess/FileSystemAccess）+ Redis 式 SetNX 幂等防重跑；llm-as-judge 项需 model 层（gated）。真值实测 coze-loop domain/entity/evaluator.go:53-58（四类型）+expt_run.go:40/56（ItemRun/TurnRunState）+execution_request.go:9/30（SandboxExecutionRequest/RuntimeCapabilities）+infra/runtime/manager.go:37（GetRuntime 多语言）+domain/component/idem/idem.go:12（SetNX 幂等）+ google-adk evaluation framework。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·10"
+    }
+  ],
+  "output_schema": {
+    "required": [
+      "id",
+      "type",
+      "evidence",
+      "risk_level",
+      "confidence",
+      "next_step"
+    ],
+    "fields": {
+      "id": {
+        "type": "string",
+        "pattern": "^TES-[0-9]{2}$",
+        "description": "必须引用 checklist 中的规则 ID"
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "pattern_violation",
+          "missing_mechanism",
+          "design_flaw",
+          "performance_issue",
+          "other",
+          "unknown"
+        ],
+        "description": "发现类型"
+      },
+      "evidence": {
+        "type": "string",
+        "min_length": 10,
+        "description": "行级证据：文件路径 + 行号 + 代码片段"
+      },
+      "risk_level": {
+        "type": "string",
+        "enum": [
+          "critical",
+          "high",
+          "medium",
+          "low",
+          "unknown"
+        ],
+        "description": "按 risk-grading-scheme.md 量化口径判定"
+      },
+      "risk_scheme_ref": {
+        "type": "string",
+        "description": "引用 risk-grading-scheme.md 触发条件编号"
+      },
+      "confidence": {
+        "type": "string",
+        "enum": [
+          "high",
+          "medium",
+          "low",
+          "unknown"
+        ],
+        "description": "对定级和证据的置信度"
+      },
+      "next_step": {
+        "type": "string",
+        "min_length": 10,
+        "description": "具体可执行的下一步，含验证命令或人工复核说明"
+      },
+      "verify_command": {
+        "type": "string",
+        "description": "可运行的验证命令（GREEN-first）"
+      },
+      "rollback": {
+        "type": "string",
+        "description": "失败时的撤退路径"
+      }
+    }
+  },
+  "meta": {
+    "version": "1.0",
+    "updated_at": "2026-09-14",
+    "source_skill": "architect-test",
+    "scene": "B",
+    "note": "本契约仅用于蜂群模式（场景 B）的方案评审。"
+  }
+}

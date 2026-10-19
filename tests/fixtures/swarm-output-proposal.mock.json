@@ -1,0 +1,76 @@
+{
+  "project": "loop-dev",
+  "evaluatedAt": "2026-08-31T10:00:00Z",
+  "proposal": {
+    "id": "PROP-001",
+    "target": "把 orchestration 从 3628 行单文件降至 ≤600 行/文件，pytest 490 基线不回归",
+    "gap": "现状 orchestrator.py 3628 行 god file 全塞 OODA 7-step；缺模块边界",
+    "scope": "loop-engine/orchestrator.py + steps/{understand,...}.py + tests/",
+    "migration": "阶段1拆 decide/act；阶段2拆 observe/verify；阶段3 learn 最后",
+    "compat": "调度壳保留原 CLI；失败回滚 git revert 到 18f1038",
+    "acceptance": [
+      {"cmd": "git ls-files loop-engine | findstr orchestrator", "pass_when": "单文件 ≤600 行"},
+      {"cmd": "python -m pytest -q", "pass_when": "490 基线通过，pre-existing 不增"}
+    ],
+    "owner": "cb-owner",
+    "due": "2026-09-15"
+  },
+  "agents": [
+    {
+      "agent": "Bacon",
+      "dimension": "test",
+      "evaluatedAt": "2026-08-31T10:05:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "M5",
+          "type": "masked_bug",
+          "evidence": "test_close_event_records_probe_success_count: threshold-restore logic masked",
+          "file_line": "event_store_test.go:312",
+          "risk_level": "high",
+          "risk_scheme_ref": "§一②",
+          "confidence": "high",
+          "next_step": "add explicit probe success count assertion before threshold-restore",
+          "verify_command": "go test ./event -run TestCloseEventRecords -v",
+          "rollback": "git revert 该提交或移除 assertion 恢复旧逻辑",
+          "response_time": "7d",
+          "related_dimensions": ["design"]
+        }
+      ],
+      "coverage": { "status": "covered" },
+      "meta": { "intake_evidence_count": 5, "files_read": [], "notes": "" }
+    },
+    {
+      "agent": "Newton",
+      "dimension": "security",
+      "evaluatedAt": "2026-08-31T10:04:00Z",
+      "status": "completed",
+      "findings": [
+        {
+          "id": "S1",
+          "type": "hardcoded_secret",
+          "evidence": "config.yaml:14 contains plaintext api_key",
+          "file_line": "config.yaml:14",
+          "risk_level": "critical",
+          "risk_scheme_ref": "§一①",
+          "confidence": "high",
+          "next_step": "rotate key and move to environment variable",
+          "verify_command": "grep -r 'api_key' config/ || echo 'clean'",
+          "response_time": "立即/24h",
+          "related_dimensions": ["ops"]
+        }
+      ],
+      "coverage": { "status": "covered" },
+      "meta": { "intake_evidence_count": 3, "files_read": [], "notes": "" }
+    }
+  ],
+  "archMap": [
+    { "dir": "loop-engine/", "role": "核心编排", "evidence": "orchestrator.py:1" }
+  ],
+  "narratives": {
+    "summary": "方案完整，但存在 high/critical 发现需修复。",
+    "keyFindings": "M5 测试探针缺失；S1 明文密钥。",
+    "hardening": "补齐探针断言，轮换密钥。",
+    "nextSteps": "按响应时间修复 S1（24h）和 M5（7d）。"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "dimension": "design",
+  "checklist": [
+    {
+      "id": "DES-01",
+      "rule": "端口-适配器: 核心逻辑与 I/O 是否分离",
+      "trigger": "发现领域代码直接调用 subprocess 或全局可变状态",
+      "severity_if_fail": "high"
+    },
+    {
+      "id": "DES-02",
+      "rule": "模块深度: 每个模块是小接口大实现吗",
+      "trigger": "接口方法数/实现行数 > 0.05",
+      "severity_if_fail": "medium"
+    },
+    {
+      "id": "DES-03",
+      "rule": "单体文件体积: Top-N 文件是否离群",
+      "trigger": "单文件 > 800 行 或 > 30KB",
+      "severity_if_fail": "high"
+    },
+    {
+      "id": "DES-04",
+      "rule": "规模适配: 当前方案是否过度设计",
+      "trigger": "Tier1 用 PostgreSQL / Tier4 用 SQLite",
+      "severity_if_fail": "medium"
+    },
+    {
+      "id": "DES-05",
+      "rule": "依赖方向: 依赖是否指向抽象而非具体实现",
+      "trigger": "领域层 import 适配器或框架",
+      "severity_if_fail": "high"
+    }
+  ],
+  "output_schema": {
+    "required": ["id", "type", "evidence", "risk_level", "confidence", "next_step"]
+  },
+  "meta": {
+    "version": "1.0",
+    "updated_at": "2026-08-31",
+    "source_skill": "architect-design"
+  }
+}

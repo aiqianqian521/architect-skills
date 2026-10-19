@@ -1,0 +1,22 @@
+{
+  "templateRoot": "E:/业余/skill/wend/ai-skill-output-template",
+  "defaultTemplate": "architect.single-report",
+  "note": "add any new project as one row; fixture = swarm eval JSON; out = deliverable path",
+  "projects": [
+    {
+      "name": "cspm_agent",
+      "fixture": "tests/fixtures/eval-cspm-agent.json",
+      "out": "E:/lvfs_git/cpsm_git/cspm_agent/docs/architecture-report.md"
+    },
+    {
+      "name": "loop-dev",
+      "fixture": "tests/fixtures/eval-loop-dev.json",
+      "out": "E:/业余/my/loop-dev/docs/architecture-report.md"
+    },
+    {
+      "name": "deepseek-harness",
+      "fixture": "tests/fixtures/eval-deepseek-harness.json",
+      "out": "E:/业余/my/loop-dev/docs/deepseek-harness-master/architecture-report.md"
+    }
+  ]
+}

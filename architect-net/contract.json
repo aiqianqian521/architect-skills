@@ -1,0 +1,154 @@
+{
+  "dimension": "net",
+  "checklist": [
+    {
+      "id": "NET-01",
+      "rule": "API 契约先于实现（先写 OpenAPI/Proto/接口文档）",
+      "trigger": "",
+      "severity_if_fail": "medium",
+      "guide_ref": "核心原则·1"
+    },
+    {
+      "id": "NET-02",
+      "rule": "向后兼容（加字段不改字段，加接口不删接口）",
+      "trigger": "",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·2"
+    },
+    {
+      "id": "NET-03",
+      "rule": "版本策略明确（URL v1/v2 或 Header Accept-Version）",
+      "trigger": "",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·3"
+    },
+    {
+      "id": "NET-04",
+      "rule": "错误信息可操作（返回 error_code + human_readable + action_required）",
+      "trigger": "",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·4"
+    },
+    {
+      "id": "NET-05",
+      "rule": "API 是否有明确的契约文档（OpenAPI/Proto）？",
+      "trigger": "没有: 先写 Spec，再写代码",
+      "severity_if_fail": "medium",
+      "guide_ref": "核心原则·5"
+    },
+    {
+      "id": "NET-06",
+      "rule": "超时策略是否分层（connect/read/total）？",
+      "trigger": "未分层: 至少区分连接超时和业务超时",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·6"
+    },
+    {
+      "id": "NET-07",
+      "rule": "重试是否带退避+抖动？",
+      "trigger": "固定间隔: 改为指数退避 + 随机抖动",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·7"
+    },
+    {
+      "id": "NET-08",
+      "rule": "是否有 circuit breaker 防止雪崩？",
+      "trigger": "没有: 实现 CLOSED→OPEN→HALF_OPEN 三状态熔断",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·8"
+    },
+    {
+      "id": "NET-09",
+      "rule": "关键服务是否有降级方案（fallback）？",
+      "trigger": "无降级: 定义 graceful degradation 策略",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·9"
+    },
+    {
+      "id": "NET-10",
+      "rule": "是否考虑网络分区（split-brain）场景？",
+      "trigger": "未考虑: 评估 CAP 取舍，明确是 CP 还是 AP",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·10"
+    }
+  ],
+  "output_schema": {
+    "required": [
+      "id",
+      "type",
+      "evidence",
+      "risk_level",
+      "confidence",
+      "next_step"
+    ],
+    "fields": {
+      "id": {
+        "type": "string",
+        "pattern": "^NET-[0-9]{2}$",
+        "description": "必须引用 checklist 中的规则 ID"
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "pattern_violation",
+          "missing_mechanism",
+          "design_flaw",
+          "performance_issue",
+          "other",
+          "unknown"
+        ],
+        "description": "发现类型"
+      },
+      "evidence": {
+        "type": "string",
+        "min_length": 10,
+        "description": "行级证据：文件路径 + 行号 + 代码片段"
+      },
+      "risk_level": {
+        "type": "string",
+        "enum": [
+          "critical",
+          "high",
+          "medium",
+          "low",
+          "unknown"
+        ],
+        "description": "按 risk-grading-scheme.md 量化口径判定"
+      },
+      "risk_scheme_ref": {
+        "type": "string",
+        "description": "引用 risk-grading-scheme.md 触发条件编号"
+      },
+      "confidence": {
+        "type": "string",
+        "enum": [
+          "high",
+          "medium",
+          "low",
+          "unknown"
+        ],
+        "description": "对定级和证据的置信度"
+      },
+      "next_step": {
+        "type": "string",
+        "min_length": 10,
+        "description": "具体可执行的下一步，含验证命令或人工复核说明"
+      },
+      "verify_command": {
+        "type": "string",
+        "description": "可运行的验证命令（GREEN-first）"
+      },
+      "rollback": {
+        "type": "string",
+        "description": "失败时的撤退路径"
+      }
+    }
+  },
+  "meta": {
+    "version": "1.0",
+    "updated_at": "2026-09-14",
+    "source_skill": "architect-net",
+    "scene": "B",
+    "note": "本契约仅用于蜂群模式（场景 B）的方案评审。"
+  }
+}
