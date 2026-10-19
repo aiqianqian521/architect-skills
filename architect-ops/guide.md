@@ -27,6 +27,10 @@
 
 配置通过环境/密钥管理注入；镜像和依赖锁版本；发布记录 commit、构建摘要、配置版本、迁移版本和操作者。
 
+### 5. 对外调用背压与限流
+
+对 LLM/HTTP/第三方 API 的调用必须有背压与限流：加载不能无限打满下游。用**滚动窗口限流器**（固定小桶 num_buckets=window//bucket_size，求和最近桶），避免服务端原子脚本；后端（Redis 等）可插拔，**后端不可用时 fail-to-memory（精度下降但仍执行限流），绝不 fail-open-to-unlimited**；`enabled=false` 仅作显式旁路且需留痕。真值实测：open-webui@0.11.3 `backend/open_webui/utils/rate_limit.py:7-136`；loop-dev `loop-engine/rate_limiter.py`（本仓 cycle-6 A4 落地，见 `tests/test_rate_limiter.py`）。
+
 ## 检查清单
 
 ```text
@@ -37,6 +41,7 @@
 [ ] 数据库迁移是否与应用发布兼容并可恢复？ | 未通过时: 用 expand-contract 拆迁移，发布与不可逆删除不绑同一窗口；写回滚命令并演练。
 [ ] 是否记录版本、配置、迁移和回滚证据？ | 未通过时: 发布记录写 commit/build/配置版本/迁移版本/操作者；无记录即接发布日志自动化。
 [ ] 容器是否非 root、无 secrets、固定基础镜像版本？ | 未通过时: Dockerfile USER 非 root、secrets 走 env/secret manager、基础镜像钉版本(含 digest)；浮动 latest 即钉版本。
+[ ] 对外调用（LLM/HTTP/第三方 API）是否有背压/限流（滚动窗口）+ 后端不可用时降级不放开限制？ | 未通过时: 加滚动窗口限流器；后端不可用时 fail-to-memory 不 fail-open；`enabled=false` 需留痕。
 ```
 
 ## 常见问题修复指南

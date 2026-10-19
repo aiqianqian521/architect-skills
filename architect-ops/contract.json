@@ -49,6 +49,13 @@
       "trigger": "未通过时: Dockerfile USER 非 root、secrets 走 env/secret manager、基础镜像钉版本(含 digest)；浮动 latest 即钉版本。",
       "severity_if_fail": "critical",
       "guide_ref": "核心原则·7"
+    },
+    {
+      "id": "OPS-08",
+      "rule": "对外调用（LLM/HTTP/第三方 API）是否有背压/限流（滚动窗口）+ 后端不可用时降级不放开限制？",
+      "trigger": "缺事: 加滚动窗口限流器（固定小桶 num_buckets=window//bucket_size，求和最近桶，避免服务端原子脚本）；后端（Redis 等）不可用时 **fail-to-memory**（精度下降但仍执行限流），绝不 fail-open-to-unlimited；`enabled=false` 仅作为显式旁路且需留痕。",
+      "severity_if_fail": "high",
+      "guide_ref": "背压与限流"
     }
   ],
   "output_schema": {
@@ -125,7 +132,7 @@
   },
   "meta": {
     "version": "1.0",
-    "updated_at": "2026-09-14",
+    "updated_at": "2026-10-19",
     "source_skill": "architect-ops",
     "scene": "B",
     "note": "本契约仅用于蜂群模式（场景 B）的方案评审。"

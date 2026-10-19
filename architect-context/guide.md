@@ -78,6 +78,12 @@ raw_facts_budget = total_budget * 0.25      # 最低优先级
 
 **原则**：高价值内容（mental_models）获得更多token预算，低价值内容（raw_facts）按需截断。
 
+## 可逆性与可回放
+
+压缩不能丢失真相。压缩前的原始事件必须落为 **可独立读回的 log 层产物**（非仅内存、非仅摘要），保留可回放的 trace/checkpoint，审计端能不依赖被压缩的摘要而直接读回。验证手段：一条重放命令能读回压缩前事件。
+
+真值实测：hind/open-webui `context_compaction.py:300-333`；loop-dev `loop-engine/context_compactor.py` compact_with_checkpoint（cycle-6 A4）。
+
 ## 检查清单
 
 ```
@@ -103,6 +109,7 @@ raw_facts_budget = total_budget * 0.25      # 最低优先级
     → 没有: 加 token_usage 指标，80%阈值告警
 
 [ ] 压缩是否为可逆/可回放？（trace重放能力）
+[ ] 压缩前原始事件是否落为可独立读回的 log 层产物（而非仅内存/仅摘要）？ | 不可独立读回: 压缩前写 log 层 + 保留可回放 trace/checkpoint；一条重放命令能读回。
     → 不可逆: 保留压缩前的原始事件（仅log层），支持trace重放
 ```
 

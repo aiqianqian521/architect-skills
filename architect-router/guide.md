@@ -21,7 +21,7 @@
 | 文档工程 | `architect-docs` | ADR、技术文档、架构决策记录、知识管理、技术调研、CLAUDE.md | — |
 | 网络架构 | `architect-net` | API设计、RPC、服务间通信、超时重试、负载均衡、网关 | — |
 | 安全架构 | `architect-security` | 认证授权、输入校验、密钥管理、沙箱、威胁建模、安全审计 | — |
-| 部署与运行 | `architect-ops` | 部署、CI/CD、容器、健康检查、灰度发布、蓝绿发布、回滚 | — |
+| 部署与运行 | `architect-ops` | 部署、CI/CD、容器、健康检查、灰度发布、蓝绿发布、回滚、限流、背压 | — |
 | 可观测性 | `architect-observability` | 日志、指标、Tracing、SLO、告警、运行手册、故障响应 | — |
 | 成本与供应商 | `architect-cost` | 成本估算、云账单、容量费用、FinOps、供应商锁定、预算 | — |
 | 合规与隐私 | `architect-compliance` | GDPR、个人信息保护、数据驻留、审计保留、删除请求 | — |
