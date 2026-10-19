@@ -78,6 +78,21 @@ def build_ooda_graph():
 | 模式 | 场景 | 实现 |
 |------|------|------|
 | Circuit Breaker | 连续失败自动熔断 | `_consecutive_errors` 计数 |
+
+### Circuit Breaker 的故障域分级（增强，cycle-7 A4）
+
+基础熔断只管「连续失败数」；对多模型/多提供商舰队，还需**故障域分类** + **两级回路**，否则「单模型坏」会误伤整个提供商，或「输入错误」误封正常模型。
+
+| 域 | 含义 | 动作 |
+|------|------|------|
+| `NONE` | 端点已应答（如上下文超长/??错误） | 不开回路（不隔离），避免误伤 |
+| `MODEL` | 只有该模型 ref 不健康 | 开单模型回路，兄弟模型仍可路由 |
+| `PROVIDER` | 整个提供商不健康 | 开整提供商回路，不再逐个轮询子模型 |
+
+- **cooldown 指数升级**：OPEN 后等待时间随连续失败数递增（base 60s → 2次 5×（上限内）→ ≥3次 max 900s），防反复撞墙。
+- **half-open 单飞探针**：cooldown 到期后只允许一个探针通行（同层拒绝第二个），探针成功则关闭回路，失败则重新 OPEN。
+- **真值实测**：TencentCloud/Octop v1.0.2 `src/octop/infra/agents/providers/health.py:44-50,60-84,95-106,148-153,155-179`；loop `loop-engine/failure_scope.py` + `failure_scope_registry.py`（cycle-7 A4）。
+- **边界**：API 边界内单次调用的熔断/超时/重试仍归 [[architect-net]]；本节只补「编排内多模型/多提供商**舰队**健康」。
 | Idempotency | 重复执行结果一致 | error_signature 去重 + UPSERT |
 | Rate Limiting | 限流保护 | subprocess 并发控制 |
 | Backpressure | 防止队列无限增长 | worker-pool 并发上限 + buffer-storage + oversize-strategy + agent-task-queue 四件套（真值实测 TencentDB `worker-pool.ts:41-52`/`buffer-storage.ts:23-30`/`oversize-strategy.ts:18-24`/`agent-task-queue.ts:36-45`；非“待实现”占位） |
@@ -131,7 +146,7 @@ parent_step_id  = fan-out 子任务回收时的父步骤
 [ ] 是否有明确的状态机定义（状态+转换+条件）？ → 没有: 用 StateGraph 或枚举定义状态，画出转换图
 [ ] 阶段间状态是否可持久化（checkpoint-resume）？ → 不可持久化: 每个 checkpoint 写 state.md 或 SQLite
 [ ] 错误处理是否分层（L1重试→L2诊断→L3人工）？ → 未分层: 实现 standard→longer_timeout→graceful_skip 三级
-[ ] 是否有 circuit breaker（防止雪崩）？ → 没有: 加连续错误计数器，超阈值时熔断 + 通知
+[ ] 是否有 circuit breaker（防止雪崩），且按故障域分级（单模型 vs 整提供商），OPEN 后 cooldown 随失败数升级？ → 无熔断: 加连续错误计数器，超阈值熔断 + 通知。有熔断但单作用域: 补故障域分类 + 两级回路 + cooldown 指数升级 + half-open 单飞探针
 [ ] 长流程/记忆/日志是否有分层降维 + 压缩归档（L0 原始 → L1 抽取 → compact 压缩 → fast-path 快路径）？ → 未分层: 按 L0-recorder→L1-extractor→compressor→fast-path 四层降维，超阈值触发压缩归档（真值 TencentDB `l0-recorder.ts:28-34`/`l1-extractor.ts:64-72`/`compressor.ts:90-98`/`fast-path.ts:17-20`）
 [ ] 并发抽取是否有 worker-pool 并发上限 + buffer + oversize + task-queue 背压四件套？ → 缺件: 补 worker-pool(concurrency≥1) + buffer-storage + oversize-strategy + agent-task-queue，禁止无限 `gather()`（真值 TencentDB `worker-pool.ts:41-52` 等）
 [ ] 扩展点是否用事件/钩子而非硬编码？ → 硬编码: 改为 waterfall hook 链或 EventEmitter 模式

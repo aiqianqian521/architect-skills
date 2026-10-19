@@ -24,8 +24,8 @@
                       },
                       {
                           "id":  "AGE-04",
-                          "rule":  "是否有 circuit breaker（防止雪崩）？",
-                          "trigger":  "没有: 加连续错误计数器，超阈值时熔断 + 通知",
+                          "rule":  "是否有 circuit breaker（防止雪崩），且按故障域分级（单模型 vs 整提供商），OPEN 后 cooldown 随失败数升级？",
+                          "trigger":  "无熔断: 加连续错误计数器，超阈值熔断 + 通知。有熔断但单作用域: 补「故障域分类」（MODEL=仅单模型、PROVIDER=整提供商、NONE=政策/输入错误不隔离）+ 两级回路（per-model + per-provider）+ OPEN 后 cooldown 指数升级（base 60s→2次5×→≥3次 max 900s）+ half-open 单飞探针（真值 TencentCloud/Octop v1.0.2 `src/octop/infra/agents/providers/health.py:44-50,60-84,95-106,148-153,155-179`；loop `loop-engine/failure_scope.py` + `failure_scope_registry.py`，cycle-7 A4）",
                           "severity_if_fail":  "high",
                           "guide_ref":  "核心原则·4"
                       },
