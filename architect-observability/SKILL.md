@@ -1,7 +1,10 @@
 ---
 name: architect-observability
 description: >-
-  
+  可观测性与 SLO 架构评估：SLI/SLO、logs·metrics·traces、告警与 trace 重放。
+  适用于：评估 SLI/SLO 是否绑定关键旅程、三信号是否可互跳、telemetry 后端可插拔与 noop 降级、P50/P95/P99 与饱和度、告警阈值·owner·runbook、采样与高基数成本、OTel/OpenInference span 语义与 exporter 路由。
+  不适用于：接入单个 APM SDK、打印业务日志、仪表盘视觉设计。
+
 ---
 
 # Observability 架构评估

@@ -1,4 +1,4 @@
-﻿---
+---
 name: architect-agent
 description: >-
   Agent架构评估（LLM-Agent / 异步循环 / 编排引擎），含13条核心原则（单一路径、Async Generator、三段式状态分离、死亡螺旋5层防护、Auto-Compact熔断器、错误恢复阶梯）、9步Loop OODA模式、8项检查清单与修复指南、以及Claude Code Agent Loop深度设计参考。触发条件：设计/审查Agent系统、编排引擎、异步任务循环、LLM-Agent架构。

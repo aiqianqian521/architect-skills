@@ -1,7 +1,10 @@
 ---
 name: architect-workflow
 description: >-
-  
+  开发工作流与规格架构评估：领域术语、严格追问、Spec 完整度、垂直切片。
+  适用于：评估领域术语是否有唯一定义（CONTEXT.md）、架构决策是否经过严格追问、Spec 是否写清 Problem/Solution/Out of Scope、工单是否为可独立验证的垂直切片、大型探索任务是否使用 wayfinding 地图。
+  不适用于：代写需求文档、绘制流程图、项目管理工具操作。
+
 ---
 
 # Workflow 架构评估

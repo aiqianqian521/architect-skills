@@ -1,4 +1,4 @@
-﻿---
+---
 name: architect-context
 description: >-
   上下文预算与压缩架构评估。评估LLM Agent系统的上下文窗口管理、压缩策略、预算控制、surface/log分层。

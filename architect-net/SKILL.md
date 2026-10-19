@@ -1,7 +1,10 @@
 ---
 name: architect-net
 description: >-
-  
+  网络与 API 契约架构评估：契约先行、超时·重试·熔断·降级、版本与兼容。
+  适用于：评估 API 契约与版本策略、向后兼容、错误信息可操作性（error_code + action_required）、超时分层（connect/read/total）、重试退避与抖动、circuit breaker 防雪崩、降级方案与网络分区。
+  不适用于：调试一次具体接口报错、代写 OpenAPI 文件、压测取值与调参。
+
 ---
 
 # Net 架构评估

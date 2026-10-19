@@ -1,7 +1,10 @@
 ---
 name: architect-frontend
 description: >-
-  
+  前端与体验架构评估：关键用户旅程状态、可访问性、性能预算、展示系统结构。
+  适用于：评估关键旅程的加载/空/错误/权限四态覆盖、状态分层与组件边界、可访问性与 Core Web Vitals（LCP/INP/CLS）、design token 单一真相源、Dashboard 展示系统的分页·虚拟滚动·三态与深链接。
+  不适用于：页面视觉还原、CSS 样式调试、单个组件编码。
+
 ---
 
 # Frontend 架构评估

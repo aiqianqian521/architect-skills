@@ -1,7 +1,10 @@
 ---
 name: architect-ops
 description: >-
-  
+  部署与运行架构评估：发布路径、健康检查、回滚策略、容器基线。
+  适用于：评估 CI 最小门禁（lint/unit/integration/security scan）、health·readiness·startup 探针、staging 隔离环境、rolling/blue-green/canary 可回滚策略、迁移与应用发布兼容、容器非 root 与基础镜像固定。
+  不适用于：执行一次部署、K8s YAML 语法纠错、云主机运维操作。
+
 ---
 
 # Ops 架构评估
