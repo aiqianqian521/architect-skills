@@ -190,9 +190,9 @@
 1. 新建 `architect-{name}/SKILL.md`，明确触发词、核心原则、检查清单、修复指南和交叉引用。
 2. 在 Router 路由表和全面分析顺序中登记。
 3. 在 `ARCHITECTURE-COVERAGE.md` 增加覆盖维度、输出物和证据要求。
-4. 在 `tests/validate-architect-skills.mjs` 增加结构、路由和代表性意图测试。
+4. 在 `scripts/validate-contracts.mjs` + `tests/run-l1-tests.mjs` 增加结构、路由和代表性意图测试。
 
-5. **修旧优先于加新**：新增 atom 前，必须先核验现有 atom 是否兑现 covered 四要素（清单配修复 / 修复含验证末步 / 有独立交付段 / 风险分级引用骨架）。发现裸问句、缺验证末步、缺交付段的 atom 须先还债再扩展；`tests/validate-architect-skills.mjs` 的质量门禁（无裸问句 / 修复含验证末步）即修旧的自动守门，不通过不得加新。
+5. **修旧优先于加新**：新增 atom 前，必须先核验现有 atom 是否兑现 covered 四要素（清单配修复 / 修复含验证末步 / 有独立交付段 / 风险分级引用骨架）。发现裸问句、缺验证末步、缺交付段的 atom 须先还债再扩展；`scripts/validate-contracts.mjs` + `tests/run-l1-tests.mjs` 的质量门禁（无裸问句 / 修复含验证末步）即修旧的自动守门，不通过不得加新。
 
 ## 新增 Atom Skill
 
@@ -201,7 +201,7 @@
 1. 创建 `~/.claude/skills/architect-{name}/SKILL.md`
 2. 在路由表中加一行（用户意图 + 路由到 + 触发关键词 + 判断规则，无判断规则时填"—"）
 3. 在本文件 `子技能` 列表和 description frontmatter 中增加新 skill 名称；在 `ARCHITECTURE-COVERAGE.md` 登记覆盖维度和输出物
-4. 在 `tests/validate-architect-skills.mjs` 增加结构、交叉引用和代表性意图测试，并运行安装测试
+4. 在 `scripts/validate-contracts.mjs` + `tests/run-l1-tests.mjs` 增加结构、交叉引用和代表性意图测试，并运行安装测试
 
 ### SKILL.md 模板
 ```markdown
@@ -281,4 +281,4 @@ description: >-
 
 ### 终态演进（P3，未完成）
 
-当前 U0/U1/风险分级/横评格式靠本清单 prompt 约束 + `tests/validate-architect-skills.mjs` 结构校验。终态演进出 report_renderer 脚本：结构由代码 render，LLM 只写 narrative（参考 cspm_agent report_renderer，其 `templates/risk_zh.md` 已标弃用转服务端 render）。
+当前 U0/U1/风险分级/横评格式靠本清单 prompt 约束 + `scripts/validate-contracts.mjs` + `tests/run-l1-tests.mjs` 结构校验。终态演进出 report_renderer 脚本：结构由代码 render，LLM 只写 narrative（参考 cspm_agent report_renderer，其 `templates/risk_zh.md` 已标弃用转服务端 render）。

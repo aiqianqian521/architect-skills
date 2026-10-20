@@ -371,3 +371,11 @@ async function fanOutFanIn(tasks: Task[]): Promise<AggregatedResult> {
 - 审查 Agent 架构 → 参见 [[architect-review]] 12层审计
 - API 超时/重试/熔断/幂等契约 → 参见 [[architect-net]]
 - SLO/告警/日志平台 → 参见 [[architect-observability]]
+
+## cycle-8 实测增补：活性看门狗与上下文域工具策略门（2026-10-20）
+
+> 来源：A 阶段 cycle-8 蒸馏 QwenLM/qwen-code（真值 file:行段见 `contract.json` AGE-16/AGE-17）。两项均为 loop 实测缺口回流。
+
+**14. 活性看门狗（AGE-16）**：委派式尝试（子 agent 派发 / 模型轮次）应有**挂钟级「无进展」看门狗**：默认 180s（可 per-call / env 覆盖，0= 关闭）；**工具在飞期间挂起计时**（合法长工具不得误判为 stall）；**仅对 stall 重试**（上限 3），确定性失败（MAX_TURNS/TIMEOUT/ERROR）立即上抛、不重试；父级取消优先于重试。与「死亡螺旋层防护」「错误恢复阶梯」互补：后两者管“入口/恢复策略”，看门狗管“活性（卡死不可见）”。
+
+**15. 上下文域工具策略门（AGE-17）**：工具可见性按执行上下文动态收窄：子 agent/队友处于“计划待批准”上下文时，仅放行**只读检视白名单** + 退出计划模式；`task_update` 过**参数级**最小放行（仅“认领”语义）；拒绝以**结果级** `ToolResult{error}` 返回（对模型可解释、可自纠）而非抛错中断循环。

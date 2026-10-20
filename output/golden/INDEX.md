@@ -55,3 +55,9 @@
 - **architect-test（⑧，行 4）**：检查清单 +1 项（AI 输出评测框架：多 evaluator 类型 code/prompt/agent/custom_rpc + 实验运行 run/item/turn 状态机 + 多语言沙箱执行 + Redis SetNX 幂等）；此前清单仅传统单测/TDD，缺 AI 评测维度（真缺口）。§2 要点补 1 点。真值 file:行段：coze-loop domain/entity/evaluator.go:53-58（四类型）+expt_run.go:40/56（ItemRun/TurnRunState）+execution_request.go:9/30（SandboxExecutionRequest/RuntimeCapabilities）+infra/runtime/manager.go:37（GetRuntime 多语言）+domain/component/idem/idem.go:12（SetNX 幂等）；google-adk evaluation framework（multi-evaluator+eval 契约，部分 llm-as-judge model-gated）。
 - **金样对照点**：NEW output/loop-dev/2026-09-06/report.md（B 阶段 round2 校正验证报告），与 2026-09-05/2026-08-25 并列对照演进；本轮口径演进（检查点新增），未改 risk-grading-scheme 定级锚点，仅记 changelog。
 - 详细：output/loop-dev/2026-09-06/report.md + docs/iteration-tracker/loop-dev-2026-09-06.md + output/golden/INDEX.md。
+
+### 2026-10-20 · B 阶段 round3 · QwenLM/qwen-code 实测真值校正（口径演进，非定级锚点变更）
+- **architect-agent（⑥，行 6）**：检查清单 +2 项——AGE-16 活性看门狗（挂钟无进展中止 + 工具在飞挂起计时 + 仅 stall 重试）、AGE-17 上下文域工具策略门（按上下文收窄工具面 + 结果级阻断）；核心原则表 13 -> 15。真值两源：qwen-code workflow-stall.ts:67,70,134,156-162,180-193,248-296；subagent-plan-tool-policy.ts:18-34,43-45,94-105,139-153。
+- **loop 落地**：活性看门狗已 A4 cycle-8 回填（`loop-engine/stall_watchdog.py` + 18 例，commit 549fb8c，run_gate PASS 1310/73.23%）。
+- **金样对照**：NEW `output/loop-dev/2026-10-20/report.md`（B 阶段 round3 校正验证报告），与 2026-08-25/09-05/09-06 并列对照演进；本轮为口径演进（检查点新增），未改 risk-grading-scheme 定级锚点，仅入 changelog。
+- 详细：`output/loop-dev/2026-10-20/report.md` + `docs/iteration-tracker/loop-dev-2026-10-20.md` + `ARCHITECTURE-COVERAGE.md §5`。

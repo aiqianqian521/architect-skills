@@ -4,7 +4,7 @@
 > 被 `architect-router/SKILL.md`「全面项目分析模式」段引用（`../ARCHITECTURE-COVERAGE.md`，即本文件位于 architect-skills 根目录）。
 > 被 loop-dev `docs/knowledge-distillation/PROJECT-ANALYSIS-TEMPLATE.md` 的 16 矩阵行口径引用。
 > **本文件 = 19 矩阵行（18 atom skill + 1「性能/延迟/容量/资源预算」partial，主属 architect-agent，尚无独立 atom）**。
-> 创建于 2026-09-05（B 阶段断链修复：原 router/TEMPLATE 引用本文件但文件缺失，D4 断链；本次补建使口径源真实可回溯）。最后更新：2026-10-09（新增 architect-context/architect-rag，升级 architect-agent 检查项）。
+> 创建于 2026-09-05（B 阶段断链修复：原 router/TEMPLATE 引用本文件但文件缺失，D4 断链；本次补建使口径源真实可回溯）。最后更新：2026-10-20（新增 architect-context/architect-rag，升级 architect-agent 检查项）。
 
 ## §1 固定分析顺序（10 维）→ atom 映射
 
@@ -35,7 +35,7 @@
 | 3 | architect-data | ⑤ | schema/迁移/事务/一致性/备份恢复/生命周期/隐私分类 | 行级 file:line | 四件套 | |
 | 4 | architect-test | ⑧ | 单测/契约/集成/E2E/金数据/回归/覆盖率/验证末步；AI 输出评测框架(多 evaluator+实验状态机+多语言沙箱+幂等) | 测试入口+覆盖率+验证命令+评测契约 | 四件套 | ✅ 2026-09-06 |
 | 5 | architect-workflow | ③⑥ | 流程/状态图/checkpoint-resume/handoff/fan-out·in/saga | 行级 file:line | 四件套 | |
-| 6 | architect-agent | ⑥ | 状态机/checkpoint/并发上限/取消/预算/失败恢复/可观测；分层降维+压缩归档；worker-pool 背压四件套；单一路径原则；Async Generator模式(backpressure+TerminalReason)；三段式状态分离(Config/State/Deps≤4)；死亡螺旋5层防护；错误恢复阶梯(5级)；多Agent编排(Fan-out/Saga/Map-reduce) | 行级 file:line（状态机/池/队列） | 四件套 | ✅ 2026-09-05 |
+| 6 | architect-agent | ⑥ | 状态机/checkpoint/并发上限/取消/预算/失败恢复/可观测；分层降维+压缩归档；worker-pool 背压四件套；单一路径原则；Async Generator模式(backpressure+TerminalReason)；三段式状态分离(Config/State/Deps≤4)；死亡螺旋5层防护；错误恢复阶梯(5级)；多Agent编排(Fan-out/Saga/Map-reduce)，活性看门狗（挂钟无进展中止+工具在飞挂起+仅 stall 重试），上下文域工具策略门（按上下文收窄工具面+结果级阻断） | 行级 file:line（状态机/池/队列） | 四件套 | ✅ 2026-09-05 |
 | 7 | architect-git | ⑨ | 变更管控/分支策略/CI 门禁/发布回滚/敏感数据入库 | git log/CI 配置 file:line | 四件套 | |
 | 8 | architect-docs | ⑨ | README/ADR/runbook/文档一致性/入口完整 | 文档入口 file:line | 四件套 | |
 | 9 | architect-net | ④ | API 契约/版本/错误码/超时/重试/幂等/消息流式/trace_id | 行级 file:line | 四件套 | |
@@ -62,7 +62,7 @@
 
 ## §4 继续填充规则（指针 router）
 
-新增 atom 必须同时更新四处（详见 router「继续填充规则」）：① 新建 `architect-{name}/SKILL.md`；② router 路由表+固定顺序登记；③ **本文件 §2 增加覆盖维度行**；④ `tests/validate-architect-skills.mjs` 增结构/路由/意图测试。
+新增 atom 必须同时更新四处（详见 router「继续填充规则」）：① 新建 `architect-{name}/SKILL.md`；② router 路由表+固定顺序登记；③ **本文件 §2 增加覆盖维度行**；④ `scripts/validate-contracts.mjs` + `tests/run-l1-tests.mjs` 增结构/路由/意图测试。
 **修旧优先于加新**：新增 atom 前先核验现有 atom 是否兑现 covered 四要素（清单配修复 / 修复含验证末步 / 有独立交付段 / 风险分级引骨架）；裸问句/缺验证末步/缺交付段的 atom 须先还债再扩展。
 
 ## §5 校正记录（口径演进 changelog）
@@ -102,3 +102,11 @@
   - `guide.md` 增补"展示系统架构专项"一节；`contract.json` checklist 7 → 13 项。
 - 对齐设计文档：`量化知识库/02_项目/lh-量化交易/PM/30-框架设计/2026-10-01-Runtime2026-WebUI展示系统架构设计.md`（六层嵌套路由 + 前后端分离 + 禁未来红线）。
 - 本次校准：面向"多币种×多指标×多止盈方案"实时展示系统；已覆盖架构师技能欠缺的"展示系统结构评估"能力。
+
+### 2026-10-20 · B 阶段 round3 · QwenLM/qwen-code cycle-8 实测真值校正
+- **architect-agent（⑥，行 6）**：检查清单 +2 项（AGE-16 活性看门狗；AGE-17 上下文域工具策略门）；核心原则 13 -> 15。
+  真值两源 file:行段：qwen-code `packages/core/src/agents/runtime/workflow-stall.ts:67,70,134,156-162,180-193,248-296`（挂钟看门狗：默认 180s / 仅 stall 重试；工具在飞挂起）；`packages/core/src/agents/runtime/subagent-plan-tool-policy.ts:18-34,43-45,94-105,139-153`（上下文域工具收窄 + 结果级阻断）。均 D3 核验存在✅。
+- **loop 反向样本**：`git grep -i 'watchdog|heartbeat|idle_timeout' -- loop-engine/*.py` = 0 命中（真缺口）；A4 cycle-8 已回填 `loop-engine/stall_watchdog.py`（commit 549fb8c）。
+- **本文件**：§4 校验器路径纯鏈修正（`tests/validate-architect-skills.mjs`（不存在）-> `scripts/validate-contracts.mjs` + `tests/run-l1-tests.mjs`）。
+- 验证：`node scripts/validate-contracts.mjs`（19 atom，0 错 0 警）+ `node tests/run-l1-tests.mjs`（32 passed）。
+- 详细：`output/loop-dev/2026-10-20/report.md` + `docs/iteration-tracker/loop-dev-2026-10-20.md` + `output/golden/INDEX.md`。
