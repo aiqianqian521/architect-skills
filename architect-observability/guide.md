@@ -37,10 +37,12 @@
 [ ] 是否对敏感字段做脱敏并验证日志不可泄密？ | 未通过时: 日志接入脱敏(字段白名单/正则)并跑泄密断言；无脱敏即补白名单。
 [ ] 是否能从一次 trace 重放或定位关键失败步骤？ | 未通过时: 接分布式 trace 并能按 trace_id 重放关键链路；无 trace 即先接最关键 RPC 的 span。
 [ ] telemetry span 是否使用标准语义约定（OpenInference/OpenTelemetry LLM span 语义，如 text/image/reasoning/tool_call/tool_call_response）而非自定义散点？ | 未通过时: 采 OpenInference/OpenTelemetry 标准语义约定标注 span（input/output/llm/tool），禁每点自定义；真值实测 coze-loop open_inference/openinference.go:13-19（TextLiteral/ReasoningLiteral/ToolCallLiteral）+ google-adk telemetry/tracing.py:196（trace_agent_invocation）。
-[ ] trace 导出/exporter 是否按场景选范式（SDK 直发 exporter / 平台落盘存储 / collector 扇出多租户路由）且多租户场景隔离 trace？ | 未通过时: 择优三种 exporter 范式——SDK 直发（adk sqlite_span_exporter 轻量）/ 平台落盘（coze-loop ClickHouse 批量 Insert+分析查询）/ collector 扇出（librechat OTel collector routing connector 多租户 destination eu/jp/us）；多租户必隔离 trace。真值实测 adk sqlite_span_exporter.py:36/coze-loop infra/repo/ck/spans.go:52/librechat otel/langfuse-fanout/otelcol.yaml:17+main.go:613+metrics.go:138。
+[ ] trace 导出/exporter 是否按场景选范式（SDK 直发 exporter / 平台落盘存储 / collector 扇出多租户路由）且多租户场景隔离 trace？ | 未通过时: 择优三种 exporter 范式——SDK 直发（adk sqlite_span_exporter 轻量）/ 平台落盘（coze-loop ClickHouse 批量 Insert+分析查询）/ collector 扇出（librechat OTel collector routing connector 多租户 destination eu/jp/us）；多租户必隔离 trace。真值实测 adk sqlite_span_exporter.py:36/coze-loop infra/repo/ck/spans.go:52/librechat otel/langfuse-fanout/otelcol.yaml:17+main.go:613+metrics.go:138）。
+[ ] 审计/状态历史导出是否被端到端断言（产物存在 + 每行可解析 + 语义与内存态一致），而不是只“写了导出代码”？ | 未通过时: 跑一轮真实流程后断言导出物存在、行数=内存快照数、每行 JSON 可解析且关键字段一致；并排查“不可达分支”（导出语句落在 return/raise 之后）与“伪序列化”（str(dict)/repr 当 JSON、手写拼接）——两者都算未落地。
 
 > **口径演进（2026-09-05 · TencentDB-Agent-Memory iter#3 实测真值校正）**：检查清单新增「telemetry 后端可插拔 factory + noop 降级」一项，带可回溯 file:行段真值（factory 切配多后端 + NoopTraceBackend 不可用降级）。校正记录见 architect-skills `output/loop-dev/2026-09-05/report.md`。
 > **口径演进（2026-09-06 · B 阶段 round2 · adk+coze-loop+librechat ⑩ 三方实测真值校正）**：检查清单新增「OTel 标准语义约定」「trace exporter/路由多范式+多租户隔离」两项，带三源可回溯 file:行段真值（SDK 端 adk OTel+SQLite exporter / 平台端 coze-loop ClickHouse+OpenInference / 采集器端 librechat OTel collector routing 多租户扇出）。校正记录见 architect-skills `output/loop-dev/2026-09-06/report.md`。
+> **口径演进（2026-10-22 · B 阶段 cycle-14 · loop 实测真值校正）**：检查清单新增「审计/状态历史导出的端到端断言」一项（真值 = loop cycle-14：导出块不可达 + writer 伪 JSON 叠加，导致审计导出从未真正落盘、且落盘也不可解析；修复后以产物存在性/行数/可解析性断言钉住）。校正记录见 loop 仓 `docs/flow/2026-09-05-grand-loop-status.md` §13.39。
 ```
 
 ## 常见问题修复指南
@@ -59,6 +61,14 @@
 2. 接入脱敏白名单/正则（按 key 名或值模式）在日志 handler 前生效。
 3. 跑泄密断言：批量样本日志不含已知敏感模式。
 4. **验证**：grep 已知 token/secret 在日志目录零命中；CI 加日志泄漏扫描门禁。
+
+### 审计导出形同虚设
+
+1. 先确认导出路径**可达**：导出语句不得位于 `return` / `raise` / `break` 之后；用静态检查或一次真实跑动验证产物确实被写出（不可达分支是"看起来有、实际从不执行"）。
+2. 序列化必须用真 JSON 库（`json.dumps`），禁止 `str(dict)` / `repr` / 手写字符串拼接当 JSON；非原生类型用显式兜底（如 `default=str`）。
+3. 为导出物补端到端断言：产物存在、行数等于内存条目数、每行可解析、关键字段与内存态一致。
+4. 把导出物接进回放/定位路径（按 run_id / round 可查），否则"导出"对审计仍然无用。
+5. **验证**：跑 N 轮后逐行 `json.loads` 成功；含单引号/中文/特殊字符的样本行仍合法。
 
 > 风险分级与下一步骨架参见 [[architect-router]]#原子风险分级与下一步骨架。
 > 边界口径：日志/指标/trace 采集、SLO 仪表盘、告警策略归 observability；API 契约内的 trace_id/error_code 归 [[architect-net]]；编排内 step 追踪归 [[architect-agent]]；回滚/降级/发布动作归 [[architect-ops]]。

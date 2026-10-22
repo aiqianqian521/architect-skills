@@ -161,3 +161,18 @@
   （env 关 = 3 轮不变；env 开 + 耗尽 payload = 第 0 轮干净停机）。
 - 验证：`node scripts/validate-contracts.mjs`（19 atom / 0 错 / 0 警）+ `node tests/run-l1-tests.mjs`（32 passed）。
 - 详细：loop `docs/flow/2026-09-05-grand-loop-status.md` §13.38 + `docs/design/2026-10-22-cycle13-A-quota-file-probe.md`。
+
+### 2026-10-22 · B 阶段 cycle-14 · 审计导出的端到端断言（新增 OBS-11）
+
+- **architect-observability（⑩，行 observability）**：检查清单 10 → **11** 项（**新增 OBS-11** 审计/状态历史导出的端到端断言：
+  产物真实存在 / 行数等于内存快照数 / 每行可机器解析 / 关键字段一致；并显式点名两类"未落地"——**不可达分支**
+  （导出语句落在 return/raise 之后）与**伪序列化**（str(dict)/repr 当 JSON、手写字符串拼接））；
+  `guide.md` 增检查清单行 + 口径演进注 + 修复指南「审计导出形同虚设」。
+- **loop 反向样本（真值）**：loop cycle-14 实测 —— `run_loop.run()` 的 P3-A1 导出块写在 `return {...}` **之后**（不可达，
+  `StateHistory.to_jsonl` 从未被调用，`iter_loop()` 也从无导出）；且该 writer 实现为
+  `str(s.to_dict()).replace("'", '"')`（Python repr 拼"伪 JSON"），值里出现单引号即产出非法行。
+  修复：提取 `_export_state_history()` 并在 `run()` 返回前 + `iter_loop()` 收尾处各调用一次；
+  `to_jsonl` 改 `json.dumps(..., ensure_ascii=False, default=str)`；新增 `tests/test_state_history_export.py`(7，
+  产物存在/行数/可解析/源侧 tripwire) + `test_to_jsonl_is_valid_json_even_with_quotes`。
+- 验证：`node scripts/validate-contracts.mjs`（19 atom / 0 错 / 0 警）+ `node tests/run-l1-tests.mjs`（32 passed）。
+- 详细：loop `docs/flow/2026-09-05-grand-loop-status.md` §13.39 + `docs/design/2026-10-22-cycle14-C-state-history-export.md`。

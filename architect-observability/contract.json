@@ -70,6 +70,13 @@
       "trigger": "未通过时: 择优三种 exporter 范式——SDK 直发（adk sqlite_span_exporter 轻量）/ 平台落盘（coze-loop ClickHouse 批量 Insert+分析查询）/ collector 扇出（librechat OTel collector routing connector 多租户 destination eu/jp/us）；多租户必隔离 trace。真值实测 adk sqlite_span_exporter.py:36/coze-loop infra/repo/ck/spans.go:52/librechat otel/langfuse-fanout/otelcol.yaml:17+main.go:613+metrics.go:138。",
       "severity_if_fail": "high",
       "guide_ref": "核心原则·10"
+    },
+    {
+      "id": "OBS-11",
+      "rule": "审计/状态历史类导出是否被端到端断言过（产物真实存在、每行可被机器解析、语义与内存态一致），而不是只“写了导出代码”？",
+      "trigger": "存在审计/状态历史/回放导出时：跑一轮真实流程后断言导出物存在、行数等于内存快照数、每行可 JSON 解析且关键字段一致；同时排查两类“未落地”——“不可达分支”（导出语句落在 return/raise 之后）与“伪序列化”（str(dict)/repr 当 JSON、手写字符串拼接）。真值：loop cycle-14 实测 run_loop.run() 的 P3-A1 导出块写在 return {...} 之后（不可达，StateHistory.to_jsonl 从未被调用），且该 writer 以 str(字典).replace(单引号→双引号) 拼“伪 JSON”，值含单引号即产出非法行；修复后以 tests/test_state_history_export.py(7) 断言产物存在+行数+可解析，并用 test_to_jsonl_is_valid_json_even_with_quotes 钉住真 JSON 契约。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·11"
     }
   ],
   "output_schema": {
