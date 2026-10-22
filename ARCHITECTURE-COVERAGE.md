@@ -149,3 +149,15 @@
   接线 `rag_layers._merge_text`（commit 见 loop 仓 §13.37）。
 - 验证：`node scripts/validate-contracts.mjs`（19 atom / 0 错 / 0 警）+ `node tests/run-l1-tests.mjs`（32 passed）。
 - 详细：loop `docs/flow/2026-09-05-grand-loop-status.md` §13.37 + `docs/design/2026-10-22-cycle12-A-4src-distill.md`。
+
+### 2026-10-22 · B 阶段 cycle-13 · 配额来源离线可注入（COS-08 补强）
+
+- **architect-cost（⑩，行 cost）**：COS-08 补强 —— 配额来源必须能**离线注入**（文件探针 / 环境变量 / 宿主注入点），
+  且**未配置时默认行为逐字节不变**（opt-in）；探针只"读 / 取数"，窗口语义映射与 fail-soft 降级仍归快照层；
+  `guide.md` 核心原则 5 增注入补强段 + 新增修复指南「配额来源不可离线验证」。
+- **loop 反向样本**：cycle-11 登记 N-3（真实额度源）为 blocked（本机无 SDK / 凭证）—— G-6 停止门已接线却无来源可测；
+  cycle-13 A 落 `loop-engine/quota_file_probe.py`（`LOOP_QUOTA_FILE` 只读 JSON；文件缺失 = 探针抛错，由快照层降级），
+  仅 2 行接入 `Orchestrator.__init__`；`tests/test_quota_file_probe.py`(32) 含两条端到端用例
+  （env 关 = 3 轮不变；env 开 + 耗尽 payload = 第 0 轮干净停机）。
+- 验证：`node scripts/validate-contracts.mjs`（19 atom / 0 错 / 0 警）+ `node tests/run-l1-tests.mjs`（32 passed）。
+- 详细：loop `docs/flow/2026-09-05-grand-loop-status.md` §13.38 + `docs/design/2026-10-22-cycle13-A-quota-file-probe.md`。
