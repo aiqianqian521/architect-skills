@@ -116,9 +116,16 @@
                       {
                           "id":  "AGE-17",
                           "rule":  "工具可见性是否按执行上下文（子 agent / 队友 / 计划态）收窄，且拒绝以结果级返回？",
-                          "trigger":  "全局一刀切：按上下文收窄工具面（计划待批准仅放只读检视白名单 + 退出计划模式；task_update 走参数级最小放行）；拒绝用结果级 ToolResult{error} 返回（可解释可自纠）而非抛错。真值：qwen-code packages/core/src/agents/runtime/subagent-plan-tool-policy.ts:18-34,43-45,94-105,139-153；loop loop-engine/tool_registry.py（待接线，candidate）",
+                          "trigger":  "全局一刀切：按上下文收窄工具面（计划待批准仅放只读检视白名单 + 退出计划模式；task_update 走参数级最小放行）；拒绝用结果级 ToolResult{error} 返回（可解释可自纠）而非抛错。真值：qwen-code packages/core/src/agents/runtime/subagent-plan-tool-policy.ts:18-34,43-45,94-105,139-153；loop loop-engine/tool_registry.py（已接线，adopted，cycle-8 A4-cand-B；条目 7）",
                           "severity_if_fail":  "high",
                           "guide_ref":  "核心原则·15"
+                      },
+                      {
+                          "id":  "AGE-18",
+                          "rule":  "每个步骤（节点/工具调用/委派）是否有可配置的异常策略（超时+重试+降级三态），且兜底路径显式标记成功？",
+                          "trigger":  "失败处理写死在调用点：把异常策略做成数据四元组 {timeout_ms, max_retry, process_type, data_on_err}；三态 = 抛错 / 异常分支 / 返回兜底数据；总尝试 = 重试次数+1；兜底路径给输出盖 isSuccess 标记供下游分支；中断（暂停/恢复）错误短路直抛、不消耗重试。真值：coze-studio backend/domain/workflow/internal/schema/node_schema.go:87-92 + backend/domain/workflow/internal/compose/node_runner.go:620-643,777-780；loop loop-engine/step_exception_policy.py（cycle-9 A4）",
+                          "severity_if_fail":  "high",
+                          "guide_ref":  "核心原则·16"
                       }
                   ],
     "output_schema":  {
@@ -195,7 +202,7 @@
                       },
     "meta":  {
                  "version":  "1.0",
-                 "updated_at":  "2026-10-20",
+                 "updated_at":  "2026-10-22",
                  "source_skill":  "architect-agent",
                  "scene":  "B",
                  "note":  "本契约仅用于蜂群模式（场景 B）的方案评审。"

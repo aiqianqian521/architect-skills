@@ -9,3 +9,6 @@ Thumbs.db
 *.backup
 *.bak-*
 *_orig.bak
+
+*.p9bak
+*.p9bak-*

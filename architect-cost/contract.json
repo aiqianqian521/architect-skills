@@ -49,6 +49,13 @@
       "trigger": "未通过时: 按 Tier 论证是否需要此复杂度并写 YAGNI 复算触发条件；过度设计即降级到当前 Tier 方案。",
       "severity_if_fail": "high",
       "guide_ref": "核心原则·7"
+    },
+    {
+      "id": "COS-08",
+      "rule": "额度/配额是否按多窗口快照管理（短窗+长窗），且抓取失败可降级、消费动作幂等？",
+      "trigger": "只有单窗计数器或根本没有配额面：建双窗快照（如 5h 突发窗 + 7d 持续窗），每窗带 usedPercent（夹取 [0,100]）与 resetsAt；非法百分比丢窗、两窗皆废→None（不得用 0% 假装健康）；抓取失败降级为 error snapshot（含 updatedAt）而不抛；额度消费须带强制幂等键、跨传输复用同一键、自带超时。真值：lobehub-canary apps/desktop/src/main/modules/heterogeneousAgent/codexQuota.ts:18-20,115-122,348-374,613-641；loop loop-engine/quota_window.py（cycle-9 A4）",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·5"
     }
   ],
   "output_schema": {
@@ -125,7 +132,7 @@
   },
   "meta": {
     "version": "1.0",
-    "updated_at": "2026-09-14",
+    "updated_at": "2026-10-22",
     "source_skill": "architect-cost",
     "scene": "B",
     "note": "本契约仅用于蜂群模式（场景 B）的方案评审。"

@@ -1,7 +1,7 @@
 ---
 name: architect-agent
 description: >-
-  Agent架构评估（LLM-Agent / 异步循环 / 编排引擎），含15条核心原则（单一路径、Async Generator、三段式状态分离、死亡螺旋5层防护、Auto-Compact熔断器、错误恢复阶梯、活性看门狗、上下文域工具策略门）、9步Loop OODA模式、8项检查清单与修复指南、以及Claude Code Agent Loop深度设计参考。触发条件：设计/审查Agent系统、编排引擎、异步任务循环、LLM-Agent架构。
+  Agent架构评估（LLM-Agent / 异步循环 / 编排引擎），含16条核心原则（单一路径、Async Generator、三段式状态分离、死亡螺旋5层防护、Auto-Compact熔断器、错误恢复阶梯、活性看门狗、上下文域工具策略门、步骤级异常策略三态）、9步Loop OODA模式、8项检查清单与修复指南、以及Claude Code Agent Loop深度设计参考。触发条件：设计/审查Agent系统、编排引擎、异步任务循环、LLM-Agent架构。
 ---
 
 # Agent 架构评估
@@ -40,6 +40,7 @@ description: >-
 | 13 | **Auto-Compact 熔断器** | 连续失败3次熔断，防止每天250K API调用 |
 | 14 | **活性看门狗** | 挂钟无进展中止 + 工具在飞挂起计时 + 仅 stall 重试 |
 | 15 | **上下文域工具策略门** | 按执行上下文收窄工具面 + 结果级阻断 |
+| 16 | **步骤级异常策略三态** | 超时+重试+降级四元组 + isSuccess 标记 + 中断短路 |
 
 ## 交叉引用
 
