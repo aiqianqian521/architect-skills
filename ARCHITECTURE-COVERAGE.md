@@ -136,3 +136,16 @@
   另修正 cycle-9 对 I-2 的口径错误：当时记「与 `tool_concurrency` 重叠、不采」，但 `tool_concurrency` 自身即为未接线机制（前提不成立）。
 - 验证：`node scripts/validate-contracts.mjs`（19 atom / 0 错 / 0 警）+ `node tests/run-l1-tests.mjs`（32 passed）。
 - 详细：loop `docs/flow/2026-09-05-grand-loop-status.md` §13.36 + `docs/design/2026-10-22-cycle11-N123-orphan-gate-coze-candidates-quota-contract.md`。
+
+### 2026-10-22 · B 阶段 cycle-12 · WeKnora 真值校正（RAG 重叠拼接）
+
+- **architect-rag（⑩，行 rag）**：检查清单 8 → **9** 项（**新增 RAG-09** 重叠感知的保守文本拼接：
+  完全包含折叠 / 有界后缀-前缀重叠去除（最短 12 码位、窗口上限 400）/ 极短子串不判包含 / 无重叠时保守保留分隔符）；
+  `guide.md` 增「朴素拼接 → 重叠感知的保守合并」修复指南（含"不要按位置坐标裁剪"的失效说明）；`output_schema` type 增 `no_overlap_merge`。
+  真值 file:行段：WeKnora `internal/searchutil/chunkmerge.go:15-45`（`JoinChunkContent`）、`:50-58`（`ContainsChunkContent` 短串不判包含）、
+  `:87-94`（`minOverlapRunes = 12` / `defaultSearchSpan = 400`）、`:178-227`（`MergeTextChunks`）。
+- **loop 反向样本**：`rag_layers.LayeredMemory._merge_text` 原实现只做「完全相同去重 + `' ∣ '` 拼接」，
+  对包含/部分重叠无能为力（真缺口）→ cycle-12 A 回填 `loop-engine/text_merge.py` + `tests/test_text_merge.py`(16)，
+  接线 `rag_layers._merge_text`（commit 见 loop 仓 §13.37）。
+- 验证：`node scripts/validate-contracts.mjs`（19 atom / 0 错 / 0 警）+ `node tests/run-l1-tests.mjs`（32 passed）。
+- 详细：loop `docs/flow/2026-09-05-grand-loop-status.md` §13.37 + `docs/design/2026-10-22-cycle12-A-4src-distill.md`。

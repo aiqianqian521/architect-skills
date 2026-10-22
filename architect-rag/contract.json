@@ -56,6 +56,13 @@
       "trigger": "无但场景需要: 加Entity Links + Spreading Activation",
       "severity_if_fail": "low",
       "guide_ref": "Graph检索"
+    },
+    {
+      "id": "RAG-09",
+      "rule": "多段文本拼接/合并是否按重叠裁剪？（完全包含折叠 + 有界重叠去除 + 短串不判包含 + 保守回退）",
+      "trigger": "朴素去重或按位置坐标拼接: 改为按文本重叠合并（最短重叠 12 码位 / 搜索窗口上限 400 码位），无重叠可去时保守保留分隔符",
+      "severity_if_fail": "medium",
+      "guide_ref": "重叠感知保守拼接"
     }
   ],
   "output_schema": {
@@ -84,6 +91,7 @@
           "weak_embedding",
           "no_consolidation",
           "no_graph",
+          "no_overlap_merge",
           "other"
         ],
         "description": "发现类型"
