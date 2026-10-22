@@ -53,7 +53,7 @@
     {
       "id": "COS-08",
       "rule": "额度/配额是否按多窗口快照管理（短窗+长窗），且抓取失败可降级、消费动作幂等？",
-      "trigger": "只有单窗计数器或根本没有配额面：建双窗快照（如 5h 突发窗 + 7d 持续窗），每窗带 usedPercent（夹取 [0,100]）与 resetsAt；非法百分比丢窗、两窗皆废→None（不得用 0% 假装健康）；抓取失败降级为 error snapshot（含 updatedAt）而不抛；额度消费须带强制幂等键、跨传输复用同一键、自带超时。真值：lobehub-canary apps/desktop/src/main/modules/heterogeneousAgent/codexQuota.ts:18-20,115-122,348-374,613-641；loop loop-engine/quota_window.py（cycle-9 A4）",
+      "trigger": "只有单窗计数器或根本没有配额面：建双窗快照（如 5h 突发窗 + 7d 持续窗），每窗带 usedPercent（夹取 [0,100]）与 resetsAt；非法百分比丢窗、两窗皆废→None（不得用 0% 假装健康）；抓取失败降级为 error snapshot（含 updatedAt）而不抛；额度消费须带强制幂等键、跨传输复用同一键、自带超时。真值：lobehub-canary apps/desktop/src/main/modules/heterogeneousAgent/codexQuota.ts:18-20,115-122,348-374,613-641；loop loop-engine/quota_window.py（cycle-9 A4；**接线** cycle-10：exhausted 必须驱动循环停止判定——停机原因显式带 provider 与 next_reset_at；抓取失败降级**不得**停机（fail-soft，绝不抛进主路径）；以上次已知快照兜底；无探针时循环行为与旧版逐字节一致。真值：loop loop-engine/run_loop.py `_quota_stop_reason` + `Orchestrator.quota_probe`）",
       "severity_if_fail": "high",
       "guide_ref": "核心原则·5"
     }

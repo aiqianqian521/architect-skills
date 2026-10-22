@@ -31,6 +31,11 @@
 与 `resetsAt`；百分比缺失/非法时**丢窗**（不是当 0），两窗皆废则整快照为空；抓取失败**降级为 error snapshot**
 （含 `updatedAt`）绝不抛进主路径；额度消费必须带**强制幂等键**并在传输回退时复用同一键，调用自带超时。
 > cycle-9 A4 真值：lobehub-canary `codexQuota.ts:18-20,115-122,348-374,613-641` → loop `loop-engine/quota_window.py`。
+>
+> **cycle-10 接线补强**：快照只是数据面，**`exhausted` 必须驱动循环的停止判定**（停机原因显式带 `provider` 与
+> `next_reset_at`，便于运维判断何时解锁）；**抓取失败必须降级、绝不停机**（探针抛错 → error snapshot，循环照常
+> 进行，不能因为配额面不可达而停掉整个长跑）；缓存的上次已知快照是首选兜底。接线须 **opt-in**：无探针时循环行为
+> 与旧版逐字节一致。真值：loop `loop-engine/run_loop.py` `_quota_stop_reason` + `Orchestrator.quota_probe`。
 
 ## 检查清单
 

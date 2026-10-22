@@ -110,3 +110,19 @@
 - **本文件**：§4 校验器路径纯鏈修正（`tests/validate-architect-skills.mjs`（不存在）-> `scripts/validate-contracts.mjs` + `tests/run-l1-tests.mjs`）。
 - 验证：`node scripts/validate-contracts.mjs`（19 atom，0 错 0 警）+ `node tests/run-l1-tests.mjs`（32 passed）。
 - 详细：`output/loop-dev/2026-10-20/report.md` + `docs/iteration-tracker/loop-dev-2026-10-20.md` + `output/golden/INDEX.md`。
+
+### 2026-10-22 · B 阶段 cycle-9（回溯补记）· coze-studio / lobehub-canary 实测真值校正
+- **architect-agent（⑥，行 6）**：检查清单 +1 项（AGE-18 步骤级异常策略三态）；核心原则 15 -> 16。
+  真值：coze-studio `backend/domain/workflow/internal/schema/node_schema.go:87-92` + `backend/domain/workflow/internal/compose/node_runner.go:620-643,777-780`（超时+重试+降级四元组；总尝试 = maxRetry+1；兜底路径盖 `isSuccess`；中断短路不消耗重试）。
+- **architect-cost（⑩，行 10）**：检查清单 +1 项（COS-08 双窗配额快照 + 降级 + 幂等消费）；guide 原则 5 增补。
+  真值：lobehub-canary `apps/desktop/src/main/modules/heterogeneousAgent/codexQuota.ts:18-20,115-122,348-374,613-641`（usedPercent 夹取 [0,100]、丢窗不补 0、抓取失败降级 error snapshot、强制幂等键跨传输复用 + 自带超时）。
+- **loop 反向样本**：`git grep -n "apply_policy\|ExceptionPolicy" -- loop-engine/*.py` 当轮仅命中模块自身 → 机制已落、无调用点（登记为 G-5，cycle-10 接线闭合）。
+- **回溯说明**：本条为 cycle-9 B 增量的**补记**——当轮漏记 §5（2026-10-22 cycle-10 一并补齐）；契约与验证结论未变，属文档完整性回填而非口径变更。
+- 验证：`node scripts/validate-contracts.mjs`（19 atom，0 错 0 警）+ `node tests/run-l1-tests.mjs`（32 passed）。
+
+### 2026-10-22 · B 阶段 cycle-10 · loop G-5/G-6/R1 接线回流
+- **architect-agent（⑥，行 6）**：AGE-18 补强（**接线优先**：策略必须挂在真实单步调用点、默认档 = 单次+抛错与旧行为等价、兜底 `isSuccess` 只表执行完成**不得**升级为业务成功）；**新增 AGE-19**（单写者锁必须覆盖所有共享存储变更入口）；核心原则 16 -> 18。
+- **architect-cost（⑩，行 10）**：COS-08 补强（`exhausted` 必须驱动循环停止判定、停机原因显式带 provider/next_reset_at；抓取失败降级**绝不停机**；以上次已知快照兜底；接线 opt-in）。
+- **loop 反向样本**：`--once` 曾不持锁（只给长跑入口加锁 = 无锁）→ cycle-10 让 `CliRouter._run_once` 与长跑共用同一把 `.loop.lock`（冲突退 2，全退出路径释放）；`quota_window` 曾有机制无探针 → cycle-10 加 `Orchestrator.quota_probe` + `run_loop._quota_stop_reason`。
+- 验证：`node scripts/validate-contracts.mjs`（19 atom，0 错 0 警）+ `node tests/run-l1-tests.mjs`（32 passed）。
+- 详细：loop 仓 `docs/flow/2026-09-05-grand-loop-status.md` §13.35 + `docs/design/2026-10-22-cycle10-G56R1-connectivity.md`。
