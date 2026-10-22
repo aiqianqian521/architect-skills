@@ -39,10 +39,12 @@
 [ ] telemetry span 是否使用标准语义约定（OpenInference/OpenTelemetry LLM span 语义，如 text/image/reasoning/tool_call/tool_call_response）而非自定义散点？ | 未通过时: 采 OpenInference/OpenTelemetry 标准语义约定标注 span（input/output/llm/tool），禁每点自定义；真值实测 coze-loop open_inference/openinference.go:13-19（TextLiteral/ReasoningLiteral/ToolCallLiteral）+ google-adk telemetry/tracing.py:196（trace_agent_invocation）。
 [ ] trace 导出/exporter 是否按场景选范式（SDK 直发 exporter / 平台落盘存储 / collector 扇出多租户路由）且多租户场景隔离 trace？ | 未通过时: 择优三种 exporter 范式——SDK 直发（adk sqlite_span_exporter 轻量）/ 平台落盘（coze-loop ClickHouse 批量 Insert+分析查询）/ collector 扇出（librechat OTel collector routing connector 多租户 destination eu/jp/us）；多租户必隔离 trace。真值实测 adk sqlite_span_exporter.py:36/coze-loop infra/repo/ck/spans.go:52/librechat otel/langfuse-fanout/otelcol.yaml:17+main.go:613+metrics.go:138）。
 [ ] 审计/状态历史导出是否被端到端断言（产物存在 + 每行可解析 + 语义与内存态一致），而不是只“写了导出代码”？ | 未通过时: 跑一轮真实流程后断言导出物存在、行数=内存快照数、每行 JSON 可解析且关键字段一致；并排查“不可达分支”（导出语句落在 return/raise 之后）与“伪序列化”（str(dict)/repr 当 JSON、手写拼接）——两者都算未落地。
+[ ] 多步管线/状态机/执行链的审计记录是否覆盖全部短路分支（每步都有记录、短路后不再执行后续步、终态与真实结果一致），而不是只断言 happy path？ | 未通过时: 为每条短路分支各补一例（查无/中止/校验拒绝/权限拒绝/异常/回退/超时），断言审计步骤恰好止于短路步、短路步 status 可判读、终态不为成功、副作用未发生；happy path 另断言步骤编号与名称全序完整。
 
 > **口径演进（2026-09-05 · TencentDB-Agent-Memory iter#3 实测真值校正）**：检查清单新增「telemetry 后端可插拔 factory + noop 降级」一项，带可回溯 file:行段真值（factory 切配多后端 + NoopTraceBackend 不可用降级）。校正记录见 architect-skills `output/loop-dev/2026-09-05/report.md`。
 > **口径演进（2026-09-06 · B 阶段 round2 · adk+coze-loop+librechat ⑩ 三方实测真值校正）**：检查清单新增「OTel 标准语义约定」「trace exporter/路由多范式+多租户隔离」两项，带三源可回溯 file:行段真值（SDK 端 adk OTel+SQLite exporter / 平台端 coze-loop ClickHouse+OpenInference / 采集器端 librechat OTel collector routing 多租户扇出）。校正记录见 architect-skills `output/loop-dev/2026-09-06/report.md`。
 > **口径演进（2026-10-22 · B 阶段 cycle-14 · loop 实测真值校正）**：检查清单新增「审计/状态历史导出的端到端断言」一项（真值 = loop cycle-14：导出块不可达 + writer 伪 JSON 叠加，导致审计导出从未真正落盘、且落盘也不可解析；修复后以产物存在性/行数/可解析性断言钉住）。校正记录见 loop 仓 `docs/flow/2026-09-05-grand-loop-status.md` §13.39。
+> **口径演进（2026-10-22 · B 阶段 cycle-15 · loop 实测真值校正）**：检查清单新增「多步管线/状态机的审计覆盖全部短路分支」一项（真值 = loop cycle-15：tool_pipeline 的 14 步管线只有 happy path 与 step-10 步异常策略有断言，lookup miss / abort / schema 拒绝 / 权限拒绝 / 前置 hook 抛错 / 回退路径全部无测试；补 25 例契约后覆盖率 64%→99%）。校正记录见 loop 仓 `docs/flow/2026-09-05-grand-loop-status.md` §13.40。
 ```
 
 ## 常见问题修复指南
@@ -69,6 +71,14 @@
 3. 为导出物补端到端断言：产物存在、行数等于内存条目数、每行可解析、关键字段与内存态一致。
 4. 把导出物接进回放/定位路径（按 run_id / round 可查），否则"导出"对审计仍然无用。
 5. **验证**：跑 N 轮后逐行 `json.loads` 成功；含单引号/中文/特殊字符的样本行仍合法。
+
+### 多步管线的审计只看 happy path
+
+1. 列出管线的**全部短路分支**（查无/中止/校验拒绝/权限拒绝/异常/回退/超时），逐条确认是否有测试覆盖。
+2. 每条短路分支断言三件事：**审计步骤集合恰好止于短路步**（后续步不得出现）、**短路步 status 与 detail 可判读**、**终态不是成功**。
+3. 断言**副作用未发生**（handler/下游未被调用），防止"已经拒绝了却还是执行了"。
+4. happy path 单独断言**步骤编号与名称全序完整**，防止某步被静默删除后审计链断档。
+5. **验证**：逐条短路分支单独跑；若删掉某分支的用例后测试仍全绿，说明该分支其实没被覆盖。
 
 > 风险分级与下一步骨架参见 [[architect-router]]#原子风险分级与下一步骨架。
 > 边界口径：日志/指标/trace 采集、SLO 仪表盘、告警策略归 observability；API 契约内的 trace_id/error_code 归 [[architect-net]]；编排内 step 追踪归 [[architect-agent]]；回滚/降级/发布动作归 [[architect-ops]]。

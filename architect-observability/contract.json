@@ -77,6 +77,13 @@
       "trigger": "存在审计/状态历史/回放导出时：跑一轮真实流程后断言导出物存在、行数等于内存快照数、每行可 JSON 解析且关键字段一致；同时排查两类“未落地”——“不可达分支”（导出语句落在 return/raise 之后）与“伪序列化”（str(dict)/repr 当 JSON、手写字符串拼接）。真值：loop cycle-14 实测 run_loop.run() 的 P3-A1 导出块写在 return {...} 之后（不可达，StateHistory.to_jsonl 从未被调用），且该 writer 以 str(字典).replace(单引号→双引号) 拼“伪 JSON”，值含单引号即产出非法行；修复后以 tests/test_state_history_export.py(7) 断言产物存在+行数+可解析，并用 test_to_jsonl_is_valid_json_even_with_quotes 钉住真 JSON 契约。",
       "severity_if_fail": "high",
       "guide_ref": "核心原则·11"
+    },
+    {
+      "id": "OBS-12",
+      "rule": "多步管线/状态机/执行链的审计记录是否覆盖全部短路分支（每步都有记录、短路后不再执行后续步、终态与真实结果一致），而不是只断言 happy path？",
+      "trigger": "存在多步管线/状态机（权限门/重试/超时/短路返回）时：为每条短路分支各补一例，断言 (a) 审计到的步骤集合恰好止于短路步（后续步必须缺失）、(b) 短路步 status=failed/blocked 且 detail 可判读、(c) 终态不得为 completed/成功、(d) 副作用未发生（handler 与下游未被调用）；happy path 另需断言步骤编号与名称全序完整。真值：loop cycle-15 实测 tool_pipeline.ToolPipeline.execute() 的 14 步中仅 step-10（G-5 步异常策略）有断言，lookup miss / abort / schema 拒绝 / 权限拒绝 / 前置 hook 抛错 / 回退路径全部无测试；补 tests/test_tool_pipeline_contract.py(25 例) 后该模块覆盖率 64%→99%，并钉死两条安全不变量——拒绝不得被记为 completed、短路后不得继续执行。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·12"
     }
   ],
   "output_schema": {

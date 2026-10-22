@@ -176,3 +176,16 @@
   产物存在/行数/可解析/源侧 tripwire) + `test_to_jsonl_is_valid_json_even_with_quotes`。
 - 验证：`node scripts/validate-contracts.mjs`（19 atom / 0 错 / 0 警）+ `node tests/run-l1-tests.mjs`（32 passed）。
 - 详细：loop `docs/flow/2026-09-05-grand-loop-status.md` §13.39 + `docs/design/2026-10-22-cycle14-C-state-history-export.md`。
+
+### 2026-10-22 · B 阶段 cycle-15 · 多步管线审计须覆盖全部短路分支（新增 OBS-12）
+
+- **architect-observability（⑩，行 observability）**：检查清单 11 → **12** 项（**新增 OBS-12** 多步管线/状态机/执行链的审计记录须覆盖全部短路分支：
+  审计步骤集合恰好止于短路步 / 短路步 status 与 detail 可判读 / 终态不为成功 / 副作用未发生；happy path 另断言步骤编号与名称全序完整）；
+  `guide.md` 增检查清单行 + 口径演进注 + 修复指南「多步管线的审计只看 happy path」。
+- **loop 反向样本（真值）**：loop cycle-15 实测 —— `tool_pipeline.ToolPipeline.execute()` 的 14 步管线中，原先只有 happy path 与
+  step-10（G-5 步异常策略）有断言；`step1 查无 / step2 abort / step3 schema 拒绝 / step8-9 权限拒绝 / step7 前置 hook 抛错 /
+  step10 回退路径`以及 `ToolOrchestrator`、`create_pipeline` 两个适配器全部无测试（该模块覆盖率仅 64%）。
+  补 `tests/test_tool_pipeline_contract.py`（25 例）后覆盖率 **64% → 99%**（仅剩已生效的 sys.path bootstrap 行），
+  并钉死两条安全不变量：**权限拒绝不得被记为 completed**、**短路后不得继续执行后续步**。
+- 验证：`node scripts/validate-contracts.mjs`（19 atom / 0 错 / 0 警）+ `node tests/run-l1-tests.mjs`（L1 全绿）。
+- 详细：loop `docs/flow/2026-09-05-grand-loop-status.md` §13.40 + `docs/design/2026-10-22-cycle15-A-tool-pipeline-contract.md`。
