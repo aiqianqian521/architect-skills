@@ -126,3 +126,13 @@
 - **loop 反向样本**：`--once` 曾不持锁（只给长跑入口加锁 = 无锁）→ cycle-10 让 `CliRouter._run_once` 与长跑共用同一把 `.loop.lock`（冲突退 2，全退出路径释放）；`quota_window` 曾有机制无探针 → cycle-10 加 `Orchestrator.quota_probe` + `run_loop._quota_stop_reason`。
 - 验证：`node scripts/validate-contracts.mjs`（19 atom，0 错 0 警）+ `node tests/run-l1-tests.mjs`（32 passed）。
 - 详细：loop 仓 `docs/flow/2026-09-05-grand-loop-status.md` §13.35 + `docs/design/2026-10-22-cycle10-G56R1-connectivity.md`。
+
+### 2026-10-22 · B 阶段 cycle-11 · N-1 无调用方机制门禁
+
+- **architect-agent（⑥，行 6）**：**新增 AGE-20**（无调用方机制门禁：机制模块须有非测试调用方；白名单必须显式、可判活，陈旧豁免同样失败）；核心原则 18 -> 19。
+  真值：loop cycle-11 新增 `scripts/check_orphan_mechanisms.py`（AST 判定机制模块 + 显式 EXEMPT 白名单 + 陈旧豁免失败）+ 接入 `scripts/run_gate.py`。
+- **loop 反向样本**：门禁首次运行即命中两处 —— `loop-engine/loop_pipeline.py`（无任何调用方的被取代遗留 → 归档到 `loop-engine/_archive/`）；
+  `loop-engine/tool_concurrency.py`（P1-1 批量调度机制，无生产调用点 → 显式豁免 + 追踪 N-2/I-2）。
+  另修正 cycle-9 对 I-2 的口径错误：当时记「与 `tool_concurrency` 重叠、不采」，但 `tool_concurrency` 自身即为未接线机制（前提不成立）。
+- 验证：`node scripts/validate-contracts.mjs`（19 atom / 0 错 / 0 警）+ `node tests/run-l1-tests.mjs`（32 passed）。
+- 详细：loop `docs/flow/2026-09-05-grand-loop-status.md` §13.36 + `docs/design/2026-10-22-cycle11-N123-orphan-gate-coze-candidates-quota-contract.md`。

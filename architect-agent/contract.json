@@ -133,6 +133,13 @@
                           "trigger":  "长跑/常驻入口有锁而短入口（--once / 单次任务 / CLI 子命令）裸奔写同一存储：先枚举**所有会写同一共享存储（SQLite / 文件 / 队列）的入口**，让它们共用同一把单写者锁（冲突即拒绝并给非零退出码），或给每次运行独立产物目录以消除共享；锁须可判活（持有者 PID 不可达=陈旧可接管，模糊态 fail-safe 不抢锁）且在**任何**退出路径（异常/中断/信号）释放。真值：loop loop-engine/cli_router.py `_run_once` + loop-engine/run_lock.py（cycle-10 A4 补 R1 残余）",
                           "severity_if_fail":  "high",
                           "guide_ref":  "核心原则·18"
+                      },
+                      {
+                          "id":  "AGE-20",
+                          "rule":  "机制落地后，是否有可执行门禁能发现「无人调用的机制」（白名单必须显式、可判活）？",
+                          "trigger":  "机制模块（>=1 顶层 def/class）已落在引擎目录却**没有任何调用方** = 「机制已落、接线未闭」的静默回归（loop G-5/G-6 曾靠人工 git grep 才发现）。做法：门禁脚本用 AST 判定每个机制模块是否有**非测试**调用方，无调用方即失败；例外必须写成**显式白名单条目**（附理由 + 追踪项），且白名单须**可判活**——条目对应模块消失或已接线 = **陈旧豁免**，同样失败；仅被测试引用的模块单列为 informational（允许的「参考实现」）。真值：loop scripts/check_orphan_mechanisms.py + scripts/run_gate.py（cycle-11 N-1）",
+                          "severity_if_fail":  "medium",
+                          "guide_ref":  "核心原则·19"
                       }
                   ],
     "output_schema":  {
