@@ -179,6 +179,7 @@ cycle-17 修门禁自身、cycle-18 修唤醒指针的提交链）。凡是"记�
 - 栅栏内的"修复前原文照抄"也必须加标记，且全仓扫描必须同时覆盖**设计文档 / status / 交接记录**，
   不能只扫"被修复的那个文件"。
 - 扫描要有覆盖度自证（命中数 >= 阈值）与负例自证（改坏一处必须报错），否则"扫不到"与"没有问题"无法区分。
+- **扫描覆盖待提交文件**：只扫 tracked 会让“正在写的新文档”逃过扫描，而它恰恰在提交后才被守卫发现（loop cycle-19 A2：`git ls-files` → `--cached --others --exclude-standard` + 本机工作记录）。提交前必须能看见即将提交的内容。
 - 反例（loop cycle-19 实证）：`test_no_tracked_document_claims_a_hash_for_the_wrong_cycle` 首跑即报 3 条 ——
   两条在 cycle-18 设计文档、一条在 status §13.43；工作记录（未纳入版本控制的 `work_ooda/`）也有 1 条，一并修掉。
 
