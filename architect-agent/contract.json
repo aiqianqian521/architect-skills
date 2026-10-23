@@ -147,6 +147,13 @@
                           "trigger":  "当一个协作接口（如 PermissionGate / HookBus / 结果契约）被 >=2 处调用时：逐处核对方法名与参数语义是否一致，并为每一处补等价断言；只在一处有测试 = 另一处可静默漂移（方法重命名后仍能全绿）。真值：loop cycle-16 实测同一权限接缝两处调用——tool_pipeline step 8 用 check_tool_call(name, params)（正确且有测试），tool_registry.dispatch 用 check(name, source)（方法早已不存在 → 任何 set_permission 都抛 AttributeError）；后者无测试故长期隐藏。修复后以 tests/test_tool_registry_contract.py 钉住，并保留一条“原缺陷会抛 AttributeError”的回归用例。",
                           "severity_if_fail":  "high",
                           "guide_ref":  "核心原则·20"
+                      },
+                      {
+                        "id":  "AGE-22",
+                        "rule":  "门禁/守护脚本本身是否被**行为**验证（import 后真跑到各判定分支），而不是只做源码字符串匹配？",
+                        "trigger":  "只做源码 grep = 未验证：把门禁当被测对象——用 importlib 按路径加载，逐一调用其纯函数（触发判定 / 阈值解析 / 摘要解析 / 比对函数）；用 monkeypatch 替掉慢与依赖环境的接缝（子进程跑测试、git show HEAD:...、外部校验器模块），让**每条 fail 路径**都成为一条可在进程内复现的断言（缺依赖拒绝 / 棘轮下降拒绝 / 测试红灯 / 文档漂移 / 登记值落后）。真值：loop cycle-17 —— scripts/run_gate.py 的门禁接线此前只有 assert \"check_orphan_mechanisms\" in src 这类源码 grep 断言，把检查挪到 return 0 之后仍然全绿；补 tests/test_gate_self_verification.py（20 例）后 5 条 fail 路径全部可复现，并顺带暴露\"登记数字从不与实测对照\"的既有盲区。",
+                        "severity_if_fail":  "high",
+                        "guide_ref":  "核心原则·21"
                       }
                   ],
     "output_schema":  {

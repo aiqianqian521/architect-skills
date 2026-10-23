@@ -77,6 +77,20 @@
       "trigger": "只要存在 test_*.py / *_test.py：跑一次 pytest --collect-only -q <路径> 并断言收集数 > 0；脚本式伪测试（def main(): ... + if __name__ == '__main__'，且没有任何顶层 def test_* / class Test*）会被 pytest 静默收集 0 个测试，于是其中全部断言从不进 CI/门禁——看起来有测试、实际从不执行。做法：给脚本加一个薄入口 def test_<name>(): main()（body 不改），并加一条元测试（扫描 tests/**/test_*.py 的 AST，发现 0 个可收集测试即失败）防复发。真值：loop cycle-16 实测 6 个 tests/test_*.py 是脚本式（test_execution_contracts.py 等，共约 630 行断言），pytest 对其报 no tests ran；把这些断言纳入门禁后，立刻暴露出 tool_registry.dispatch() 的权限门调用点用了早已不存在的 .check()（应为 check_tool_call），任何 set_permission() 都必抛 AttributeError——该分支正因长期无测试而隐藏。",
       "severity_if_fail": "high",
       "guide_ref": "核心原则·11"
+    },
+    {
+      "id": "TES-12",
+      "rule": "门禁的收集扫描是否覆盖 pytest 会收集的全部命名与深度（`test_*.py` 与 `*_test.py`，且递归子目录），而不是只认一种命名 / 只扫一层？",
+      "trigger": "只认一种命名 / 只扫一层 = 漏网：用 `rglob` 同时匹配两种命名（pytest 默认 `python_files = test_*.py *_test.py`），并加一条\"扫描器自证\"用例（在 tmp 目录放 test_a.py / b_test.py / sub/test_c.py / helper.py，断言只看见前三个）——否则修了扫描器也没人知道。真值：loop cycle-17 —— cycle-16 的收集 tripwire 用 glob('test_*.py')（非递归、只认 test_ 前缀），把 0 收集文件放进 tests/<sub>/ 或命名成 foo_test.py 即可整体绕过。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·12"
+    },
+    {
+      "id": "TES-13",
+      "rule": "门禁里\"登记\"的基线数字（passed / coverage / fail_under）是否与实测运行对照，而不只是\"文档 ↔ 登记\"互校？",
+      "trigger": "缺对照 = 可静默删测试：门禁跑完测试后解析摘要（N passed / Total coverage: X%）与登记值做**单向棘轮**比对（实测 < 登记即失败；多出不失败），解析不出摘要同样失败（fail-closed）；覆盖度比对留小的浮点容差。文档一致性只保证\"文档说的 == 登记的\"，不等于\"登记的 == 真实的\"。真值：loop cycle-17 —— docs/baseline.json 的 1542 passed / 77.58% 是手抄数字，run_gate.py 只看退出码与 fail_under，删掉一批测试后手改登记值 + 9 个当前态文档即可保持全绿（fail_under=70 与实测之间的缓冲足以吸收）。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·13"
     }
   ],
   "output_schema": {

@@ -151,8 +151,10 @@ parent_step_id  = fan-out 子任务回收时的父步骤
 [ ] 并发抽取是否有 worker-pool 并发上限 + buffer + oversize + task-queue 背压四件套？ → 缺件: 补 worker-pool(concurrency≥1) + buffer-storage + oversize-strategy + agent-task-queue，禁止无限 `gather()`（真值 TencentDB `worker-pool.ts:41-52` 等）
 [ ] 扩展点是否用事件/钩子而非硬编码？ → 硬编码: 改为 waterfall hook 链或 EventEmitter 模式
 [ ] 热路径是否经过优化？ → 未优化: 用 cProfile 找到最热 3 条路径，逐一优化
+[ ] 门禁/守护脚本本身是否被**行为**验证（import 后真跑到各判定分支），而不是只做源码字符串匹配？ → 只做源码 grep = 未验证：把门禁当被测对象——用 `importlib` 加载后逐一调用它的纯函数（触发判定 / 阈值解析 / 摘要解析），并用 monkeypatch 替掉慢与依赖环境的接缝（子进程、git、外部校验器），**每条 fail 路径都要有断言**（缺依赖拒绝 / 棘轮下降拒绝 / 测试红灯 / 文档漂移 / 登记值落后）。真值：loop cycle-17 —— 门禁接线此前只有 `assert "check_orphan_mechanisms" in src` 这类源码 grep 断言，把检查挪到 `return 0` 之后仍全绿。
 
 > **口径演进（2026-09-05 · TencentDB-Agent-Memory iter#3 实测真值校正）**：Backpressure 行由“待实现”校正为真实四件套实现模式；检查清单新增「分层降维/压缩归档」「worker-pool 并发上限+buffer+oversize」两项，均带可回溯 file:行段真值。校正记录见 architect-skills `output/loop-dev/2026-09-05/report.md`。
+> **口径演进（2026-10-23 · B 阶段 cycle-17 · loop 实测真值校正）**：检查清单新增「门禁/守护脚本必须被行为验证」一项（真值 = loop cycle-17：`run_gate.py` 的接线只由源码 grep 断言守护，删掉/挪走检查后全绿；补行为契约后 5 条 fail 路径全部可复现）。校正记录见 loop 仓 `docs/flow/2026-09-05-grand-loop-status.md` §13.42。
 ```
 
 ## 常见问题修复指南
@@ -437,3 +439,20 @@ informational（允许的「参考实现」，如 `tool_concurrency`）。与原
 于是**任何** `set_permission()` 之后的 dispatch 必抛 `AttributeError`；该分支因无测试而长期隐藏（模块覆盖率 65%）。
 修复后以 `tests/test_tool_registry_contract.py` 钉住，并保留一条"原缺陷会抛 AttributeError"的回归用例。
 与原则 19（无调用方门禁）互补：19 管"有没有人调用"，20 管"每个调用点是否一致且被验证"。
+
+## cycle-17 实测增补：门禁自证（2026-10-23）
+
+> 来源：cycle-17 A —— 审计"门禁自己的门禁"，发现守护脚本只用源码字符串断言验证（真值 file:行段：`contract.json` AGE-22）。
+> 口径：**守护脚本的失效方式是"静默"的——只有行为测试能让它吵起来。**
+
+**21. 门禁/守护脚本必须被行为验证（AGE-22）**：门禁（pre-commit 钩子 / 校验脚本 / 巡检器）是整条链上最后一道自动防线，
+但它自己往往只被"看起来接上了"的方式验证：`assert "check_orphan_mechanisms" in src`、`assert "--all" in src`——
+**对源码做字符串匹配**。这种断言挡不住真正的回归：把某个检查挪到 `return 0` 之后、删掉一段棘轮判定、或改掉触发前缀，
+源码里那个字符串还在，测试全绿，门禁已经静默失效。做法：把门禁当**被测系统**——
+① 用 `importlib` 按路径加载（门禁脚本通常不在包路径上）；② 把它的纯函数（触发判定、阈值解析、摘要解析、比对函数）
+当单元被测；③ 对 `main()` 用 monkeypatch 替掉慢/环境依赖的接缝（子进程跑测试、`git show HEAD:…`、外部校验器模块），
+让**每一条 fail 路径**都变成一条可在进程内复现的断言：缺依赖 → 拒绝且非零；棘轮下降 → 拒绝；测试红灯 → 拒绝；
+文档/登记漂移 → 拒绝；登记值落后于实测 → 拒绝。真值：loop cycle-17 —— `scripts/run_gate.py` 补
+`tests/test_gate_self_verification.py`（20 例）后，上述 5 条 fail 路径全部有断言，且暴露了门禁的既有盲区
+（登记数字从不与实测对照）。与原则 20（协作接缝多调用点）互补：20 管"业务接缝的每个调用点是否被验证"，
+21 管"守护这些调用的门禁本身是否被验证"。

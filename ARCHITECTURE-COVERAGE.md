@@ -206,3 +206,13 @@
   `tests/test_gate_collection_tripwire.py` 2 例）。
 - 验证：`node scripts/validate-contracts.mjs`（19 atom / 0 错 / 0 警）+ `node tests/run-l1-tests.mjs`。
 - 详细：loop `docs/flow/2026-09-05-grand-loop-status.md` §13.41 + `docs/design/2026-10-23-cycle16-A-gate-collection-and-permission-seam.md`。
+
+### 2026-10-23 · B 阶段 cycle-17 · 门禁自证（新增 TES-12 / TES-13 / AGE-22）
+
+- **architect-test（⑧，行 test）**：检查清单 11 → **13** 项（**新增 TES-12** 收集扫描须覆盖 pytest 全部可收集命名与深度——`test_*.py` + `*_test.py` 且递归；**新增 TES-13** 登记基线数字须与实测运行对照（单向棘轮：实测 < 登记即失败，摘要解析失败亦失败）；`guide.md` 增 2 行检查清单 + 口径演进注 + cycle-17 实测增补节）。
+- **architect-agent（⑨，行 agent）**：检查清单 21 → **22** 项（**新增 AGE-22** 门禁/守护脚本必须被行为验证——import 后跑到每条判定分支，源码 grep 式断言不算验证；`guide.md` 增检查清单行 + 口径演进注 + cycle-17 实测增补节 + 原则 21；`SKILL.md` 摘要表补第 20/21 行并把"19条核心原则"校正为 21 条——该表自 cycle-16 起就落后于 contract）。
+- **loop 反向样本（真值）**：loop cycle-17 实测 —— ① 门禁接线只用源码 grep 断言守护（`assert "check_orphan_mechanisms" in src`），把检查挪到 `return 0` 之后仍全绿；`run_gate.py` 主体（`main()` / `_triggered()` / `_parse_fail_under()`）从未被任何测试执行过，且 `scripts/` 不在覆盖率分母内；② `docs/baseline.json` 的 `passed`/`coverage` 从未与实测对照（只与文档互校）＝可静默删测试（`fail_under=70` 与实测 77.57% 之间 7.6pt 缓冲足以吸收）；③ cycle-16 的收集 tripwire 用非递归 `glob('test_*.py')`，`*_test.py` 与子目录文件可整体绕过。
+  修复：`run_gate.py` 增「实测 vs 登记」单向棘轮（`parse_pytest_summary` + `baseline_violations`，捕获 pytest 输出并复用同一摘要再原样转发）+ `scripts/docs_baseline.py` docstring 去硬编码旧口径 + 新增 `tests/test_gate_self_verification.py`（20 例，覆盖缺依赖/棘轮下降/测试红灯/文档漂移/登记落后 5 条 fail 路径）+ tripwire 改 `rglob` 双命名并加扫描器自证用例（4 例）+ 新增 `tests/test_orchestrator_cli_surface.py`（21 例）。
+  结果：`orchestrator.py`（被 orphan 门禁误列为 test_only 的 CLI 入口）53% → **86%**；全量 1542 → **1586 passed**，coverage 77.57% → **78.73%**。
+- 验证：`node scripts/validate-contracts.mjs`（19 atom / 0 错 / 0 警）+ `node tests/run-l1-tests.mjs`（32 passed）。
+- 详细：loop `docs/flow/2026-09-05-grand-loop-status.md` §13.42 + `docs/design/2026-10-23-cycle17-A-gate-self-verification.md`。
