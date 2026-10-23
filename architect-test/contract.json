@@ -113,6 +113,13 @@
       "trigger": "只要文档/交接/状态记录在**正文散文**里写出提交哈希——反引号形态 `` `hash` ``，或 `A→B→C` 箭头链（含带反引号的箭头链）：必须交给脚本解析**活文档**。① 每个哈希须在**已知仓**（loop-dev-next / legacy loop-dev / architect-skills）中真实存在，解析不出 = 幽灵哈希，fail-closed；② 箭头链里**同仓相邻**哈希须祖先相关（真实但乱序也要拦）；③ 只扫反引号哈希与箭头链，不扫任意裸 hex（`20261023` 这类日期同样匹配 `[0-9a-f]{7,40}`，全裸扫误报不可接受）；④ 跨仓箭头只做存在性（跨仓祖先关系无定义）；⑤ 引用缺陷值必须同行标记（❌错记 / phantom），否则视为声明。反例（loop cycle-20）：GRAND-LOOP 的 legacy 补充链把 ❌错记 `11588a1` 当作 `1fb4846→11542a1→edf2a55` 的真实中间提交（三仓都解析不出，真值 `11542a1`）；cycle-14 设计文档把自己的 step A 提交写成 ❌错记 `a67594c`（真值 `a67594e`）；status §13.9 把 ❌错记 `8cf9d4c` 写成建 `loop-engine/backpressure.py` 的提交（真值 `eb9f4b6`）。",
       "severity_if_fail": "high",
       "guide_ref": "检查原则16"
+    },
+    {
+      "id": "TES-17",
+      "rule": "正文/指针里**裸写**（不带反引号）的提交哈希是否也被机器校验（同行 git 上下文门控 + 外部源仓 pin 登记），而不只校验反引号哈希与箭头链",
+      "trigger": "只要文档在正文散文里**裸写**提交哈希（唤醒指针路径行的 `HEAD 1fb4846 … 362e479/af5cd11`、registry 提交列的 `766209c/24be2bb/56b1b6e`、ADR/CHANGELOG 的提交提及）：必须交给脚本解析**活文档**并对照 git 校验——① 裸哈希**仅当同一行已含至少一个可解析提交引用**时才视为提交引用（该共现门控排除 `defaced`/`effaced` 这类全 hex 英文词；裸扫必然误报）；② 该裸哈希须在已知仓中真实存在，解析不出 = 幽灵哈希，fail-closed；③ **外部源仓 pin**（`SOURCE.md` 的 `TencentDB-Agent-Memory@2ee2239`）须登记对应 checkout 后解析，避免把真 pin 误判为幽灵；④ 带 `md5=`/`sha256:` 等摘要标签的行跳过；⑤ 纯数字 token 仍排除（`20261014` 这类日期会同现于 git 上下文行，实测会误报）；⑥ 引用缺陷值必须同行标记（交叉记 / phantom）。反例（loop cycle-21）：GRAND-LOOP 唤醒指针路径行与 status 提交列共 79 个唯一裸 token（179 处）从未被任何守卫看过；cycle-20 只扫反引号哈希与箭头链。自证：向仓库根放含裸 `abc123d`（同行含真哈希）的未跟踪 .md → 守卫立刻 FAIL。",
+      "severity_if_fail": "high",
+      "guide_ref": "检查原则17"
     }
   ],
   "output_schema": {

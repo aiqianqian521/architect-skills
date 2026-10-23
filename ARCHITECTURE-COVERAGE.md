@@ -244,3 +244,12 @@
 - **loop 回写动机**：loop cycle-20 三仓交叉取证命中 **3 个幽灵哈希** —— `docs/flow/GRAND-LOOP.md` L53 的 ❌错记 `11588a1`（真值 `11542a1`）、cycle-14 设计文档的 ❌错记 `a67594c`（真值 `a67594e`）、status §13.9 的 ❌错记 `8cf9d4c`（真值 `eb9f4b6`）。cycle-18/19 只守住声明形态与唤醒指针区块，正文散文与 `A→B→C` 箭头链完全裸奔。四连族：cycle-16 被漏掉的测试 → cycle-17 门禁自身 → cycle-18 提交链 → cycle-19 缺陷描述复刻形态 → cycle-20 正文/箭头链。
 - **A2 自查**：守卫自证探针发现 `ARROW_RUN_RE` 只认裸哈希 → 带反引号的箭头链整段漏检（修：匹配前展平反引号，两处）。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警**；`node tests/run-l1-tests.mjs` → **32 passed**。
+
+
+### 2026-10-24 — B 轮（cycle-21 — 裸写提交哈希的机器校验 + 外部源仓 pin 登记；TES-17 / DOC-08）
+
+- **architect-test（test 维度）**：检查清单 16 → **17**，新增 **TES-17** —— 正文/指针里**裸写**（不带反引号）的提交哈希也必须被机器校验（同行 git 上下文门控 + 外部源仓 pin 登记）。反例：loop cycle-21 发现唤醒指针路径行与 registry 提交列的 **79 个唯一裸 token（179 处）** 从未被任何守卫看过；cycle-20 只扫反引号哈希与箭头链。
+- **architect-docs（docs 维度）**：检查清单 7 → **8**，新增 **DOC-08** —— 文档正文里裸写的提交哈希也必须有校验器保证可解析，禁止只靠人工。
+- **loop 侧闭环**：`tests/test_wake_pointer_chain.py` 16 → **20** 例（裸哈希上下文门控、全 hex 英文词不误报、摘要行跳过、外部源仓 pin 解析）。
+- **新增类别**：**外部源仓 pin**（`SOURCE.md` 的 `TencentDB-Agent-Memory@2ee2239`）——它在本项目任何仓都解析不出，必须登记 checkout 后才能校验，否则裸扫会把真 pin 误判为幽灵（实测的第一个假阳性）。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警**；`node tests/run-l1-tests.mjs` → **32 passed**。
