@@ -98,6 +98,13 @@
       "trigger": "只要某文档用 `cycle-N` 标注提交哈希（唤醒指针 GRAND-LOOP、README、交接文档）：必须交给脚本解析**活文档** —— ① 每条哈希须在 git 中真实存在；② 提交主题里的 cycle 号不得与标注矛盾；③ 同一哈希不得标注两个 cycle；④ 链的标题跨度须等于最新条目；⑤ 指针 `head` 须等于单一事实源（如 `docs/baseline.json.head`）。反例（loop cycle-18）：`docs/flow/GRAND-LOOP.md` 把 cycle-16 A 记成 `710a3af`（实为 cycle-17 A），真哈希 `a09421a` 全文 0 次出现，重复哈希把缺失掩盖成\"看起来完整\"；无任何门禁报警，照链取证的 agent 全部拿到错哈希。",
       "severity_if_fail": "high",
       "guide_ref": "检查原则14"
+    },
+    {
+      "id": "TES-15",
+      "rule": "文档里的\"负例/缺陷引用\"是否与机器可读的声明形态可区分（不得照抄成 `hash`(cycle-N …)）",
+      "trigger": "只要文档要引用一个错误值（错哈希 / 旧基线数字 / 坏配置）：必须让它与**声明形态**可区分。约定：机器声明的链写作 `hash`(cycle-N …)；缺陷引用写成 `hash`(❌错记 cycle-N …)，或在哈希与 cycle 之间插入说明文字，禁止原样照抄成声明形态 —— 否则\"记录的否定句\"会被下一个扫链/取证脚本当成事实，也会被 agent 当成证据。反例（loop cycle-19）：cycle-18 的缺陷描述（设计文档 / status §13.43 / 工作记录）把 `710a3af` 原样写成 `710a3af`(cycle-16 A），全仓扫描立刻在 3 处复现同一假声明 —— **缺陷记录把缺陷又造了一遍**。",
+      "severity_if_fail": "high",
+      "guide_ref": "检查原则15"
     }
   ],
   "output_schema": {

@@ -227,3 +227,13 @@
   （实为 cycle-17 A）、真哈希 `a09421a` 全文 0 次出现，而没有任何门禁报警。三连：cycle-16 修"被漏掉的测试"、
   cycle-17 修"门禁自身没人验证"、cycle-18 修"唤醒指针的提交链没人验证" —— 同族缺陷：**记录 vs 真值**。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警**；`node tests/run-l1-tests.mjs` → **32 passed**。
+
+### 2026-10-23 · B 轮 cycle-19 · 缺陷引用不得伪装成声明（TES-15）
+
+- **architect-test（test 维）**：检查清单 14 → **15**，新增 **TES-15** —— 文档里的"负例/缺陷引用"必须与机器可读的
+  声明形态可区分（禁止把错值照抄成 `` `hash`(cycle-N …) ``），且全仓扫描须覆盖设计文档 / status / 交接记录，
+  带覆盖度自证与负例自证。
+- **loop 回写动机**：loop cycle-18 修好了"提交链 vs git 真值"，但 cycle-18 的**缺陷描述**在设计文档 / status §13.43 /
+  工作记录里原样复制了错哈希的声明形态，全仓扫描立刻在 3 处复现同一个假声明 —— 修完"记录错了"还要修
+  "记录里写着那个错"。三连族：cycle-16 被漏掉的测试 → cycle-17 门禁自身 → cycle-18 提交链 → cycle-19 缺陷引用的形态。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警**；`node tests/run-l1-tests.mjs` → **32 passed**。
