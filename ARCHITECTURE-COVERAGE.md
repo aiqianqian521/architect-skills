@@ -237,3 +237,10 @@
   工作记录里原样复制了错哈希的声明形态，全仓扫描立刻在 3 处复现同一个假声明 —— 修完"记录错了"还要修
   "记录里写着那个错"。三连族：cycle-16 被漏掉的测试 → cycle-17 门禁自身 → cycle-18 提交链 → cycle-19 缺陷引用的形态。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警**；`node tests/run-l1-tests.mjs` → **32 passed**。
+### 2026-10-23 · B 轮 cycle-20 · 幽灵哈希（正文散文 / 箭头链）（TES-16 / DOC-07）
+
+- **architect-test（test 维）**：检查清单 15 → **16**，新增 **TES-16** —— 正文散文里的哈希引用必须机器校验（存在性 + 箭头链同仓拓扑），负例自证须覆盖「带反引号的箭头链」这一形态。
+- **architect-docs（docs 维）**：检查清单 6 → **7**，新增 **DOC-07** —— 正文哈希引用（含箭头链）必须可解析，禁止只靠人工同步。
+- **loop 回写动机**：loop cycle-20 三仓交叉取证命中 **3 个幽灵哈希** —— `docs/flow/GRAND-LOOP.md` L53 的 ❌错记 `11588a1`（真值 `11542a1`）、cycle-14 设计文档的 ❌错记 `a67594c`（真值 `a67594e`）、status §13.9 的 ❌错记 `8cf9d4c`（真值 `eb9f4b6`）。cycle-18/19 只守住声明形态与唤醒指针区块，正文散文与 `A→B→C` 箭头链完全裸奔。四连族：cycle-16 被漏掉的测试 → cycle-17 门禁自身 → cycle-18 提交链 → cycle-19 缺陷描述复刻形态 → cycle-20 正文/箭头链。
+- **A2 自查**：守卫自证探针发现 `ARROW_RUN_RE` 只认裸哈希 → 带反引号的箭头链整段漏检（修：匹配前展平反引号，两处）。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警**；`node tests/run-l1-tests.mjs` → **32 passed**。

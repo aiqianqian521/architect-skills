@@ -42,6 +42,14 @@
       "trigger": "只要文档写下会被机器读回的引用（提交链、`head <hash>`、`N passed / coverage X%`、配置键名）：必须有脚本/测试解析**活文档**并对照单一事实源（git 历史、`docs/baseline.json`）校验，禁止只靠人工同步；校验器要 fail-closed（解析不到锚点 = 失败）并有负例自证。反例：loop cycle-17 之前 `docs/baseline.json` 的 passed/coverage 从不对照实测（cycle-17 修：单向棘轮）；loop cycle-18 发现唤醒指针提交链把 cycle-16 A 记成 cycle-17 的哈希、真哈希全文缺失（cycle-18 修：`tests/test_wake_pointer_chain.py`）。",
       "severity_if_fail": "high",
       "guide_ref": "检查原则6"
+   
+    },
+    {
+      "id": "DOC-07",
+      "rule": "文档正文里的提交哈希引用（含 `A→B→C` 箭头链）是否有校验器保证其可解析，而不只校验声明形态",
+      "trigger": "只要文档在正文散文里写出提交哈希（反引号或箭头链）：必须有脚本解析**活文档**并对照单一事实源（git 历史）校验——① 每个哈希须在已知仓中真实存在；② 箭头链同仓相邻须祖先相关；③ 引用缺陷值必须同行标记；④ 只扫反引号哈希与箭头链（日期串同样匹配 hex 模式，全裸扫误报不可接受）。禁止只靠「人写的时候看清了」。反例（loop cycle-20）：GRAND-LOOP legacy 补充链、cycle-14 设计文档、status §13.9 各有一个三仓都解析不出的幽灵哈希（❌错记 `11588a1` / `a67594c` / `8cf9d4c`），任何照链取证 agent 都会把它当事实传递。",
+      "severity_if_fail": "high",
+      "guide_ref": "检查原则7"
     }
   ],
   "output_schema": {
