@@ -216,3 +216,14 @@
   结果：`orchestrator.py`（被 orphan 门禁误列为 test_only 的 CLI 入口）53% → **86%**；全量 1542 → **1586 passed**，coverage 77.57% → **78.73%**。
 - 验证：`node scripts/validate-contracts.mjs`（19 atom / 0 错 / 0 警）+ `node tests/run-l1-tests.mjs`（32 passed）。
 - 详细：loop `docs/flow/2026-09-05-grand-loop-status.md` §13.42 + `docs/design/2026-10-23-cycle17-A-gate-self-verification.md`。
+
+### 2026-10-23 · B 轮 cycle-18 · 提交链自证（TES-14 / DOC-06）
+
+- **architect-test（test 维）**：检查清单 13 → **14**，新增 **TES-14** —— 文档/指针里的提交链与哈希引用必须被机器校验
+  （存在性 + 标注一致 + 跨源 `head` 交叉），守卫须有负例自证与覆盖度自证，且查询要批量化不拖慢门禁。
+- **architect-docs（docs 维）**：检查清单 5 → **6**，新增 **DOC-06** —— 文档中的机器可读引用（提交哈希 / 版本号 /
+  基线数字 / 配置键名）必须有校验器并与单一事实源交叉；禁止只靠人工同步。
+- **loop 回写动机**：loop cycle-18 发现 `docs/flow/GRAND-LOOP.md` 的提交链把 cycle-16 A 记成 `710a3af`
+  （实为 cycle-17 A）、真哈希 `a09421a` 全文 0 次出现，而没有任何门禁报警。三连：cycle-16 修"被漏掉的测试"、
+  cycle-17 修"门禁自身没人验证"、cycle-18 修"唤醒指针的提交链没人验证" —— 同族缺陷：**记录 vs 真值**。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警**；`node tests/run-l1-tests.mjs` → **32 passed**。

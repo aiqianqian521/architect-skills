@@ -102,10 +102,12 @@ def store():
 [ ] 测试/契约文件是否被门禁实际收集（收集数 ≠ 0）？ | 未通过时: 跑 `pytest --collect-only -q <路径>` 断言收集数 > 0；脚本式伪测试（只有 `def main()` + `__main__` 守卫、没有顶层 `def test_*`/`class Test*`）会被静默收集 0 个测试 → 加薄入口 `def test_<name>(): main()`（不改 body）+ 元测试（AST 扫描 tests/**/test_*.py）防复发。真值：loop cycle-16，6 个伪测试文件约 630 行断言不在门禁内。
 [ ] 门禁的"收集扫描"是否覆盖 pytest 会收集的全部命名与深度（`test_*.py` 与 `*_test.py`，且递归子目录）？ → 只认一种命名 / 只扫一层 = 漏网：用 `rglob` 同时匹配两种命名（pytest 默认 `python_files = test_*.py *_test.py`），并加一条"扫描器必须能看见 `*_test.py` 与子目录文件"的自证用例（否则修了扫描器也没人知道它修了）。真值：loop cycle-17 —— cycle-16 的收集 tripwire 用 `glob('test_*.py')`（非递归、只认 test_ 前缀），把 0 收集文件放进 `tests/<sub>/` 或命名成 `foo_test.py` 即可整体绕过。
 [ ] 门禁里"登记"的基线数字（passed / coverage / fail_under）是否与**实测运行**对照，而不只是"文档 ↔ 登记"互校？ → 缺对照 = 可静默删测试：跑完测试后解析摘要（`N passed` / `Total coverage: X%`）与登记值做**单向棘轮**比对（实测 < 登记即失败；多出不失败），解析不出摘要同样失败（fail-closed）。文档一致性检查只保证"文档说的 == 登记的"，永远不等于"登记的 == 真实的"。真值：loop cycle-17 —— `docs/baseline.json` 的 `1542 passed / 77.58%` 是手抄数字，`run_gate.py` 只看退出码与 `fail_under`，删掉一批测试后手改登记值 + 9 个文档即可保持全绿（`fail_under=70` 与实测之间的缓冲足以吸收）。
+[ ] 文档/指针里的提交链与哈希引用是否被机器校验（存在性 + 标注一致 + 跨源交叉） | 触发: 见 `contract.json` TES-14 / guide「cycle-18 实测增补」
 ```
 > **口径演进（2026-09-06 · B 阶段 round2 · coze-loop+adk ⑧ 实测真值校正）**：检查清单新增「AI 输出评测框架（多 evaluator + 实验状态机 + 多语言沙箱 + 幂等）」一项；此前清单仅覆盖传统单测/TDD，缺 AI/Agent 输出评测维度（真缺口）。真值 coze-loop eval 引擎 + google-adk evaluation framework。校正记录见 architect-skills `output/loop-dev/2026-09-06/report.md`。
 > **口径演进（2026-10-23 · B 阶段 cycle-16 · loop 实测真值校正）**：检查清单新增「测试/契约文件必须被门禁实际收集（收集数 ≠ 0）」一项（真值 = loop cycle-16：6 个 `tests/test_*.py` 实为脚本式伪测试，pytest 收集 0 个测试、约 630 行断言从不执行；纳入门禁后立刻暴露 registry 权限门调用点调用不存在的方法）。校正记录见 loop 仓 `docs/flow/2026-09-05-grand-loop-status.md` §13.41。
 > **口径演进（2026-10-23 · B 阶段 cycle-17 · loop 实测真值校正）**：检查清单新增「收集扫描须覆盖 pytest 全部可收集命名与深度」「登记基线数字须与实测运行对照（单向棘轮）」两项（真值 = loop cycle-17：收集 tripwire 只扫顶层且只认 `test_*` 前缀；`run_gate.py` 从不解析实测摘要，baseline 数字全靠手抄）。校正记录见 loop 仓 `docs/flow/2026-09-05-grand-loop-status.md` §13.42。
+> **口径演进（2026-10-23 · B 轮 cycle-18 · loop 回写）**：新增 TES-14 —— 文档里的"记录"（提交链 / `head <hash>` / 基线数字）也必须有行为校验；与 TES-11（伪测试）、TES-12（收集扫描）、TES-13（登记 vs 实测）同族：**写下来的记录必须有人对着真值验证**。
 
 ## 常见问题修复指南
 
@@ -140,6 +142,27 @@ def store():
 **单向棘轮**比对（实测 < 登记 = 失败；多出 = 允许，因为那是新增测试），摘要解析失败也判失败（fail-closed）；
 覆盖度比对留一个小的浮点/取整容差，避免第二位小数抖动误报。真值：loop cycle-17 —— `run_gate.py` 原先
 只检查 pytest 退出码与 `fail_under`，`docs/baseline.json` 的 `passed`/`coverage` 从未与实测对照过。
+
+## cycle-18 实测增补：提交链自证（2026-10-23）
+
+> 来源：cycle-18 A —— 对"唤醒指针 / 文档里的提交链"做审计（真值 file:行段：`contract.json` TES-14）。
+
+**TES-14 · 文档/指针里的提交链与哈希引用必须被机器校验**："守护者无人守护"的第三处（cycle-16 修被门禁漏掉的测试、
+cycle-17 修门禁自身、cycle-18 修唤醒指针的提交链）。凡是"记录型"文档 —— 提交链、`head <hash>`、基线数字 ——
+都必须有脚本解析**活文档**并与真值（git 历史 / 单一事实源）对照：
+
+- ① 每条 `cycle-N` 哈希须在 git 中真实存在；② 提交主题里的 cycle 号不得与标注矛盾；③ 同一哈希不得标注两个 cycle；
+  ④ 链的标题跨度须等于最新条目；⑤ 指针 `head` 须等于单一事实源（如 `docs/baseline.json.head`）。
+- fail-closed：链段落 / 指针定位不到 = 失败（禁止"解析不到就跳过"）；跨仓条目（architect-skills B）在兄弟仓存在时
+  一并校验，缺失时登记为机器本地缺口，**不降级**为静默通过。
+- 守卫自身必须有负例：把真实文本改回缺陷态必须立即报错（loop cycle-18：错标注 / 重复哈希 / 标题跨度 / 锚点丢失 /
+  head 漂移 共 4 条负例）。
+- 性能也是门禁质量：git 查询要批量化（每仓一次 `git log --all` + 记忆化），逐条目 spawn 会让守卫本身变成负担
+  （loop cycle-18 首版 ~45s → 10s）。
+
+反例（loop cycle-18 实证）：`docs/flow/GRAND-LOOP.md` 的提交链把 cycle-16 A 记成 `710a3af`（实为 cycle-17 A），
+真正的 `a09421a` 全文 **0 次出现** —— 重复的 `710a3af` 把缺失掩盖成"看起来完整"，且没有任何门禁报警，
+照链取证的 agent 全部拿到错哈希。
 
 ## 交叉引用
 - 代码审查 → 参见 [[architect-review]]

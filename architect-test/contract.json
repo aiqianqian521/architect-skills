@@ -91,6 +91,13 @@
       "trigger": "缺对照 = 可静默删测试：门禁跑完测试后解析摘要（N passed / Total coverage: X%）与登记值做**单向棘轮**比对（实测 < 登记即失败；多出不失败），解析不出摘要同样失败（fail-closed）；覆盖度比对留小的浮点容差。文档一致性只保证\"文档说的 == 登记的\"，不等于\"登记的 == 真实的\"。真值：loop cycle-17 —— docs/baseline.json 的 1542 passed / 77.58% 是手抄数字，run_gate.py 只看退出码与 fail_under，删掉一批测试后手改登记值 + 9 个当前态文档即可保持全绿（fail_under=70 与实测之间的缓冲足以吸收）。",
       "severity_if_fail": "high",
       "guide_ref": "核心原则·13"
+    },
+    {
+      "id": "TES-14",
+      "rule": "文档/指针里的提交链与哈希引用是否被机器校验（存在性 + 标注一致 + 跨源交叉）",
+      "trigger": "只要某文档用 `cycle-N` 标注提交哈希（唤醒指针 GRAND-LOOP、README、交接文档）：必须交给脚本解析**活文档** —— ① 每条哈希须在 git 中真实存在；② 提交主题里的 cycle 号不得与标注矛盾；③ 同一哈希不得标注两个 cycle；④ 链的标题跨度须等于最新条目；⑤ 指针 `head` 须等于单一事实源（如 `docs/baseline.json.head`）。反例（loop cycle-18）：`docs/flow/GRAND-LOOP.md` 把 cycle-16 A 记成 `710a3af`（实为 cycle-17 A），真哈希 `a09421a` 全文 0 次出现，重复哈希把缺失掩盖成\"看起来完整\"；无任何门禁报警，照链取证的 agent 全部拿到错哈希。",
+      "severity_if_fail": "high",
+      "guide_ref": "检查原则14"
     }
   ],
   "output_schema": {
