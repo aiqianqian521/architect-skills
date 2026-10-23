@@ -189,3 +189,20 @@
   并钉死两条安全不变量：**权限拒绝不得被记为 completed**、**短路后不得继续执行后续步**。
 - 验证：`node scripts/validate-contracts.mjs`（19 atom / 0 错 / 0 警）+ `node tests/run-l1-tests.mjs`（L1 全绿）。
 - 详细：loop `docs/flow/2026-09-05-grand-loop-status.md` §13.40 + `docs/design/2026-10-22-cycle15-A-tool-pipeline-contract.md`。
+
+### 2026-10-23 · B 阶段 cycle-16 · 伪测试纳入门禁 + 协作接缝多调用点（新增 TES-11 / AGE-21）
+
+- **architect-test（⑧，行 test）**：检查清单 10 → **11** 项（**新增 TES-11**：测试/契约文件必须被门禁实际收集，收集数 ≠ 0；
+  脚本式伪测试（`def main()` + `__main__` 守卫、无顶层 `def test_*`/`class Test*`）会被 pytest 静默收集 0 个测试 →
+  加薄入口 `def test_<name>(): main()` + 元测试（AST 扫描）防复发）；`guide.md` 增检查清单行 + 口径演进注。
+- **architect-agent（⑨，行 agent）**：检查清单 20 → **21** 项（**新增 AGE-21**：同一协作接缝的多个调用点都必须有等价契约断言，
+  防接口重命名漂移；`guide.md` 增 cycle-16 实测增补节 + 原则 20）。
+- **loop 反向样本（真值）**：loop cycle-16 实测 —— ① 6 个 `tests/test_*.py` 实为脚本式伪测试（约 630 行断言），
+  pytest 对它们报 `no tests ran`，`run_gate.py` 从未执行过这些断言；② 把这些断言纳入门禁后**立刻**暴露出
+  `tool_registry.dispatch()` 的权限门调用点调用早已不存在的 `.check()`（应为 `check_tool_call`）——
+  任何 `set_permission()` 之后的 dispatch 必抛 `AttributeError`，7 级权限门形同虚设（该分支因无测试而长期隐藏）。
+  修复 + 补契约后：`tool_registry.py` 65% → **100%**、`tool_concurrency.py`（EXEMPT 参考实现）0% → **100%**
+  （`tests/test_tool_registry_contract.py` 28 例 + `tests/test_tool_concurrency_contract.py` 19 例 +
+  `tests/test_gate_collection_tripwire.py` 2 例）。
+- 验证：`node scripts/validate-contracts.mjs`（19 atom / 0 错 / 0 警）+ `node tests/run-l1-tests.mjs`。
+- 详细：loop `docs/flow/2026-09-05-grand-loop-status.md` §13.41 + `docs/design/2026-10-23-cycle16-A-gate-collection-and-permission-seam.md`。

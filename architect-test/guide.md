@@ -99,8 +99,10 @@ def store():
 [ ] 是否有永真断言？（excluded >= 0 毫无意义） → 改为具体断言: excluded > 0 或检查排除的具体信号名
 [ ] 是否有依赖随机性的 flaky 测试？ → 有: 用固定 seed 或确定性 mock 替换随机数据
 [ ] AI/Agent 输出是否有评测框架（eval sets + 多 evaluator 类型 + 实验运行状态机 + 评测沙箱执行 + 幂等防重跑）？ | 未通过时: 建 AI 评测框架——多 evaluator 类型抽象（code/prompt/agent/custom_rpc）+ 实验运行 run/item/turn 三级状态机 + 多语言沙箱执行评测代码（资源限额 NetworkAccess/FileSystemAccess）+ Redis 式 SetNX 幂等防重跑；llm-as-judge 项需 model 层（gated）。真值实测 coze-loop domain/entity/evaluator.go:53-58（四类型）+expt_run.go:40/56（ItemRun/TurnRunState）+execution_request.go:9/30（SandboxExecutionRequest/RuntimeCapabilities）+infra/runtime/manager.go:37（GetRuntime 多语言）+domain/component/idem/idem.go:12（SetNX 幂等）+ google-adk evaluation framework。
+[ ] 测试/契约文件是否被门禁实际收集（收集数 ≠ 0）？ | 未通过时: 跑 `pytest --collect-only -q <路径>` 断言收集数 > 0；脚本式伪测试（只有 `def main()` + `__main__` 守卫、没有顶层 `def test_*`/`class Test*`）会被静默收集 0 个测试 → 加薄入口 `def test_<name>(): main()`（不改 body）+ 元测试（AST 扫描 tests/**/test_*.py）防复发。真值：loop cycle-16，6 个伪测试文件约 630 行断言不在门禁内。
 ```
 > **口径演进（2026-09-06 · B 阶段 round2 · coze-loop+adk ⑧ 实测真值校正）**：检查清单新增「AI 输出评测框架（多 evaluator + 实验状态机 + 多语言沙箱 + 幂等）」一项；此前清单仅覆盖传统单测/TDD，缺 AI/Agent 输出评测维度（真缺口）。真值 coze-loop eval 引擎 + google-adk evaluation framework。校正记录见 architect-skills `output/loop-dev/2026-09-06/report.md`。
+> **口径演进（2026-10-23 · B 阶段 cycle-16 · loop 实测真值校正）**：检查清单新增「测试/契约文件必须被门禁实际收集（收集数 ≠ 0）」一项（真值 = loop cycle-16：6 个 `tests/test_*.py` 实为脚本式伪测试，pytest 收集 0 个测试、约 630 行断言从不执行；纳入门禁后立刻暴露 registry 权限门调用点调用不存在的方法）。校正记录见 loop 仓 `docs/flow/2026-09-05-grand-loop-status.md` §13.41。
 
 ## 常见问题修复指南
 

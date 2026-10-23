@@ -423,3 +423,17 @@ async function fanOutFanIn(tasks: Task[]): Promise<AggregatedResult> {
 条目对应模块消失或已接线 = **陈旧豁免**，同样失败（白名单不能腐烂）。仅被测试引用的模块单列为
 informational（允许的「参考实现」，如 `tool_concurrency`）。与原则 17（接线优先）互补：17 管「机制
 真的在链路上」，19 管「没人能悄悄把一个没接线的机制留在仓里」。
+
+## cycle-16 实测增补：协作接缝多调用点漂移（2026-10-23）
+
+> 来源：cycle-16 A —— 同一个权限接缝被两处调用，一处的测试全绿、另一处**早就调用了不存在的方法**（真值 file:行段：`contract.json` AGE-21）。
+> 口径：**一个接缝有 N 个调用点，就需要 N 份等价断言；只在其中一处有测试 = 其余各处在静默漂移。**
+
+**20. 协作接缝的多调用点等价断言（AGE-21）**：当一个协作接口（PermissionGate / HookBus / 结果契约 / 存储事务）
+被 **≥2 处**调用时，只覆盖其中一处是**假安全**——接口方法改名/改签名后，未被覆盖的那一处照样能"编译通过 + 测试全绿"，
+直到线上第一次走到那条分支才炸。做法：**枚举接缝的全部调用点** → 逐处核对方法名与参数语义是否一致 →
+**每一处**都补等价断言（同一不变量、同一失败模式）。真值：loop cycle-16 实测——`tool_pipeline` step 8 调
+`check_tool_call(name, params)`（正确且有测试），而 `tool_registry.dispatch` 调的是早已不存在的 `check(name, source)`，
+于是**任何** `set_permission()` 之后的 dispatch 必抛 `AttributeError`；该分支因无测试而长期隐藏（模块覆盖率 65%）。
+修复后以 `tests/test_tool_registry_contract.py` 钉住，并保留一条"原缺陷会抛 AttributeError"的回归用例。
+与原则 19（无调用方门禁）互补：19 管"有没有人调用"，20 管"每个调用点是否一致且被验证"。

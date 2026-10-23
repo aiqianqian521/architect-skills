@@ -140,6 +140,13 @@
                           "trigger":  "机制模块（>=1 顶层 def/class）已落在引擎目录却**没有任何调用方** = 「机制已落、接线未闭」的静默回归（loop G-5/G-6 曾靠人工 git grep 才发现）。做法：门禁脚本用 AST 判定每个机制模块是否有**非测试**调用方，无调用方即失败；例外必须写成**显式白名单条目**（附理由 + 追踪项），且白名单须**可判活**——条目对应模块消失或已接线 = **陈旧豁免**，同样失败；仅被测试引用的模块单列为 informational（允许的「参考实现」）。真值：loop scripts/check_orphan_mechanisms.py + scripts/run_gate.py（cycle-11 N-1）",
                           "severity_if_fail":  "medium",
                           "guide_ref":  "核心原则·19"
+                      },
+                      {
+                          "id":  "AGE-21",
+                          "rule":  "同一协作接缝的多个调用点，是否都有等价的契约断言（防接口重命名漂移）？",
+                          "trigger":  "当一个协作接口（如 PermissionGate / HookBus / 结果契约）被 >=2 处调用时：逐处核对方法名与参数语义是否一致，并为每一处补等价断言；只在一处有测试 = 另一处可静默漂移（方法重命名后仍能全绿）。真值：loop cycle-16 实测同一权限接缝两处调用——tool_pipeline step 8 用 check_tool_call(name, params)（正确且有测试），tool_registry.dispatch 用 check(name, source)（方法早已不存在 → 任何 set_permission 都抛 AttributeError）；后者无测试故长期隐藏。修复后以 tests/test_tool_registry_contract.py 钉住，并保留一条“原缺陷会抛 AttributeError”的回归用例。",
+                          "severity_if_fail":  "high",
+                          "guide_ref":  "核心原则·20"
                       }
                   ],
     "output_schema":  {

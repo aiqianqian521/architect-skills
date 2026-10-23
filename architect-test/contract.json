@@ -70,6 +70,13 @@
       "trigger": "未通过时: 建 AI 评测框架——多 evaluator 类型抽象（code/prompt/agent/custom_rpc）+ 实验运行 run/item/turn 三级状态机 + 多语言沙箱执行评测代码（资源限额 NetworkAccess/FileSystemAccess）+ Redis 式 SetNX 幂等防重跑；llm-as-judge 项需 model 层（gated）。真值实测 coze-loop domain/entity/evaluator.go:53-58（四类型）+expt_run.go:40/56（ItemRun/TurnRunState）+execution_request.go:9/30（SandboxExecutionRequest/RuntimeCapabilities）+infra/runtime/manager.go:37（GetRuntime 多语言）+domain/component/idem/idem.go:12（SetNX 幂等）+ google-adk evaluation framework。",
       "severity_if_fail": "high",
       "guide_ref": "核心原则·10"
+    },
+    {
+      "id": "TES-11",
+      "rule": "测试/契约文件是否被门禁实际收集（收集数 ≠ 0），而不是只有文件名像测试？",
+      "trigger": "只要存在 test_*.py / *_test.py：跑一次 pytest --collect-only -q <路径> 并断言收集数 > 0；脚本式伪测试（def main(): ... + if __name__ == '__main__'，且没有任何顶层 def test_* / class Test*）会被 pytest 静默收集 0 个测试，于是其中全部断言从不进 CI/门禁——看起来有测试、实际从不执行。做法：给脚本加一个薄入口 def test_<name>(): main()（body 不改），并加一条元测试（扫描 tests/**/test_*.py 的 AST，发现 0 个可收集测试即失败）防复发。真值：loop cycle-16 实测 6 个 tests/test_*.py 是脚本式（test_execution_contracts.py 等，共约 630 行断言），pytest 对其报 no tests ran；把这些断言纳入门禁后，立刻暴露出 tool_registry.dispatch() 的权限门调用点用了早已不存在的 .check()（应为 check_tool_call），任何 set_permission() 都必抛 AttributeError——该分支正因长期无测试而隐藏。",
+      "severity_if_fail": "high",
+      "guide_ref": "核心原则·11"
     }
   ],
   "output_schema": {
