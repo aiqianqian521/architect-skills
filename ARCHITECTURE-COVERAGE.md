@@ -270,3 +270,12 @@
 - **loop 回写**：`tests/test_wake_pointer_chain.py` 27 → **30** 例，直接驱动 `scripts/audit_cross_repo_ledger.py`：未解释幽灵 → exit 1、全部可解释 → exit 0、REGISTERED_UNRESOLVABLE 每条仍解析不出；全量 1615 → **1618 passed**。
 - **第 8 例同族缺陷**：cross-repo 取证脚本交付时 0 覆盖、exit code 无人断言——「交付了验证器」≠「验证器被验证」。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
+
+### 2026-10-24 · B 轮 cycle-24 · 校验器的作用域本身必须被校验（TES-20 / DOC-11）
+
+- **architect-test（test 维度）**：新增第 19 → **20** 条 —— **TES-20** 文档一致性校验的**作用域**（手写校验清单）本身必须被校验：入口文档不得被排除，清单要被断言，改坏入口文档必须 FAIL。
+- **architect-docs（docs 维度）**：新增第 10 → **11** 条 —— **DOC-11** 文档一致性校验必须写明并覆盖「入口文档」。
+- **loop 回写**：`docs_baseline.CHECK_FILES` 纳入 `docs/flow/GRAND-LOOP.md`；`tests/test_gate_self_verification.py` 23 → **26** 例（清单覆盖断言 + 合成仓漂移自证 + 真实仓断言）；全量 1618 → **1621 passed**。
+- **第 9 例同族缺陷**：wake pointer 引用的基线数字无人校验——「最该被信任的文件恰恰没人查」。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
+

@@ -134,6 +134,13 @@
       "trigger": "只要守卫/工具把「判定」写成 exit code 或一张手写登记表，就必须有测试直接驱动它：① exit code 是断言——用合成语料跑一遍，有未解释幽灵必须 exit 1、全部可解释必须 exit 0，两条路径都要被断言，不能只在文档里写「发现幽灵返回 1」；② 单测不得触碰本机兄弟仓（清空默认扫描目标，只扫合成仓），否则测试变成环境依赖；③ 手写登记表（如 REGISTERED_UNRESOLVABLE）会静默腐烂——必须断言每条登记此刻仍解析不出任何已知仓，一旦某条开始可解析，它就是陈旧凭证，必须 FAIL；④ 覆盖≠正确：唯一调用分类器的脚本此前 0 覆盖、exit code 无人断言，等于把一个未验证的判决当事实传递。反例（loop cycle-23）：cycle-22 新增 scripts/audit_cross_repo_ledger.py 是 classify_document 的唯一调用方，0 覆盖、exit code 从未跑过；补 3 例后 fixture 27→30、全量 1615→1618 passed。",
       "severity_if_fail": "high",
       "guide_ref": "检查原则19"
+    },
+    {
+      "id": "TES-20",
+      "rule": "文档一致性校验的**作用域**（手写校验清单）本身是否被校验：入口 / 首个被读取的当前态文档不得被排除在外",
+      "trigger": "只要项目里存在一份手写的『必须校验的文档清单』：① 入口文档（新 agent 第一个读的，如 wake pointer）不得缺席——它引用的基线数字若无校验，就是**最该被信任的文件恰恰没人查**；② 清单本身必须被断言（有测试固定『入口文档在清单内』），否则清单可以静默缩水；③ 自证：把入口文档的基线数字改坏，校验器必须 FAIL，否则等于没接上；④ 覆盖边界要写清（历史 / 快照文档不纳入是刻意的，入口文档纳入是必须的）。反例（loop cycle-24）：docs_baseline.CHECK_FILES 覆盖 9 份当前态文档，却漏掉 docs/flow/GRAND-LOOP.md——把它改成 9999 passed / coverage 55.55% 后 docs_baseline 仍 OK、wake-pointer 守卫仍 30 passed；补 3 例后 1618→1621。",
+      "severity_if_fail": "high",
+      "guide_ref": "检查原则20"
     }
   ],
   "output_schema": {

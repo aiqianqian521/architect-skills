@@ -152,6 +152,7 @@ python orchestrator.py --doctor
 [ ] 正文里裸写的提交哈希（无反引号）是否也有校验器保证可解析（同行 git 上下文门控 + 外部源仓 pin 登记） | 触发: 见 `contract.json` DOC-08 / guide「cycle-21 实测增补」
 [ ] 跨语料的提交引用校验是否写明「扫哪些仓、哪些扩展名算账本」，并对不可解析值给出分类取证规则（数据指纹 / 运行时对象 id / amend 中转 / 外部仓基线 / 守卫自身示例） | 触发: 见 `contract.json` DOC-09 / guide「cycle-22 实测增补」
 [ ] 交付的验证器/取证工具是否写明「判定由哪条测试断言」、手写登记表不可静默腐烂 | 触发: 见 `contract.json` DOC-10 / guide「cycle-23 实测增补」
+[ ] 文档一致性校验是否写明并覆盖**入口文档**（第一个被读取的当前态文档）？ | 触发: 见 `contract.json` DOC-11 / guide「cycle-24 实测增补」
 ```
 
 ## 常见问题修复指南
@@ -224,6 +225,16 @@ python orchestrator.py --doctor
 - **覆盖 ≠ 正确**：0 覆盖、exit code 无人断言的脚本，其判决只是一条未验证的声明。
 
 **反例（loop cycle-23 A）**：cycle-22 交付的 `scripts/audit_cross_repo_ledger.py` 是分类器唯一调用方，此前 0 覆盖、exit code 从未被跑过；补 3 例后 27→30、全量 1615→1618 passed。第 8 例同族缺陷：**交付的验证器本身未被验证**。
+
+## DOC-11 — 文档一致性校验的作用域必须写明并覆盖「入口文档」
+
+> 起因：loop cycle-24 A。文档声明「当前态文档与基线一致」，但手写校验清单漏掉了入口文档（wake pointer）。
+
+- 必须写明校验清单覆盖哪些文件，且**入口文档（第一个被读取的，如 wake pointer）必须在内**；
+- 手写清单可静默缩水，必须被测试断言（入口文档在清单内 + 改坏入口文档必须 FAIL）；
+- 边界要写清：历史 / 快照 / 设计记录类文档不纳入是刻意的；入口文档漏掉不是刻意的。
+
+**反例（loop cycle-24 A）**：`docs_baseline` 漏掉 `docs/flow/GRAND-LOOP.md`，把它的基线数字改成 `9999 passed` / `55.55%` 后校验器仍 OK。
 
 ## 交叉引用
 - 设计决策记录 → 参见 [[architect-design]]
