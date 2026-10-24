@@ -295,4 +295,10 @@
 - **第 11 例同族缺陷**：文档一致性校验只断言「基线数字出现过」，历史数字从不要求标注——旧数字与现值并排，读者会当真。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
 
+### 2026-10-24 · B 轮 cycle-27 · 识别器的字母表不得窄于它审计的现实（TES-23 / DOC-14）
 
+- **architect-test（test 维度）**：新增第 22 → **23** 条 —— **TES-23** 引用识别口径（哈希字母表 7..40、全 / 半角括号、括号前可有空白）必须统一，识别到的引用必须在真实来源仓解析；口径窄于现实 = 记录被静默丢弃，而下限断言仍绿。
+- **architect-docs（docs 维度）**：新增第 13 → **14** 条 —— **DOC-14** 引用必须被统一口径识别、来源可解析、轮次标注一致；漏扫（假阴性）与误报（假阳性）都算违规。
+- **loop 回写**：`tests/test_wake_pointer_chain.py` 新增单一口径常量 `HASH_SRC`（`ENTRY_RE` / `HEAD_RE` / `CLAIM_RE` 共用）、全 / 半角括号 + 可选空白、`claim_problems` 跨仓解析、head 指针按提交前缀比较；34 → **44** 例；全量 1632 → **1642 passed**。
+- **第 12 例同族缺陷**：链条目 / head 指针 / 哈希声明三个解析器各自硬编码 7 位哈希，而幽灵规则已用 7..40；`docs/flow/2026-09-05-grand-loop-task.md` 的全角括号声明 0 识别器可见，且其提交只在历史仓——即便看见也会被误报为幽灵。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
