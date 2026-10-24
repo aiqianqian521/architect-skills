@@ -253,3 +253,12 @@
 - **loop 侧闭环**：`tests/test_wake_pointer_chain.py` 16 → **20** 例（裸哈希上下文门控、全 hex 英文词不误报、摘要行跳过、外部源仓 pin 解析）。
 - **新增类别**：**外部源仓 pin**（`SOURCE.md` 的 `TencentDB-Agent-Memory@2ee2239`）——它在本项目任何仓都解析不出，必须登记 checkout 后才能校验，否则裸扫会把真 pin 误判为幽灵（实测的第一个假阳性）。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警**；`node tests/run-l1-tests.mjs` → **32 passed**。
+
+### 2026-10-24 — B 轮（cycle-22 — 跨仓账本扫描：分类器与边界；TES-18 / DOC-09）
+
+- **architect-test（test 维度）**：检查清单 17 → **18**，新增 **TES-18** —— 多语料账本扫描必须区分「真错」与「合法不可解析值」，逐类给出可复现的排除规则（数据指纹 / 运行时对象 id / 被 amend 掉的中转提交 / 外部仓基线 / 守卫自身示例），解析不出的默认仍是 fail-closed 幽灵；分类器禁止接入门禁。
+- **architect-docs（docs 维度）**：检查清单 8 → **9**，新增 **DOC-09** —— 文档里的提交引用校验要写明「扫哪些语料、哪些语料不算账本」，并对跨语料不可解析值给出分类取证规则。
+- **loop 侧闭环**：`tests/test_wake_pointer_chain.py` 20 → **27** 例（全长度哈希解析 / 带分隔符的摘要标签 / 分类器三类排除 + 两个反方向自证）；新增 `scripts/audit_cross_repo_ledger.py` 复现跨仓扫描（取证报告工具，不进 pytest 门禁）。
+- **实测**：legacy `loop-dev` 2300 篇 shipped `.md` → 20 处 finding（runtime-id 6 / fingerprint 14）；architect-skills 86 篇 → 9 处（registered-external 9）；**幽灵提交 0**（unexplained 0，脚本 exit 0）。
+- **第 7 例同族缺陷**：守卫示例 token 被逐字复刻（本仓 architect-test/guide.md 的 defaced / effaced / abc123d）→ 已修（去掉代码跨度，语义更准）。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警**；`node tests/run-l1-tests.mjs` → **32 passed**。
