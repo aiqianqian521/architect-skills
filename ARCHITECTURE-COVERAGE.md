@@ -287,3 +287,12 @@
 - **第 10 例同族缺陷**：GRAND-LOOP.md 的『下一目标 §13.N』指针无人校验——过期指针会把下一个执行者引到旧清单。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
 
+### 2026-10-24 · B 轮 cycle-26 · 一致性校验必须区分『当前态』与『历史态』（TES-22 / DOC-13）
+
+- **architect-test（test 维度）**：新增第 21 → **22** 条 —— **TES-22** 一致性校验必须区分『当前态』与『历史态』：当前态数字唯一等于基线，历史数字必须带锚点（日期 / cycle-N / 「历史」），锚点作用域是数字所在的块，步进计数不纳入。
+- **architect-docs（docs 维度）**：新增第 12 → **13** 条 —— **DOC-13** 历史数字必须带锚点，当前态数字唯一等于基线。
+- **loop 回写**：`scripts/docs_baseline.py` 新增块级锚点规则（`blocks()` + `unanchored_suite_counts()`）；`docs/loop-dev-AS-BUILT.md` / `docs/loop-dev-ROADMAP.md` 补 7 处「历史快照」标注；`tests/test_gate_self_verification.py` 26 → **33** 例；全量 1625 → **1632 passed**。
+- **第 11 例同族缺陷**：文档一致性校验只断言「基线数字出现过」，历史数字从不要求标注——旧数字与现值并排，读者会当真。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
+
+
