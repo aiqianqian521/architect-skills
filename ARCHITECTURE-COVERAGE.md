@@ -279,3 +279,11 @@
 - **第 9 例同族缺陷**：wake pointer 引用的基线数字无人校验——「最该被信任的文件恰恰没人查」。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
 
+### 2026-10-24 · B 轮 cycle-25 · 导航标号（§13.N 指针）必须被机器校验（TES-21 / DOC-12）
+
+- **architect-test（test 维度）**：新增第 20 → **21** 条 —— **TES-21** 『指向最新状态 / 下一步』的导航标号必须被机器校验：指针等于注册表最新小节号，注册表编号连续无重复，指针缺失 / 注册表为空即 fail-closed。
+- **architect-docs（docs 维度）**：新增第 11 → **12** 条 —— **DOC-12** 文档里的『最新状态 / 下一步』标号必须被机器校验。
+- **loop 回写**：`tests/test_wake_pointer_chain.py` 30 → **34** 例（指针 = 注册表最新 / 注册表连续无重复 / 过期指针自证 / 重号缺号自证 / 指针缺失自证）；全量 1621 → **1625 passed**。
+- **第 10 例同族缺陷**：GRAND-LOOP.md 的『下一目标 §13.N』指针无人校验——过期指针会把下一个执行者引到旧清单。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
+
