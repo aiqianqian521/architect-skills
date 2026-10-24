@@ -262,3 +262,11 @@
 - **实测**：legacy `loop-dev` 2300 篇 shipped `.md` → 20 处 finding（runtime-id 6 / fingerprint 14）；architect-skills 86 篇 → 9 处（registered-external 9）；**幽灵提交 0**（unexplained 0，脚本 exit 0）。
 - **第 7 例同族缺陷**：守卫示例 token 被逐字复刻（本仓 architect-test/guide.md 的 defaced / effaced / abc123d）→ 已修（去掉代码跨度，语义更准）。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警**；`node tests/run-l1-tests.mjs` → **32 passed**。
+
+### 2026-10-24 · B 轮 cycle-23 · 交付的验证器本身必须被验证（TES-19 / DOC-10）
+
+- **architect-test（test 维度）**：新增第 18 → **19** 条 —— **TES-19** 交付的验证器/取证工具本身必须被验证：判定的 exit code 与手写登记表必须有测试直接断言，单测只扫合成语料，登记表条目一旦开始可解析即 FAIL。
+- **architect-docs（docs 维度）**：新增第 9 → **10** 条 —— **DOC-10** 文档必须写明验证器的「判定由哪条测试断言」，手写登记表不可静默腐烂。
+- **loop 回写**：`tests/test_wake_pointer_chain.py` 27 → **30** 例，直接驱动 `scripts/audit_cross_repo_ledger.py`：未解释幽灵 → exit 1、全部可解释 → exit 0、REGISTERED_UNRESOLVABLE 每条仍解析不出；全量 1615 → **1618 passed**。
+- **第 8 例同族缺陷**：cross-repo 取证脚本交付时 0 覆盖、exit code 无人断言——「交付了验证器」≠「验证器被验证」。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。

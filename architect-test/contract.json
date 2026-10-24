@@ -127,6 +127,13 @@
       "trigger": "只要把提交哈希校验推广到本仓之外的语料（legacy loop-dev 2300 篇、architect-skills 86 篇 shipped .md）：① 先按同一规则跑一遍，把得到的不可解析值**逐类**给出可复现的排除规则，默认仍是幽灵（fail-closed）；② 分类器只用于取证报告，**禁止**接入任何门禁（否则「16/32 位一律算摘要」会顺手豁免伪造的提交声明）；③ 每条排除规则必须写清证据来源（行内摘要标签 / token 长度 / 同文档运行时上下文 / 显式登记表及其出处）；④ 语料边界必须写明（只扫 shipped markdown；机器可读契约 JSON 里的规则文案不算账本）。反例（loop cycle-22）：同一套擅长抓幽灵哈希的规则指向 legacy loop-dev + architect-skills，得到 32 处 finding、**0 处是幽灵**（14 数据指纹 / 6 运行时对象 id / 9 被 amend 掉的中转提交与外部仓基线 / 3 守卫自身示例）；把 fail-closed 门禁直接挪过去，只会让 32 个合法值淹没真信号。自证：语料里放一条无标签、无运行时上下文、未登记的 7 位哈希 → 仍必须报幽灵。",
       "severity_if_fail": "high",
       "guide_ref": "检查原则18"
+    },
+    {
+      "id": "TES-19",
+      "rule": "交付的验证器/取证工具本身是否被验证：判定的 exit code 与手写登记表是否有测试直接断言，而不是只写在文档里",
+      "trigger": "只要守卫/工具把「判定」写成 exit code 或一张手写登记表，就必须有测试直接驱动它：① exit code 是断言——用合成语料跑一遍，有未解释幽灵必须 exit 1、全部可解释必须 exit 0，两条路径都要被断言，不能只在文档里写「发现幽灵返回 1」；② 单测不得触碰本机兄弟仓（清空默认扫描目标，只扫合成仓），否则测试变成环境依赖；③ 手写登记表（如 REGISTERED_UNRESOLVABLE）会静默腐烂——必须断言每条登记此刻仍解析不出任何已知仓，一旦某条开始可解析，它就是陈旧凭证，必须 FAIL；④ 覆盖≠正确：唯一调用分类器的脚本此前 0 覆盖、exit code 无人断言，等于把一个未验证的判决当事实传递。反例（loop cycle-23）：cycle-22 新增 scripts/audit_cross_repo_ledger.py 是 classify_document 的唯一调用方，0 覆盖、exit code 从未跑过；补 3 例后 fixture 27→30、全量 1615→1618 passed。",
+      "severity_if_fail": "high",
+      "guide_ref": "检查原则19"
     }
   ],
   "output_schema": {
