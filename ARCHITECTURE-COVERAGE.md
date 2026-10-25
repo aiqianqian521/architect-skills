@@ -317,3 +317,12 @@
 - **architect-docs（docs 维度）**：新增第 15 → **16** 条 —— **DOC-16** 文档 / 报告的证据引用必须可落地：无同目录快照时显式自引，禁止宣称不存在的 `data/`；宣称「报告自带校验」时必须写明它校验存在性而非标签。
 - **第 14 例同族缺陷（D-R1）**：`--report` 的带日期客户报告把 §2 六行证据写成 `file:line: data/rounds.json:1`，而报告旁从不写 `data/`（快照在 runtime 树）；自校验 `validate_risk_evidence` 只匹配 `ref:` / `file:line:` 标签，对断链 100% 失明 → 一份「看起来很干净」的报告把取证 agent 指向不存在的文件。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
+
+
+### 2026-10-25 · B 阶段 cycle-31 · 识别器的每个语法定点必须收敛为单一常量、且不窄于现实（TES-26 / DOC-17）
+
+- **architect-test（test 维度）**：新增第 25 → **26** 条 —— **TES-26** 识别器的全部语法定点（字母表 / 括号类 / 前缀 / 分隔符）必须收敛成单一常量并被所有识别器共用、且不窄于它审计的现实（全角与半角括号、7..40）；不被覆盖的形态必须是被负例钉死的**决定**；唯一性记录必须断言「恰好一条」。自证 = 把记录改成识别器看不见的合法写法（全角括号）并写错标注，扫描器必须变红。
+- **architect-docs（docs 维度）**：新增第 16 → **17** 条 —— **DOC-17** 机械记录（提交链 / 哈希引用 / 唤醒指针）的书写形态必须与校验器同宽；校验器看不见的形态要显式登记为决定（并说明不扩宽的理由），引用写法与校验器共用同一常量口径。
+- **第 15 例同族缺陷**：cycle-27 修了哈希**字母表**，却把同一个「识别器窄于现实」类里剩下的定点（括号类、前缀）留在原地 —— `ENTRY_RE` 只认 ASCII 括号，全角括号的链条目被 `chain_entries` **静默丢弃**（把它的 cycle 标注改错，`chain_violations` 仍为 `[]`）；`HEAD_PREFIX` 同时写在内联字面量与常量里（两处真相，D-S1 家族）。
+- **loop 回写**：`BOPEN` / `BCLOSE` 单常量由 `ENTRY_RE` 与 `CLAIM_RE` 共用；`HEAD_RE` 由 `re.escape(HEAD_PREFIX)` 构造；唤醒指针新增唯一性断言；未加括号的 cycle 标注用负例钉死为**已决定的边界**。测试 44 → **49** 例；全量 1692 → **1697 passed**。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
