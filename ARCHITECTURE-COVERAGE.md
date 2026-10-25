@@ -326,3 +326,11 @@
 - **第 15 例同族缺陷**：cycle-27 修了哈希**字母表**，却把同一个「识别器窄于现实」类里剩下的定点（括号类、前缀）留在原地 —— `ENTRY_RE` 只认 ASCII 括号，全角括号的链条目被 `chain_entries` **静默丢弃**（把它的 cycle 标注改错，`chain_violations` 仍为 `[]`）；`HEAD_PREFIX` 同时写在内联字面量与常量里（两处真相，D-S1 家族）。
 - **loop 回写**：`BOPEN` / `BCLOSE` 单常量由 `ENTRY_RE` 与 `CLAIM_RE` 共用；`HEAD_RE` 由 `re.escape(HEAD_PREFIX)` 构造；唤醒指针新增唯一性断言；未加括号的 cycle 标注用负例钉死为**已决定的边界**。测试 44 → **49** 例；全量 1692 → **1697 passed**。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
+
+### 2026-10-25 · B 阶段 cycle-32 · 豁免类机制必须窄于它豁免的缺陷（TES-27 / DOC-18）
+
+- **architect-test（test 维度）**：新增第 26 → **27** 条 —— **TES-27** 豁免 / 白名单 / 例外类机制必须窄于它豁免的缺陷：标记必须来自穷尽枚举（不得是代码标识符 / 普通词）、必须紧邻被标记物、列表（`a` / `b` / `c`）仅首项被标注才整体豁免；无法紧邻的行级形态必须显式登记，守卫断言登记仍存在 / 仍生效 / 不外溢。自证 = 把标记换成普通词或挪远超阈值，豁免必须失效。
+- **architect-docs（docs 维度）**：新增第 17 → **18** 条 —— **DOC-18** 文档里的『豁免 / 免检』标注必须与被豁免的内容同界：标注只豁免它标注的引用，不得整行 / 跨单元格外溢；标注词必须是写作约定而非普通词；远距离 / 行级豁免必须显式登记。
+- **第 16 例同族缺陷**：`_is_defect_line()` 整行豁免 + `phantom` 作标记 ⇒ 一句提到本模块函数名 `phantom_hash_problems` 的注释即让整行免检（全仓 53 行仅靠它免检；无一行藏坏哈希，故为潜伏假阴性）。
+- **loop 回写**：`DEFECT_MARKERS` 收敛为纯写作约定（叉号 / 错记 / NOT-A-COMMIT）；豁免按 token（`MARK_WINDOW` = 24，由语料分界线实测给出）+ 斜杠连接的哈希列表整体豁免 + `ROW_MARKED_RULES` 显式登记与守卫；分类器同步按 token 判定。测试 49 → **57** 例；全量 1697 → **1705 passed**。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
