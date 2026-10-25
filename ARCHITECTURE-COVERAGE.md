@@ -334,3 +334,11 @@
 - **第 16 例同族缺陷**：`_is_defect_line()` 整行豁免 + `phantom` 作标记 ⇒ 一句提到本模块函数名 `phantom_hash_problems` 的注释即让整行免检（全仓 53 行仅靠它免检；无一行藏坏哈希，故为潜伏假阴性）。
 - **loop 回写**：`DEFECT_MARKERS` 收敛为纯写作约定（叉号 / 错记 / NOT-A-COMMIT）；豁免按 token（`MARK_WINDOW` = 24，由语料分界线实测给出）+ 斜杠连接的哈希列表整体豁免 + `ROW_MARKED_RULES` 显式登记与守卫；分类器同步按 token 判定。测试 49 → **57** 例；全量 1697 → **1705 passed**。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
+
+### 2026-10-25 · B 阶段 cycle-33 · 门控的触发条件必须不窄于它识别的声明（TES-28 / DOC-19）
+
+- **architect-test（test 维度）**：新增第 27 → **28** 条 —— **TES-28** 门控 / 触发条件 / 前置过滤必须不窄于它识别的声明：不能因「缺少旁证」把唯一的、形态上明确的声明漏掉；放宽必须用**紧邻性**（局部、可实测）而不是**共现性**（全局、会漏）定义；每个放宽都要用语料实测证明零误报；门控要有正例 + 负例双向测试。自证 = 把「紧邻关键词 + 坏哈希」写成孤立一行，门控必须变红。
+- **architect-docs（docs 维度）**：新增第 18 → **19** 条 —— **DOC-19** 文档若用裸哈希表示提交引用，必须让关键词紧邻 token、落在校验器的触发范围内；不得依赖「同行已有别的可解析引用」这类共现条件，否则唯一的声明不会被校验。
+- **第 17 例同族缺陷**：cycle-21 的共现门控挡住了全 hex 英文词，却把唯一的裸声明漏掉了 —— 「fixed in commit <坏哈希>」孤立一行从不报红（门控决定要不要看，而它看开了）。
+- **loop 回写**：新增 `GIT_ADJACENT_RE`（紧邻性触发），`_bare_git_context_tokens` 改为「共现 或 紧邻」；三仓实测新增 4 命中、全部真引用、误报 0；其中 legacy 冻结期 HEAD 4b22b8d 登记进 `REGISTERED_UNRESOLVABLE` 并附收据。测试 57 → **60** 例；全量 1705 → **1708 passed**。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
