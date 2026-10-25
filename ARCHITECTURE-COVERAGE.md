@@ -310,3 +310,10 @@
 - **loop 回写**：`tests/test_guardian_gate.py` 新增「arg_rule 见证可达性表」（规则集必须与见证表一一对应）、下载管道由 `_HIGH_RISK_PATTERNS` 兜底、空格路径边界登记、escalate fail-closed + escalation_level 标注；`tests/test_runtime_artifact_containment.py` 新增 8 例（运行产物与锁路径必须服从 runtime.root）。16 → **36** 例；全量 1668 → **1682 passed**。
 - **第 13 例同族缺陷**：护栏从未被行为驱动 —— `risk_assessor` 词边界关键字扫整条命令串，运行根含 `-eval-` 即全拒（假阳性）；`permission_matrix` 的 `sudo ` / `chmod 777` / `nc -l` 精确等值永不命中（假阴性）；策略拒绝渲染成 `guardian . escapes runtime root .`（误归因）。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
+
+### 2026-10-25 · B 阶段 cycle-30 · 产出的证据引用必须落到真实文件（TES-25 / DOC-16）
+
+- **architect-test（test 维度）**：新增第 24 → **25** 条 —— **TES-25** 自动生成的证据引用（`file:line:`）在产物写出时必须能解析到真实文件：相对引用按产物目录解析、跨盘用绝对路径、无快照则自引；产物自带的自校验必须校验**存在性**（且需解析锚点），只 grep 标签的自校验对断链失明；自证 = 把引用指向不存在的文件必须变红。
+- **architect-docs（docs 维度）**：新增第 15 → **16** 条 —— **DOC-16** 文档 / 报告的证据引用必须可落地：无同目录快照时显式自引，禁止宣称不存在的 `data/`；宣称「报告自带校验」时必须写明它校验存在性而非标签。
+- **第 14 例同族缺陷（D-R1）**：`--report` 的带日期客户报告把 §2 六行证据写成 `file:line: data/rounds.json:1`，而报告旁从不写 `data/`（快照在 runtime 树）；自校验 `validate_risk_evidence` 只匹配 `ref:` / `file:line:` 标签，对断链 100% 失明 → 一份「看起来很干净」的报告把取证 agent 指向不存在的文件。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
