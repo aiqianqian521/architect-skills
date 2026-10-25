@@ -302,3 +302,11 @@
 - **loop 回写**：`tests/test_wake_pointer_chain.py` 新增单一口径常量 `HASH_SRC`（`ENTRY_RE` / `HEAD_RE` / `CLAIM_RE` 共用）、全 / 半角括号 + 可选空白、`claim_problems` 跨仓解析、head 指针按提交前缀比较；34 → **44** 例；全量 1632 → **1642 passed**。
 - **第 12 例同族缺陷**：链条目 / head 指针 / 哈希声明三个解析器各自硬编码 7 位哈希，而幽灵规则已用 7..40；`docs/flow/2026-09-05-grand-loop-task.md` 的全角括号声明 0 识别器可见，且其提交只在历史仓——即便看见也会被误报为幽灵。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
+
+### 2026-10-25 · B 阶段 cycle-29 · 安全护栏的行为面必须被独立驱动（TES-24 / DOC-15）
+
+- **architect-test（test 维度）**：新增第 23 → **24** 条 —— **TES-24** 护栏行为面：矩阵每条规则要有见证命令，三个出口（allow / deny / escalate）分别断言，拒绝渲染必须与真实原因一致（策略拒绝 ≠ 路径越界），已知边界显式登记，且要有「补一条命不中的规则必红」的自证。
+- **architect-docs（docs 维度）**：新增第 14 → **15** 条 —— **DOC-15** 护栏行为契约：见证、出口语义（escalate 未接线等同 deny）、拒绝渲染口径、已知边界都要写清，结论可被命令复核。
+- **loop 回写**：`tests/test_guardian_gate.py` 新增「arg_rule 见证可达性表」（规则集必须与见证表一一对应）、下载管道由 `_HIGH_RISK_PATTERNS` 兜底、空格路径边界登记、escalate fail-closed + escalation_level 标注；`tests/test_runtime_artifact_containment.py` 新增 8 例（运行产物与锁路径必须服从 runtime.root）。16 → **36** 例；全量 1668 → **1682 passed**。
+- **第 13 例同族缺陷**：护栏从未被行为驱动 —— `risk_assessor` 词边界关键字扫整条命令串，运行根含 `-eval-` 即全拒（假阳性）；`permission_matrix` 的 `sudo ` / `chmod 777` / `nc -l` 精确等值永不命中（假阴性）；策略拒绝渲染成 `guardian . escapes runtime root .`（误归因）。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
