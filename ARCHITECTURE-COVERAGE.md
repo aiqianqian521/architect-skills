@@ -351,3 +351,11 @@
 - **loop 回写**：新增 `_digest_labelled`（标签锚定在值前缀末尾的单点谓词），反引号识别器与裸识别器共用；移除整行跳过，未被标签标注的裸 token 仍进入候选；分类器口径钉死为「有意更宽」。测试 60 → **64** 例；全量 1708 → **1712 passed**。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
 
+### 2026-10-26 · B 阶段 cycle-35 · 「受门控 / 已覆盖」必须由登记证明，不能按名字推断（TES-30 / DOC-21）
+
+- **architect-test（test 维度）**：新增第 29 → **30** 条 —— **TES-30**「受控 / 已受门控 / 已覆盖」这类范围性不变量，其判定必须：① 以**站点 / 文件的显式登记**为对象，不得按名字（标识符出现不等于经过）；② **取样域**与声称的域一致（不得把未跟踪 / 临时 / 归档脚本算进业务代码）；③ 每条登记必须**仍生效**（仍命中一个真站点），登记不可静默腐坏；④ 违规报告不得**截断**（须给条数 + 全部行）；⑤ 自证 = 只提到门名字的函数 + 裸调用必须变红、登记失效必须报警。
+- **architect-docs（docs 维度）**：新增第 20 → **21** 条 —— **DOC-21** 文档声明「已受控 / 已覆盖」时必须附**可核对证据**（登记表 / 断言 / 检查产物）并完整列出规模，不得凭名字推断受控，也不得只列前几条；判定的覆盖范围（扫描域）必须写清。
+- **第 19 例同族缺陷**：门禁不变量的豁免按**名字**（`guard_terms & _enclosing_refs`）——一句提到 `gate` 的函数即豁免整站点，既**可伪造**又**掩盖**了 5 处真业务绕过（backtest_adapter 的无门回退 x3、ooda_pipeline 的裸 spawn x2）；同时 `_PY_FILES` 用 `rglob` 把 gitignore 的 `scripts/tmp/**` 算进业务域，且 xfail 报告 `unguarded[:4]` 截断规模。
+- **loop 回写**：取样域改为 git 跟踪 + 待提交（排除归档 / 临时）；名字级豁免换成**登记式**允许清单（`SPAWN_SANCTIONED` + `SPAWN_OUTSIDE_GATE`，每条附理由且必须仍生效）；违规报告列全；MCP 服务端 spawn 真接 `ExecGate.popen`（无 gate 拒绝启动，fail-closed），gate 逐层透传。新增 5 例自证；全量 1712 → **1717 passed**；不变量 1 仍 xfail，但违规清单由「4 行（含 3 处宿主工具）」变为**准确的 5 处真业务绕过**。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
+
