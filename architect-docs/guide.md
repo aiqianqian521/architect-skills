@@ -379,6 +379,19 @@ python orchestrator.py --doctor
 
 **触发 loop cycle-36 A：**文档声明无门即无 spawn，并写明生产组合根（orchestrator / BacktestRunner / evolution loader）在哪里注入 gate。
 
+## DOC-23 · 声称「已强制 / 已接入」必须写清信任边界与生效前提
+
+> 触发 loop cycle-37 A：文档把本地 pre-commit 门禁写成 fail-closed，
+> 但读者据此以为「无法绕过」。
+
+- **写清信任边界**：强制点在谁的权限之外执行？被约束方能否自行关闭？能自行关闭的不算强制。
+- **写清生效前提**：哪项开关被固定、配置如何到达执行点；只设不导出、被全局配置覆盖都是「没生效」。
+- **「已安装」≠「会执行」**：必须有端到端自证（用被约束方的真实动作触发），或明确标注「未验证」。
+- **未覆盖范围逐条列出**：例如「未接入 hosted CI，只交付 pre-receive 与安装器」。
+- **反例（loop cycle-37 A）**：本地门禁被描述成 fail-closed，实际 --no-verify / 全局 core.hooksPath 即可绕过。
+
+**触发 loop cycle-37 A：**文档写明信任边界 = 接收主机、生效前提 = core.hooksPath 已钉住 + 配置已导出，并附真实 push 自证。
+
 ## 交叉引用
 - 设计决策记录 → 参见 [[architect-design]]
 - 审查文档质量 → 参见 [[architect-review]]

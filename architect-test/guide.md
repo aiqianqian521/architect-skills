@@ -474,6 +474,19 @@ cycle-31 语法定点 / 本轮**豁免 / 白名单机制本身**。
 
 **触发 loop cycle-36 A：**无门即无 spawn —— 探针返回 None、run_backtest 返回 error_code=exec_gate_required、两个 sink 拒绝；fitness 回测接入 orchestrator 的 gate；+5 例自证，全量 1717 → 1722。
 
+## TES-32 · 控制必须在被约束方无权的位置执行，且必须自证真的执行
+
+> 触发 loop cycle-37 A：本地 pre-commit 门禁被当成 fail-closed，但 --no-verify /
+> core.hooksPath / 全新克隆都能让它不运行。
+
+- **强制点在权限之外**：能被被约束方关掉的控制不是控制；把它放在服务端 / 接收侧，并证明「关掉本地开关后仍然生效」。
+- **安装即接管**：安装控制时必须固定「选择它的开关」（本机全局 core.hooksPath 会静默替换仓库自带钩子）；配置必须真正到达执行点（只设不导出 == 没生效）。
+- **本体不取自被约束内容**：控制代码用固定副本，推送里改写门禁脚本必须无效。
+- **端到端自证**：用被约束方的真实动作（真实 git push）验证通过 / 拒绝，以及「缺失即 fail-closed」。
+- **反例（loop cycle-37 A）**：本地 run_gate.py 可被三种方式绕过，文档却称其为门禁。
+
+**触发 loop cycle-37 A：**服务端 pre-receive + 钉住 core.hooksPath + export 配置 + 固定副本，+28 例自证（含真实 push 与被推树改写门禁仍被拒）。
+
 ## 交叉引用
 - 代码审查 → 参见 [[architect-review]]
 - 设计测试面 → 参见 [[architect-design]] 端口-适配器

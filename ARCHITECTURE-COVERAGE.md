@@ -367,3 +367,10 @@
 - **loop 回写**：无门即无 spawn —— 探针返回 None、run_backtest 返回 error_code=exec_gate_required、两个 sink 拒绝；fitness 回测接入 orchestrator 的 gate（零参提供者按调用时解析，避免 overlay 重建 runtime 后钉住旧 gate）；新增 runtime_exec.local_exec_gate 作为测试 / 本地构造真 gate 的唯一入口；+5 例自证，全量 1717 → **1722 passed**、0 xfail，覆盖率 79.41% → **79.42%**。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
 
+### 2026-10-26 · B 阶段 cycle-37 · 控制必须在被约束方无权的位置执行，且必须自证真的执行（TES-32 / DOC-23）
+
+- **architect-test（test 维度）**：新增第 31 → **32** 条 —— **TES-32** 一个控制若可被它约束的对象关闭，就不是控制：强制点必须落在被约束方无权的位置（服务端 / 接收侧），安装时必须固定「选择该控制的开关」（本机全局 core.hooksPath 会静默替换仓库自带钩子；配置只设不导出 == 没生效），控制本体不得取自被约束内容；「已安装」不等于「已生效」，必须有端到端自证（用被约束方的真实动作触发：干净通过 / 敏感内容被拒 / 关闭或改写控制仍被拒 / 控制缺失时 fail-closed）。
+- **architect-docs（docs 维度）**：新增第 22 → **23** 条 —— **DOC-23** 文档宣称「已强制 / 已接入」时必须写明执行点的位置与信任边界（谁无权关闭它）、生效前提（哪项开关被固定、配置如何到达执行点）与端到端验证方式；不得把「文件已存在 / 已安装」当成「会执行」，未覆盖范围必须逐条列出。
+- **本轮红证据（loop cycle-37 A）**：ROADMAP P0「fail-closed CI」长期挂着，而实际门禁是本机 pre-commit 钩子——`--no-verify`、`core.hooksPath`、全新克隆三种方式都能让它不运行；实现时又暴露两层同族问题：安装的钩子会被**全局 core.hooksPath** 静默替换（不钉住 = 不在执行路径上），以及**只 set 不 export** 的配置不会被门禁进程继承（设置 ≠ 生效）。
+- **loop 回写**：交付服务端 pre-receive 门禁（`scripts/pre-receive` + `scripts/push_gate.py` + `scripts/content_scan.py` + `scripts/install_push_gate.py`）：内容扫描（密钥文件名 / 私钥头 / AWS AK id / 高熵硬编码凭据 / 代码与配置中的家目录路径，**对全仓 371 文件实测 0 误报**）+ 在推来的树上跑本地门禁；安装固定副本、钉住 core.hooksPath、配置 export；端到端自证 28 例（真实 git push：干净通过、密钥被拒、red tests-half 被拒、推送里改写 push_gate.py 仍被拒、缺 bundle 拒绝）。全量 1722 → **1750 passed** / 0 xfail / 79.42%。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。

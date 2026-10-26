@@ -218,6 +218,13 @@
     "trigger": "只要某个安全关键参数是「可选」的，或出现 `if x is not None: 安全路径 else: 裸路径` 形状：① None 必须走 fail-closed（拒绝执行 + 可核对错误码），不得退回裸路径；② 为「方便本地跑」保留的无门回退必须改为显式登记（文件 + 理由 + 作用对象），登记必须仍命中真站点，失效即报警；③ 自证：去掉一个真调用点的 gate，判定必须变红（拒绝），且必须观察到零 spawn；④ 反向：登记式降级删掉后必须报警。反例（loop cycle-36 A）：backtest_adapter 三处 + ooda_pipeline 两个 sink 的 `else: subprocess.run` 让忘记注入 gate 的调用方静默裸跑（单点出口退化成承诺）；修：无门即无 spawn（探针返回 None、run_backtest 返回 error_code=exec_gate_required、两个 sink 拒绝），fitness 回测接入 orchestrator 的 gate，+5 例自证，全量 1717 → 1722。",
     "severity_if_fail": "high",
     "guide_ref": "检查原则31"
+  },
+  {
+    "id": "TES-32",
+    "rule": "一个控制如果可以被它约束的对象关掉，它就不是控制：**强制点必须落在被约束方无权关闭的位置**（服务端 / 接收侧），并且安装时必须**固定「选择这项控制的开关」**，否则控制根本不在执行路径上；「已安装」不等于「已生效」——必须有**端到端自证**（用被约束方的真实动作触发，观察拒绝 / 通过），并断言控制本体不是从被约束内容里读出来的。",
+    "trigger": "只要一个控制可以被其约束对象关闭（客户端钩子 / 可覆盖的配置 / 可选开关 / 全新副本缺失 / 环境变量 / 只设不导出）：① 强制点必须放在被约束方无权的位置执行（例：pre-receive 而不是 pre-commit），并先证明「被约束方关掉本地开关后控制仍然生效」；② 安装时必须同时固定选择它的开关——本机全局 core.hooksPath 会把仓库自带钩子静默替换，不钉住就等于控制不在执行路径上；③ 配置必须真正到达执行点：只 set 不 export、被上层配置覆盖、路径被重定向，都等于没生效；④ 控制本体不得取自被约束内容（在推送里改写门禁脚本必须无效），并有固定副本；⑤ 自证必须端到端：用被约束方的真实动作（一次真实 git push）验证——干净通过 / 敏感内容被拒 / 被约束方尝试关闭或改写控制仍被拒 / 控制本体缺失时 fail-closed 拒绝。反例（loop cycle-37 A）：本地 run_gate.py 是 pre-commit 钩子，--no-verify、core.hooksPath、全新克隆都能绕过，却被当作门禁；修：服务端 pre-receive 门禁 + 钉住 core.hooksPath + export 配置 + 固定副本（不取自被推的树），+28 例自证，全量 1722 → 1750。",
+    "severity_if_fail": "high",
+    "guide_ref": "检查原则32"
   }
   ],
   "output_schema": {
