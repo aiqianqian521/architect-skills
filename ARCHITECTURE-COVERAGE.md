@@ -374,3 +374,10 @@
 - **本轮红证据（loop cycle-37 A）**：ROADMAP P0「fail-closed CI」长期挂着，而实际门禁是本机 pre-commit 钩子——`--no-verify`、`core.hooksPath`、全新克隆三种方式都能让它不运行；实现时又暴露两层同族问题：安装的钩子会被**全局 core.hooksPath** 静默替换（不钉住 = 不在执行路径上），以及**只 set 不 export** 的配置不会被门禁进程继承（设置 ≠ 生效）。
 - **loop 回写**：交付服务端 pre-receive 门禁（`scripts/pre-receive` + `scripts/push_gate.py` + `scripts/content_scan.py` + `scripts/install_push_gate.py`）：内容扫描（密钥文件名 / 私钥头 / AWS AK id / 高熵硬编码凭据 / 代码与配置中的家目录路径，**对全仓 371 文件实测 0 误报**）+ 在推来的树上跑本地门禁；安装固定副本、钉住 core.hooksPath、配置 export；端到端自证 28 例（真实 git push：干净通过、密钥被拒、red tests-half 被拒、推送里改写 push_gate.py 仍被拒、缺 bundle 拒绝）。全量 1722 → **1750 passed** / 0 xfail / 79.42%。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
+### 2026-10-26 · B 阶段 cycle-38 · 事实标记必须由承载事实的那一层产生，代理指标不得冒充真值（TES-33 / DOC-24）
+
+- **architect-test（test 维度）**：新增第 32 → **33** 条 —— **TES-33** 一个「事实」标记（恢复点 / 进度水印 / 审计记录 / 完成证据）如果由应用自己声明，它就只是承诺：标记必须由承载事实的那一层在**同一原子操作**内产生（触发器 / 约束 / 同事务写入），任何应用写入路径都绕不过；**代理指标不得冒充语义指标**（行数 / 计数不得当成时间点 / 业务单元）；引入标记时对历史数据必须**恰好回填一次**且 down / 重放后可重建；自证必须包含「业务写入回滚后标记不存在」与「标记缺失即 fail-closed」。
+- **architect-docs（docs 维度）**：新增第 23 → **24** 条 —— **DOC-24** 文档不得把**代理指标**写成**语义指标**；任何恢复 / 一致性证据必须写明**生产者与原子性口径**（谁写、是否同事务、能否被应用绕过）、**历史回填口径**、**证据作用域是演练还是生产实测**，并逐条列出未覆盖范围。
+- **本轮红证据（loop cycle-38 A）**：ROADMAP P0「migration sentinel RPO」的旧口径 `rpo.mode=row_count_proxy` / `verified=false` 只能证明「恢复副本与源行数一致」，却极易被读成「可恢复到某一时刻」—— 标记由应用算出，而不是由事实产生。
+- **loop 回写**：schema v6 的 `commit_sentinel(seq, scope, committed_at)` 由 SQLite 触发器在 rounds / run_learns / failure_patterns / success_patterns / l2_suggestions 的 INSERT/UPDATE 上写入（与业务写入**同一事务**，回滚不留标记；`committed_at` 为 UTC ISO-8601 毫秒精度、字典序可排，`seq` 同毫秒消歧）；引入时对既有行**恰好回填一次**（本机真实库实测回填 131 行，integrity ok），down 只丢弃标记表与触发器、可重放重建。演练改为在隔离副本上实测业务时间点：记录 backup cutoff → 真实提交 M 笔业务行 → 从 cutoff 备份恢复 → 断言哨兵**恰好等于** cutoff，输出 `restores_to_cutoff` / `units_lost_on_restore` / `window_ms`；哨兵缺失即 fail-closed。全量 1750 → **1756 passed** / 0 xfail / 79.42% → 79.47%。
+- **验证**：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。

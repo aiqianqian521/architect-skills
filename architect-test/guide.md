@@ -487,6 +487,25 @@ cycle-31 语法定点 / 本轮**豁免 / 白名单机制本身**。
 
 **触发 loop cycle-37 A：**服务端 pre-receive + 钉住 core.hooksPath + export 配置 + 固定副本，+28 例自证（含真实 push 与被推树改写门禁仍被拒）。
 
+## TES-33 · 事实标记必须由承载事实的那一层在同一原子操作内产生
+
+> 触发 loop cycle-38 A：迁移恢复的 RPO 是 row_count_proxy / verified=false，
+> 却被当作「可恢复到某时刻」的证据 —— 标记由应用「声明」，不是事实。
+
+- **标记的生产者是事实的载体**：恢复点 / 进度水印 / 审计记录必须由承载事实的那一层产生，
+  且与业务写入**同一原子事务**（例：SQLite 触发器随业务行写入）——应用补写是承诺，不是事实。
+- **回滚即无标记**：必须能证明业务写入回滚后**不留标记**；否则标记会给出比事实更乐观的恢复点。
+- **代理不得冒充真值**：行数 / 计数是代理指标，不得当作时间点 / 业务单元上报；要么测量真值，
+  要么显式标注为代理。
+- **回填恰好一次**：引入标记时对历史数据一次性回填，且 down / 重放后可重建，不得静默重复或漏掉。
+- **缺失即 fail-closed**：标记读不出 / 范围不覆盖时必须拒绝出具证据，不得退回旧代理口径。
+- **反例（loop cycle-38 A）**：`rpo.mode=row_count_proxy`、`verified=false` 被当成恢复能力证据；
+  修：v6 的 `commit_sentinel` 触发器水印（rounds / run_learns / 两张 patterns / l2_suggestions）
+  + 演练实测 backup cutoff 与恢复后最后提交点（哨兵缺失即拒绝）。
+
+**触发 loop cycle-38 A**：业务提交哨兵 —— 标记由数据库在同一事务内写入，回滚不留痕、历史行恰好回填一次；
+演练给出 `restores_to_cutoff` / `units_lost_on_restore` / `window_ms` 的时间点口径；+6 例自证，全量 1750 → 1756。
+
 ## 交叉引用
 - 代码审查 → 参见 [[architect-review]]
 - 设计测试面 → 参见 [[architect-design]] 端口-适配器
