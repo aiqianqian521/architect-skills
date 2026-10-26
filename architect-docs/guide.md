@@ -407,6 +407,19 @@ python orchestrator.py --doctor
 
 **触发 loop cycle-38 A**：迁移恢复文档区分「演练实测（隔离副本）」与「生产 RPO」，并写明哨兵的生产者、原子性与回填口径。
 
+## DOC-25 · 门禁 / 报告的输出必须与判定同源
+
+> 触发 loop cycle-39 A：门禁判定 `measured + 0.15 >= recorded`，通过行却打印 `coverage 79.35% >= 79.47%` —— 一个字面为假的不等式。
+
+- **输出即文档**：门禁 / 校验器 / 报告打印的比较与阈值同样是「文档」，读者会把它当事实。
+- **与判定同源**：判定判 `measured < floor`，通过行就必须打印 `measured >= floor`，`floor` 由判定所用的同一函数 / 表达式算出，不得手工复述 recorded 值。
+- **容差必须显性**：判定含 slack / tolerance 时，消息必须给出**实际生效的下界**与容差，不得打印 `measured >= recorded` 这种字面为假的不等式。
+- **失败行同口径**：给出 `< floor`，而不是只给 recorded。
+- **钉一条测试**：构造「刚好落在容差内」的通过用例，断言打印的比较为真、且 `recorded - floor == slack`。
+- **反例（loop cycle-39 A）**：`scripts/run_gate.py`；修：抽出 `coverage_floor(recorded) = recorded - tolerance`，判定 `measured < floor`，通过行打印 `coverage X% >= floor Y% [recorded Z%, slack S%]`。
+
+**触发 loop cycle-39 A**：门禁通过行给出实际生效的下界（floor）与容差；判定与消息同一表达式互为取反。
+
 ## 交叉引用
 - 设计决策记录 → 参见 [[architect-design]]
 - 审查文档质量 → 参见 [[architect-review]]

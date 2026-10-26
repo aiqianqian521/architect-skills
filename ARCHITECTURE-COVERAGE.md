@@ -381,3 +381,11 @@
 - **本轮红证据（loop cycle-38 A）**：ROADMAP P0「migration sentinel RPO」的旧口径 `rpo.mode=row_count_proxy` / `verified=false` 只能证明「恢复副本与源行数一致」，却极易被读成「可恢复到某一时刻」—— 标记由应用算出，而不是由事实产生。
 - **loop 回写**：schema v6 的 `commit_sentinel(seq, scope, committed_at)` 由 SQLite 触发器在 rounds / run_learns / failure_patterns / success_patterns / l2_suggestions 的 INSERT/UPDATE 上写入（与业务写入**同一事务**，回滚不留标记；`committed_at` 为 UTC ISO-8601 毫秒精度、字典序可排，`seq` 同毫秒消歧）；引入时对既有行**恰好回填一次**（本机真实库实测回填 131 行，integrity ok），down 只丢弃标记表与触发器、可重放重建。演练改为在隔离副本上实测业务时间点：记录 backup cutoff → 真实提交 M 笔业务行 → 从 cutoff 备份恢复 → 断言哨兵**恰好等于** cutoff，输出 `restores_to_cutoff` / `units_lost_on_restore` / `window_ms`；哨兵缺失即 fail-closed。全量 1750 → **1756 passed** / 0 xfail / 79.42% → 79.47%。
 - **验证**：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
+
+### 2026-10-26 · B 阶段 cycle-39 · 测试输入必须自建且确定，门禁输出必须与判定同源（TES-34 / DOC-25）
+
+- **architect-test（test 维度）**：新增第 33 → **34** 条 —— **TES-34** 测试的输入必须由测试自身构造：被测系统的运行态产物（数据库 / 缓存 / 状态文件）不是测试输入，测试不得读取、也不得写入被测仓库树内的运行态文件；运行态必须落在私有临时目录（配确定性种子），否则测试结论会随机器状态漂移；**收集期不得有文件系统副作用**（否则一个无关模块的本地状态问题会升级为整轮 collection error）；反证必须实测（旧库 / 缺库 / 损坏库下结果一致），并钉一条「store 路径在被测仓库树之外」的回归测试。
+- **architect-docs（docs 维度）**：新增第 24 → **25** 条 —— **DOC-25** 门禁 / 校验器 / 报告的**通过消息必须与判定同源**：打印的比较必须由判定所用的同一表达式取反得到；判定含容差（slack）时必须显式给出**实际生效的下界**，禁止手工复述阈值（会出现「判定通过、消息字面为假」）。失败行同口径，并有用例钉住「刚好落在容差内」的通过路径。
+- **本轮红证据（loop cycle-39 A）**：`tests/test_v2_p1p2.py` 在收集期打开仓库内 `loop-engine/data/patterns.db` —— 全新克隆仅 `--collect-only` 就写出约 110KB 库到代码树；把一份旧版（v5）库放进树后，整套 pytest 在收集期直接 ERROR。同轮扫描又发现 4 个写入点（`test_webui_auth_config.py` / `test_webui_static.py` / `test_contract_invariants.py` / `test_evolution_bridge.py` / `test_loop.py` 的 CLI 冒烟）会创建同一文件。`scripts/run_gate.py` 判定 `measured + 0.15 >= recorded`，通过行却打印 `coverage 79.35% >= 79.47%`（字面为假）。
+- **loop 回写**：5 个写入点全部改为私有临时库 / 临时配置（`memory.sqlite_path` 指向 tmp，`test_v2_p1p2.py` 用私有临时库 + 确定性种子）；抽出 `run_gate.coverage_floor(recorded) = recorded - tolerance` 作唯一定义，判定改用 `measured < floor`，通过行打印 `coverage X% >= floor Y% [recorded Z%, slack S%]`。逐文件扫描证明零创建者；新鲜副本全量在「空库」与「预置 v5 旧库」两场景下均为 **1759 passed / 0 xfail / 79.48%**，且仓库树零写入、旧库未被改写。全量 1756 → **1759 passed** / 79.47% → 79.48%。
+- **验证**：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。

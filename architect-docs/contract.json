@@ -169,6 +169,13 @@
     "trigger": "只要文档出现「可恢复到某时刻 / RPO / RTO / 不丢数据 / 已保证一致 / 证据已入库」：① 必须写明证据是**时间点 / 业务单元**还是**代理指标**（行数 / 计数 / 哈希）——代理指标必须标注为代理，不得写成时间点；② 必须写明证据的生产者与原子性口径（谁产生、是否与业务写入同一事务、应用能否绕过）；③ 历史数据回填口径必须写明（恰好一次 / 可重放），不得让读者以为历史行也有真实提交时间；④ 必须写明作用域：这是**隔离副本上的演练**还是**生产实测**，不得把演练当生产承诺；⑤ 未覆盖范围（未在停写窗口实测、未接托管 CI 等）逐条列出。反例（loop cycle-38 A）：MIGRATION-RECOVERY 的 RPO 是行数代理，读者容易读成时间点；修：写明 mode=sentinel_timestamp / verified=true 及其演练作用域，并把「尚未在生产停写窗口实测」列为已知局限。",
     "severity_if_fail": "high",
     "guide_ref": "检查原则24"
+  },
+  {
+    "id": "DOC-25",
+    "rule": "门禁 / 校验器 / 报告的**通过消息必须与判定同源**：消息里打印的比较必须由判定所用的同一表达式取反得到，禁止手工复述判定阈值 —— 否则会出现「判定通过、消息自相矛盾」的假象（读者读到的是一个不成立的不等式）。",
+    "trigger": "只要一个门禁 / 校验器在通过路径打印比较（A >= B）或阈值：① 打印的比较必须与判定同源 —— 判定判 `measured < floor`，通过行就必须打印 `measured >= floor`，其中 floor 由判定所用的同一函数 / 表达式算出，不得手工复述 recorded 值；② 判定含容差（tolerance / slack）时，消息必须显式给出**实际生效的下界**（floor）与容差，不得打印 `measured >= recorded` 这种字面为假的不等式；③ 失败行同样必须给出下界口径（`< floor`），不得只给 recorded；④ 必须有测试钉住：构造「刚好落在容差内」的通过用例，断言打印的比较为真、且 `recorded - floor == slack`。反例（loop cycle-39 A）：run_gate.py 判定 measured + 0.15 >= recorded，通过行却打印 `coverage 79.35% >= 79.47%`（字面为假）；修：抽出 coverage_floor(recorded) = recorded - tolerance 作唯一定义，判定改用 `measured < floor`，通过行打印 `coverage X% >= floor Y% [recorded Z%, slack S%]`，两者同一表达式互为取反，+2 例钉住。",
+    "severity_if_fail": "high",
+    "guide_ref": "检查原则25"
   }
   ],
   "output_schema": {

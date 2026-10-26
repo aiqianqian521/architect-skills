@@ -506,6 +506,19 @@ cycle-31 语法定点 / 本轮**豁免 / 白名单机制本身**。
 **触发 loop cycle-38 A**：业务提交哨兵 —— 标记由数据库在同一事务内写入，回滚不留痕、历史行恰好回填一次；
 演练给出 `restores_to_cutoff` / `units_lost_on_restore` / `window_ms` 的时间点口径；+6 例自证，全量 1750 → 1756。
 
+## TES-34 · 测试输入必须自建，收集期不得有副作用
+
+> 触发 loop cycle-39 A：一个测试模块在**收集期**打开了仓库内的运行态库（`loop-engine/data/patterns.db`）—— 全新克隆仅 `--collect-only` 就写出约 110KB 库到代码树；把旧版库放进树里，整套 pytest 在收集期直接 ERROR。
+
+- **运行态不是测试输入**：数据库 / 缓存 / 状态文件必须由测试在**私有临时目录**内自建，并配**确定性种子**；不得读取机器上既有的运行态内容（结论会随机器漂移）。
+- **不得写入被测仓库树**：落点在被测仓库树内的运行态文件是耦合点 —— 测试跑完后仓库树必须干净（无新增 / 无改写）。
+- **收集期零副作用**：import / collect 阶段不得写文件，也不得因本机旧状态抛错；否则一个无关模块会把整轮收集打成 ERROR（不是「一个用例失败」，而是「没有用例被收集」）。
+- **反证必须实测**：把运行态置为「旧版本 / 缺失 / 损坏」，同一套测试的结果必须一致（同通过数、同覆盖率）。
+- **钉一条回归测试**：断言 `store.db_path` 在被测仓库树之外。
+- **反例（loop cycle-39 A）**：`tests/test_v2_p1p2.py` 收集期 `PatternStore(_ENGINE/'data'/'patterns.db')`；同轮另有 4 个写入点（`test_webui_auth_config.py` / `test_webui_static.py` / `test_contract_invariants.py` / `test_evolution_bridge.py` / `test_loop.py` 的 CLI 冒烟）创建同一文件；修：私有临时库 / 临时配置 + 确定性种子 + 隔离回归测试，空库 / 旧库两场景结果一致（1759 passed / 79.48%）。
+
+**触发 loop cycle-39 A**：测试隔离 —— 运行态自建、收集期无副作用；同一套测试在「空库 / 预置旧库」下结果一致。
+
 ## 交叉引用
 - 代码审查 → 参见 [[architect-review]]
 - 设计测试面 → 参见 [[architect-design]] 端口-适配器
