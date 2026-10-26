@@ -211,6 +211,13 @@
     "trigger": "只要写了「单点出口 / 受门控 / 白名单 / 已覆盖」这类**范围性**不变量或其判定器：① 判定不得按名字——「函数里出现 gate / ExecGate / assert_interpreter 就算受控」是可伪造的豁免，一句介绍性提及即让裸调用变绿（loop cycle-35 A 红证据：门禁不变量把名字级豁免当证据，等于豁免宽于对象，cycle-32 同族、对象换成不变量自己）；② 判定对象必须是**显式登记的站点/文件**（只有真正的实现文件受制裁，其余每条例外都要有理由），且每条登记必须**仍命中一个真站点**，否则 FAIL（登记不可静默腐坏，cycle-23 家族）；③ 判定的**取样域**必须与声称的域一致——用文件系统全量枚举会把未跟踪 / 临时 / 归档脚本算进「业务代码」，判定结果就取决于本机残留垃圾（loop cycle-35 A：rglob 收进 scripts/tmp/**）；④ 违规报告不得截断（只列前 N 条会让人低估规模——loop cycle-35 A 的 xfail 只显示 4 行，实际 5 处真绕过被名字豁免掩盖）；⑤ 自证：写一个只提到门名字的函数 + 一次裸调用，判定必须变红；删掉一条当真站点消失后的登记，判定必须报警。反例（loop cycle-35 A）：_unguarded_spawns 按 guard_terms 名字豁免 + rglob 取样域 + unguarded[:4] 截断；修：登记式允许清单 + git 跟踪取样域 + 完整报告 + MCP spawn 真接门，+5 例自证，全量 1712 → 1717。",
     "severity_if_fail": "high",
     "guide_ref": "检查原则30"
+  },
+  {
+    "id": "TES-31",
+    "rule": "安全关键参数 / 依赖缺失时必须 **fail-closed**：可选 gate、可选 runtime、可选解释器限名单为 None 或未注入时，代码不得静默降级到不安全路径（裸 subprocess、无门回退、跳过校验），必须显式拒绝并给出可核对的错误码；任何保留的降级都必须作为**显式登记的决定**写明理由与作用对象。",
+    "trigger": "只要某个安全关键参数是「可选」的，或出现 `if x is not None: 安全路径 else: 裸路径` 形状：① None 必须走 fail-closed（拒绝执行 + 可核对错误码），不得退回裸路径；② 为「方便本地跑」保留的无门回退必须改为显式登记（文件 + 理由 + 作用对象），登记必须仍命中真站点，失效即报警；③ 自证：去掉一个真调用点的 gate，判定必须变红（拒绝），且必须观察到零 spawn；④ 反向：登记式降级删掉后必须报警。反例（loop cycle-36 A）：backtest_adapter 三处 + ooda_pipeline 两个 sink 的 `else: subprocess.run` 让忘记注入 gate 的调用方静默裸跑（单点出口退化成承诺）；修：无门即无 spawn（探针返回 None、run_backtest 返回 error_code=exec_gate_required、两个 sink 拒绝），fitness 回测接入 orchestrator 的 gate，+5 例自证，全量 1717 → 1722。",
+    "severity_if_fail": "high",
+    "guide_ref": "检查原则31"
   }
   ],
   "output_schema": {

@@ -462,6 +462,18 @@ cycle-31 语法定点 / 本轮**豁免 / 白名单机制本身**。
 它一边**放过**伪造式的名字豁免，一边**掩盖**了 backtest_adapter 的无门回退与 ooda_pipeline 的裸 spawn（共 5 处）。
 修：登记式允许清单 + git 跟踪取样域 + 完整报告 + MCP spawn 真接门（无 gate 拒绝启动），+5 例自证，全量 1712 → 1717。
 
+## TES-31 · 可选依赖必须 fail-closed：安全关键参数为 None 时不得静默降级
+
+> 触发 loop cycle-36 A：不变量 1 从「登记式豁免」再往前一步 —— 就算站点已经在域内，
+> 调用方忘记注入 gate 时也绝不能静默退回裸路径。
+
+- **缺省即拒绝**：可选 gate / 可选 runtime / 可选解释器限名单为 None 时，必须显式拒绝并给出可核对的错误码，不得出现 `if x is not None: 安全路径 else: 裸路径`。
+- **降级等于决定**：为了本地方便而保留的不安全回退，必须作为显式登记的决定写明理由与作用对象，登记仍须命中真站点（失效即报警）。
+- **自证**：去掉一个真调用点的 gate，判定必须变红且观察到零 spawn；把登记式降级删掉必须报警。
+- **反例（loop cycle-36 A）**：backtest_adapter 三处 + ooda_pipeline 两个 sink 的 `else: subprocess.run`，让忘记注入 gate 的调用方静默裸跑。
+
+**触发 loop cycle-36 A：**无门即无 spawn —— 探针返回 None、run_backtest 返回 error_code=exec_gate_required、两个 sink 拒绝；fitness 回测接入 orchestrator 的 gate；+5 例自证，全量 1717 → 1722。
+
 ## 交叉引用
 - 代码审查 → 参见 [[architect-review]]
 - 设计测试面 → 参见 [[architect-design]] 端口-适配器

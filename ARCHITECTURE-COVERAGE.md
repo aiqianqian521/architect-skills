@@ -359,3 +359,11 @@
 - **loop 回写**：取样域改为 git 跟踪 + 待提交（排除归档 / 临时）；名字级豁免换成**登记式**允许清单（`SPAWN_SANCTIONED` + `SPAWN_OUTSIDE_GATE`，每条附理由且必须仍生效）；违规报告列全；MCP 服务端 spawn 真接 `ExecGate.popen`（无 gate 拒绝启动，fail-closed），gate 逐层透传。新增 5 例自证；全量 1712 → **1717 passed**；不变量 1 仍 xfail，但违规清单由「4 行（含 3 处宿主工具）」变为**准确的 5 处真业务绕过**。
 - 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
 
+### 2026-10-26 · B 阶段 cycle-36 · 可选依赖必须 fail-closed：安全关键参数为 None 时不得静默降级（TES-31 / DOC-22）
+
+- **architect-test（test 维度）**：新增第 30 → **31** 条 —— **TES-31** 安全关键参数 / 依赖缺失时必须 fail-closed：可选 gate、可选 runtime、可选解释器限名单为 None 时不得静默退回不安全路径（裸 subprocess、无门回退、跳过校验），必须显式拒绝并给出可核对错误码；任何保留的降级都要作为**显式登记的决定**（理由 + 作用对象），登记仍须命中真站点，失效即报警；自证 = 去掉一个真调用点的 gate 必须变红且零 spawn。
+- **architect-docs（docs 维度）**：新增第 21 → **22** 条 —— **DOC-22** 文档描述「可选依赖 / 可选参数 / 未配置时回退」时必须写明**缺省即拒绝**的语义，安全关键参数未注入时不得声称「仍然能跑」；若承认存在降级，必须把它作为显式登记的决定逐条写出理由与作用对象，并说明生产路径在哪里注入。
+- **第 20 条同族缺陷**：不变量 1 的豁免在 cycle-35 已改成登记式，但「登记」只回答了「谁在域内」；当调用方**忘记注入** gate 时，代码仍会在 else 分支静默退回裸 subprocess.run —— 单点出口重新退化成承诺。loop cycle-36 A 的 5 处（backtest_adapter 三处 + ooda_pipeline 两个 sink）正是这个形状：安全关键参数是「可选」，缺省就走向不安全路径。
+- **loop 回写**：无门即无 spawn —— 探针返回 None、run_backtest 返回 error_code=exec_gate_required、两个 sink 拒绝；fitness 回测接入 orchestrator 的 gate（零参提供者按调用时解析，避免 overlay 重建 runtime 后钉住旧 gate）；新增 runtime_exec.local_exec_gate 作为测试 / 本地构造真 gate 的唯一入口；+5 例自证，全量 1717 → **1722 passed**、0 xfail，覆盖率 79.41% → **79.42%**。
+- 验证：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
+

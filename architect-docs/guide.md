@@ -367,6 +367,18 @@ python orchestrator.py --doctor
 
 **反例（loop cycle-35 A）**：不变量 1 的报告被截断且按名字豁免，文档据此宣称「单点出口」，实为 5 处绕过。
 
+## DOC-22 · 可选依赖必须写明缺省即拒绝
+
+> 触发 loop cycle-36 A：文档把「可选 gate」写成兼容性便利，读者就会以为缺省仍然安全；
+> 缺省语义必须写成 fail-closed。
+
+- **缺省即拒绝**：安全关键参数未注入时必须写明会拒绝执行，而不是「兼容地继续」。
+- **降级等于决定**：文档若承认存在降级，必须逐条写出理由与作用对象，且该登记可被检查（失效即报警）。
+- **不得用「可选」掩盖「忘记注入」**：必须说明生产路径在哪里注入 gate。
+- **反例（loop cycle-36 A）**：适配器的 exec_gate=None 回退被描述成兼容性便利，实际是静默裸跑。
+
+**触发 loop cycle-36 A：**文档声明无门即无 spawn，并写明生产组合根（orchestrator / BacktestRunner / evolution loader）在哪里注入 gate。
+
 ## 交叉引用
 - 设计决策记录 → 参见 [[architect-design]]
 - 审查文档质量 → 参见 [[architect-review]]
