@@ -389,3 +389,11 @@
 - **本轮红证据（loop cycle-39 A）**：`tests/test_v2_p1p2.py` 在收集期打开仓库内 `loop-engine/data/patterns.db` —— 全新克隆仅 `--collect-only` 就写出约 110KB 库到代码树；把一份旧版（v5）库放进树后，整套 pytest 在收集期直接 ERROR。同轮扫描又发现 4 个写入点（`test_webui_auth_config.py` / `test_webui_static.py` / `test_contract_invariants.py` / `test_evolution_bridge.py` / `test_loop.py` 的 CLI 冒烟）会创建同一文件。`scripts/run_gate.py` 判定 `measured + 0.15 >= recorded`，通过行却打印 `coverage 79.35% >= 79.47%`（字面为假）。
 - **loop 回写**：5 个写入点全部改为私有临时库 / 临时配置（`memory.sqlite_path` 指向 tmp，`test_v2_p1p2.py` 用私有临时库 + 确定性种子）；抽出 `run_gate.coverage_floor(recorded) = recorded - tolerance` 作唯一定义，判定改用 `measured < floor`，通过行打印 `coverage X% >= floor Y% [recorded Z%, slack S%]`。逐文件扫描证明零创建者；新鲜副本全量在「空库」与「预置 v5 旧库」两场景下均为 **1759 passed / 0 xfail / 79.48%**，且仓库树零写入、旧库未被改写。全量 1756 → **1759 passed** / 79.47% → 79.48%。
 - **验证**：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
+
+### 2026-10-27 · B 阶段 cycle-40 · 测试结论必须可复现，登记的基线必须是可复现的观测（TES-35 / DOC-26）
+
+- **architect-test（test 维度）**：新增第 34 → **35** 条 —— **TES-35** 测试的**结论**必须可复现：同一份代码在同一台机器上连续两次运行必须给出相同的通过数与覆盖率。可复现性的两类敌人 —— **跨运行残留**（草稿目录 / 产物）与 **并发时序**（哪条分支被执行取决于调度）—— 都必须在测试边界内消除（会话级清理 / 可注入 seam / 单线程直接驱动每条分支）；无法消除的必须登记幅度与吸收它的容差，登记值取干净克隆的可复现值。
+- **architect-docs（docs 维度）**：新增第 25 → **26** 条 —— **DOC-26** 文档登记的测试基线必须是可复现的观测：登记值要能在干净克隆上逐字重现且同一命令连续两次一致；受机器残留或时序影响的数字必须先消除耦合再登记；无法消除的波动必须写明幅度 / 原因 / 容差，并取可复现的一侧；不得用“落在容差内”掩盖“两次结果不同”。
+- **本轮红证据（loop cycle-40 A/A2）**：三层漂移 —— ① `loop-engine/tests/_tmp_*` 插件草稿包跨运行残留，使 dsh-mneme / dsh-rag-kb 的 `_ensure` 在「store 已存在 / 缺失」间翻转（90%/88%、70%/69%）；② `run_reporter._archive_raw_io` 最后一级回退直读仓库根 `_data`（热机有、干净克隆无，88%/89%）；③ `sub_agent.AgentRegistry._release` 的循环分支只被线程竞态覆盖（同一命令连跑 6 次：4 次 4 partial、2 次 5 partial → 79.48% vs 79.47%）。
+- **loop 回写**：① 新增 `loop-engine/tests/conftest.py` 会话级 autouse 夹具清理 `_tmp_*`；② 抽出可注入的 `run_reporter._data_root()`，测试用 monkeypatch 钉到空临时目录；③ 新增单线程测试直接驱动 `_release` 的三种形状（走过非匹配项 / 首项命中 / 自然耗尽）。+1 例；同一命令连续两次 **1760 passed / 0 xfail / 79.49%**（4424/670）逐字一致；干净克隆复核同值。**登记基线由「本机偶发 79.48%」改为「干净克隆可复现 79.49%」**。
+- **验证**：`node scripts/validate-contracts.mjs` → **19 atom / 0 错 / 0 警** + `node tests/run-l1-tests.mjs` → **32 passed**。
