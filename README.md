@@ -36,5 +36,6 @@
 | [aiqianqian521/obsidian-skills](https://github.com/aiqianqian521/obsidian-skills) | Obsidian 知识库 skill 组（14 个） | 同族 skill：本仓的评估结论可落库沉淀 |
 | [aiqianqian521/ai-skill-output-template](https://github.com/aiqianqian521/ai-skill-output-template) | 声明式多模板注册中心 | 定义本仓评估报告的输出结构契约 |
 | [aiqianqian521/go-sec-audit](https://github.com/aiqianqian521/go-sec-audit) | Go 源码安全审计 skill（L0→L3 证据门判决） | 同族专项 skill：安全维度的专项审计工具，可作 `architect-security` 的落地手段 |
+| [aiqianqian521/go-rce-hunt](https://github.com/aiqianqian521/go-rce-hunt) | Go RCE 猎取 skill（六相 RCE 模型） | 同族专项 skill：RCE 维度的专项审计工具 |
 
 > 上面四个仓库都反向链接回本仓；`sloth-loop` 以 submodule 方式挂载本仓，可按需 pin 版本。
